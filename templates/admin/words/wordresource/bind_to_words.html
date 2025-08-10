@@ -1,0 +1,137 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}绑定资源到单词 | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='words' %}">单词工厂</a>
+&rsaquo; <a href="{% url 'admin:words_wordresource_changelist' %}">单词配套资源</a>
+&rsaquo; 绑定到单词
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>绑定资源到单词</h1>
+
+<div class="module">
+    <h2>选中的资源 ({{ queryset.count }} 个)</h2>
+    <ul>
+        {% for resource in queryset %}
+        <li><strong>{{ resource.name }}</strong> - {{ resource.get_resource_type_display }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<div class="module aligned">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div>
+                <label for="word_search" class="required">搜索单词:</label>
+                <input type="text" id="word_search" placeholder="输入单词名称进行搜索..." style="width: 300px; padding: 5px;">
+                <p class="help">输入单词名称快速查找</p>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label class="required">选择要绑定的单词:</label>
+                <div id="word_list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #f9f9f9;">
+                    {% for word in words %}
+                    <div class="word-item" data-word="{{ word.word|lower }}">
+                        <label style="display: block; margin: 5px 0;">
+                            <input type="checkbox" name="words" value="{{ word.pk }}" style="margin-right: 8px;">
+                            <strong>{{ word.word }}</strong>
+                            {% if word.definition %} - {{ word.definition|truncatechars:50 }}{% endif %}
+                            {% if word.vocabulary_list %} ({{ word.vocabulary_list.name }}){% endif %}
+                        </label>
+                    </div>
+                    {% empty %}
+                    <p>没有找到单词</p>
+                    {% endfor %}
+                </div>
+                <p class="help">选择要绑定资源的单词（可多选）</p>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label>
+                    <input type="checkbox" id="select_all" style="margin-right: 8px;">
+                    全选/取消全选
+                </label>
+            </div>
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" value="确认绑定" class="default" name="_save">
+            <a href="{% url 'admin:words_wordresource_changelist' %}" class="button cancel-link">取消</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// 搜索功能
+document.getElementById('word_search').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const wordItems = document.querySelectorAll('.word-item');
+    
+    wordItems.forEach(function(item) {
+        const wordText = item.getAttribute('data-word');
+        if (wordText.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// 全选功能
+document.getElementById('select_all').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('input[name="words"]');
+    const visibleCheckboxes = Array.from(checkboxes).filter(cb => 
+        cb.closest('.word-item').style.display !== 'none'
+    );
+    
+    visibleCheckboxes.forEach(function(checkbox) {
+        checkbox.checked = this.checked;
+    }, this);
+});
+</script>
+
+<style>
+.form-row {
+    margin-bottom: 20px;
+}
+.form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.help {
+    color: #666;
+    font-size: 11px;
+    margin-top: 5px;
+}
+.submit-row {
+    margin-top: 20px;
+    padding: 10px 0;
+    border-top: 1px solid #ddd;
+}
+.cancel-link {
+    margin-left: 10px;
+    text-decoration: none;
+    color: #666;
+}
+.word-item {
+    border-bottom: 1px solid #eee;
+    padding: 2px 0;
+}
+.word-item:hover {
+    background-color: #f0f0f0;
+}
+</style>
+{% endblock %}

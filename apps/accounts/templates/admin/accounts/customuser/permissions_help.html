@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}权限管理帮助 | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='accounts' %}">用户管理</a>
+&rsaquo; <a href="{% url 'admin:accounts_customuser_changelist' %}">用户</a>
+&rsaquo; 权限管理帮助
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module aligned">
+    <h1>权限管理帮助</h1>
+    
+    <div class="form-row">
+        <div class="field-box">
+            <h2>优化后的权限管理原则</h2>
+            <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #007cba; margin: 10px 0;">
+                <p><strong>核心理念：</strong>角色专门维护，用户仅需关联角色以动态继承权限</p>
+            </div>
+            
+            <h3>1. 权限管理架构</h3>
+            <ul>
+                <li><strong>角色权限管理：</strong>在权限模块中统一管理各角色的权限配置</li>
+                <li><strong>用户角色关联：</strong>用户只需选择角色，自动继承该角色的所有权限</li>
+                <li><strong>组权限同步：</strong>系统自动将角色权限同步到对应的Django组</li>
+                <li><strong>移除冗余设置：</strong>用户管理界面不再显示组和用户权限字段</li>
+            </ul>
+            
+            <h3>2. 优化后的用户管理</h3>
+            <ul>
+                <li><strong>简化界面：</strong>移除了"组"和"用户权限"字段，避免混淆</li>
+                <li><strong>角色驱动：</strong>用户权限完全由角色决定，确保一致性</li>
+                <li><strong>权限透明：</strong>可查看用户通过角色获得的具体权限</li>
+                <li><strong>自动同步：</strong>角色变更时自动更新用户的组归属</li>
+            </ul>
+            
+            <h3>3. 当前角色权限配置</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+                <thead>
+                    <tr style="background: #f1f1f1;">
+                        <th style="border: 1px solid #ddd; padding: 8px;">角色</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">权限数量</th>
+                        <th style="border: 1px solid #ddd; padding: 8px;">主要权限范围</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">管理员</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">42个</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">系统管理、用户管理、内容管理、权限管理</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">自由老师</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">22个</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">课程管理、学生管理、教学资源</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">学生</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">14个</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">学习功能、个人资料、作业提交</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">家长</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">8个</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">查看子女学习情况、基础互动</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <h3>4. 操作指南</h3>
+            <div style="background: #e8f4fd; padding: 15px; border-left: 4px solid #2196f3; margin: 10px 0;">
+                <h4>添加新用户：</h4>
+                <ol>
+                    <li>选择合适的用户角色</li>
+                    <li>填写基本信息（用户名、邮箱、手机等）</li>
+                    <li>系统自动分配对应的权限和组</li>
+                    <li>无需手动设置组或用户权限</li>
+                </ol>
+            </div>
+            
+            <div style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 10px 0;">
+                <h4>修改用户权限：</h4>
+                <ol>
+                    <li>如需调整权限，应在权限模块中修改角色权限</li>
+                    <li>个别用户需要特殊权限时，考虑创建新角色</li>
+                    <li>避免直接修改用户的组或权限设置</li>
+                    <li>保持权限管理的一致性和可维护性</li>
+                </ol>
+            </div>
+            
+            <h3>5. 权限查看功能</h3>
+            <ul>
+                <li><strong>角色权限信息：</strong>在用户列表中显示角色权限概览</li>
+                <li><strong>详细权限页面：</strong>点击"查看权限"可查看用户的具体权限</li>
+                <li><strong>同步状态检查：</strong>确认角色权限与Django组权限的同步状态</li>
+            </ul>
+            
+            <div style="background: #d4edda; padding: 15px; border-left: 4px solid #28a745; margin: 10px 0;">
+                <p><strong>优势总结：</strong></p>
+                <ul>
+                    <li>✓ 消除权限设置的冗余和混淆</li>
+                    <li>✓ 简化用户管理操作流程</li>
+                    <li>✓ 确保权限配置的一致性</li>
+                    <li>✓ 提高权限管理的可维护性</li>
+                    <li>✓ 降低权限配置错误的风险</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="submit-row">
+        <a href="{% url 'admin:accounts_customuser_changelist' %}" class="default">返回用户列表</a>
+        <a href="{% url 'admin:permissions_rolemanagement_changelist' %}" class="default">角色权限管理</a>
+    </div>
+</div>
+{% endblock %}

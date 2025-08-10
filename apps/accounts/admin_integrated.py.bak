@@ -1,0 +1,490 @@
+"""整合管理页面配置
+
+基于业务模型重新设计的高内聚、低耦合管理界面
+按照业务逻辑将分散的页面进行整合：
+
+1. 用户与角色管理中心 - 统一管理用户、角色分配、权限同步
+2. 角色增项配置中心 - 统一管理角色模板、增项配置、数据验证
+3. 权限与菜单管理中心 - 统一管理权限分配、菜单配置、组映射
+4. 数据统计与监控中心 - 统一管理日志、审批、数据分析
+"""
+
+from django.contrib import admin
+from django.utils.html import format_html
+from django.urls import reverse, path
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import models
+from django.http import JsonResponse
+from typing import Any, Dict, List
+
+from .models import (
+    CustomUser, UserRole, RoleExtension, UserExtensionData, 
+    RoleUserGroup, RoleLevel, RoleUser, UserExtension,
+    RoleApproval, UserLoginLog
+)
+from apps.permissions.models import (
+    RoleManagement, RoleGroupMapping, RoleMenuPermission
+)
+
+
+class IntegratedAdminMixin:
+    """整合管理页面混入类"""
+    
+    def get_dashboard_stats(self) -> Dict[str, Any]:
+        """获取仪表板统计数据"""
+        return {
+            'total_users': CustomUser.objects.count(),
+            'active_users': CustomUser.objects.filter(is_active=True).count(),
+            'role_stats': {
+                role[0]: CustomUser.objects.filter(role=role[0]).count()
+                for role in UserRole.choices
+            },
+            'pending_approvals': RoleApproval.objects.filter(status='pending').count(),
+            'extension_configs': RoleExtension.objects.filter(is_active=True).count(),
+        }
+    
+    def get_quick_actions(self) -> List[Dict[str, str]]:
+        """获取快速操作链接"""
+        return [
+            {
+                'title': '新增用户',
+                'url': reverse('admin:accounts_customuser_add'),
+                'icon': '👤',
+                'color': '#007cba'
+            },
+            {
+                'title': '角色配置',
+                'url': reverse('admin:accounts_roleextension_changelist'),
+                'icon': '⚙️',
+                'color': '#28a745'
+            },
+            {
+                'title': '权限管理',
+                'url': reverse('admin:permissions_rolemanagement_changelist'),
+                'icon': '🔐',
+                'color': '#ffc107'
+            },
+            {
+                'title': '审批管理',
+                'url': reverse('admin:accounts_roleapproval_changelist'),
+                'icon': '📋',
+                'color': '#dc3545'
+            },
+        ]
+
+
+@admin.register(CustomUser)
+class IntegratedUserAdmin(admin.ModelAdmin):
+    """整合用户管理中心
+    
+    统一管理：
+    - 用户基本信息
+    - 角色分配与权限同步
+    - 角色增项数据
+    - 组织架构关系
+    """
+    
+    list_display = [
+        'username', 'real_name', 'role', 'get_role_status', 
+        'get_extension_summary', 'get_group_status', 'is_active', 
+        'quick_actions'
+    ]
+    list_filter = ['role', 'is_active', 'date_joined']
+    search_fields = ['username', 'real_name', 'email', 'phone']
+    ordering = ['-date_joined']
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('username', 'real_name', 'email', 'phone')
+        }),
+        ('角色与权限', {
+            'fields': ('role', 'is_active', 'is_staff'),
+            'description': '角色变更将自动同步到权限组和增项配置'
+        }),
+        ('学习信息', {
+            'fields': ('grade_level', 'english_level'),
+            'classes': ('collapse',)
+        }),
+        ('系统信息', {
+            'fields': ('last_login', 'date_joined'),
+            'classes': ('collapse',),
+            'description': '系统自动维护的时间信息'
+        }),
+    )
+    
+    readonly_fields = ['last_login', 'date_joined']
+    
+    def get_role_status(self, obj):
+        """角色状态显示"""
+        if not obj.role:
+            return format_html(
+                '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; '
+                'border-radius: 3px; font-size: 12px;">❌ 未设置角色</span>'
+            )
+        
+        # 检查权限组同步状态
+        from .admin import ROLE_GROUP_MAPPING
+        target_group = ROLE_GROUP_MAPPING.get(obj.role)
+        is_synced = target_group and obj.groups.filter(name=target_group).exists()
+        
+        if is_synced:
+            return format_html(
+                '<span style="color: #28a745; background: #d4edda; padding: 2px 6px; '
+                'border-radius: 3px; font-size: 12px;">✅ {} (已同步)</span>',
+                obj.get_role_display()
+            )
+        else:
+            return format_html(
+                '<span style="color: #ffc107; background: #fff3cd; padding: 2px 6px; '
+                'border-radius: 3px; font-size: 12px;">⚠️ {} (待同步)</span>',
+                obj.get_role_display()
+            )
+    
+    get_role_status.short_description = '角色状态'  # type: ignore
+    
+    def get_extension_summary(self, obj):
+        """增项数据摘要"""
+        extensions = UserExtensionData.objects.filter(
+            user=obj, role_extension__role=obj.role
+        ).count()
+        
+        if extensions > 0:
+            return format_html(
+                '<span style="color: #007cba; background: #e7f3ff; padding: 2px 6px; '
+                'border-radius: 3px; font-size: 12px;">📋 {} 项增项</span>',
+                extensions
+            )
+        return format_html(
+            '<span style="color: #6c757d;">无增项</span>'
+        )
+    
+    get_extension_summary.short_description = '增项数据'  # type: ignore
+    
+    def get_group_status(self, obj):
+        """组织状态显示"""
+        groups = obj.groups.all()
+        if groups:
+            group_names = [g.name for g in groups]
+            return format_html(
+                '<span style="color: #17a2b8; font-size: 12px;">🏢 {}</span>',
+                ', '.join(group_names)
+            )
+        return format_html(
+            '<span style="color: #6c757d;">未分组</span>'
+        )
+    
+    get_group_status.short_description = '组织关系'  # type: ignore
+    
+    def quick_actions(self, obj):
+        """快速操作按钮"""
+        actions = []
+        
+        # 增项管理
+        if obj.role and RoleExtension.objects.filter(role=obj.role, is_active=True).exists():
+            actions.append(
+                f'<a href="{reverse("admin:accounts_customuser_extensions", args=[obj.pk])}" '
+                f'class="button" style="background: #28a745; color: white; padding: 2px 6px; '
+                f'text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 3px;">'
+                f'📝 增项</a>'
+            )
+        
+        # 密码重置
+        actions.append(
+            f'<a href="{reverse("admin:accounts_customuser_change_password", args=[obj.pk])}" '
+            f'class="button" style="background: #ffc107; color: black; padding: 2px 6px; '
+            f'text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 3px;">'
+            f'🔑 密码</a>'
+        )
+        
+        # 权限同步
+        actions.append(
+            f'<a href="#" onclick="syncUserRole({obj.pk})" '
+            f'class="button" style="background: #007cba; color: white; padding: 2px 6px; '
+            f'text-decoration: none; border-radius: 3px; font-size: 11px;">'
+            f'🔄 同步</a>'
+        )
+        
+        return format_html(''.join(actions))
+    
+    quick_actions.short_description = '快速操作'  # type: ignore
+    
+    def get_urls(self):
+        """添加自定义URL"""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'dashboard/',
+                self.admin_site.admin_view(self.dashboard_view),
+                name='accounts_user_dashboard'
+            ),
+            path(
+                '<int:user_id>/extensions/',
+                self.admin_site.admin_view(self.manage_extensions_view),
+                name='accounts_customuser_extensions'
+            ),
+            path(
+                '<int:user_id>/change_password/',
+                self.admin_site.admin_view(self.change_password_view),
+                name='accounts_customuser_change_password'
+            ),
+            path(
+                'sync-role/<int:user_id>/',
+                self.admin_site.admin_view(self.sync_role_view),
+                name='accounts_sync_user_role'
+            ),
+        ]
+        return custom_urls + urls
+    
+    def dashboard_view(self, request):
+        """用户管理仪表板"""
+        context = {
+            'title': '用户与角色管理中心',
+            'stats': self.get_dashboard_stats(),
+            'quick_actions': self.get_quick_actions(),
+            'recent_users': CustomUser.objects.order_by('-date_joined')[:10],
+            'pending_approvals': RoleApproval.objects.filter(status='pending')[:5],
+        }
+        return render(request, 'admin/accounts/user_dashboard.html', context)
+    
+    def get_dashboard_stats(self):
+        """获取仪表板统计"""
+        return {
+            'total_users': CustomUser.objects.count(),
+            'active_users': CustomUser.objects.filter(is_active=True).count(),
+            'role_stats': {
+                role[1]: CustomUser.objects.filter(role=role[0]).count()
+                for role in UserRole.choices
+            },
+            'extension_data_count': UserExtensionData.objects.count(),
+            'unsynced_users': self.get_unsynced_users_count(),
+        }
+    
+    def get_unsynced_users_count(self):
+        """获取未同步用户数量"""
+        from .admin import ROLE_GROUP_MAPPING
+        count = 0
+        for user in CustomUser.objects.filter(is_active=True):
+            if user.role:
+                target_group = ROLE_GROUP_MAPPING.get(user.role)
+                if target_group and not user.groups.filter(name=target_group).exists():
+                    count += 1
+        return count
+    
+    def get_quick_actions(self):
+        """获取快速操作"""
+        return [
+            {
+                'title': '新增用户',
+                'url': reverse('admin:accounts_customuser_add'),
+                'icon': '👤',
+                'description': '创建新用户账户'
+            },
+            {
+                'title': '批量导入',
+                'url': '#',
+                'icon': '📥',
+                'description': '批量导入用户数据'
+            },
+            {
+                'title': '权限同步',
+                'url': '#',
+                'icon': '🔄',
+                'description': '同步所有用户权限'
+            },
+            {
+                'title': '数据导出',
+                'url': '#',
+                'icon': '📤',
+                'description': '导出用户数据报表'
+            },
+        ]
+    
+    def manage_extensions_view(self, request, user_id):
+        """管理用户增项数据"""
+        # 复用原有的增项管理逻辑
+        from .admin import CustomUserAdmin
+        original_admin = CustomUserAdmin(CustomUser, self.admin_site)
+        return original_admin.manage_extensions_view(request, user_id)
+    
+    def change_password_view(self, request, user_id):
+        """修改用户密码"""
+        # 复用原有的密码修改逻辑
+        from .admin import CustomUserAdmin
+        original_admin = CustomUserAdmin(CustomUser, self.admin_site)
+        return original_admin.change_password_view(request, user_id)
+    
+    def sync_role_view(self, request, user_id):
+        """同步用户角色权限"""
+        from django.shortcuts import get_object_or_404
+        from .admin import sync_user_role_to_group
+        
+        user = get_object_or_404(CustomUser, pk=user_id)
+        success, message = sync_user_role_to_group(user)
+        
+        return JsonResponse({
+            'success': success,
+            'message': message
+        })
+    
+    class Media:
+        js = ('admin/js/integrated_user_admin.js',)
+        css = {
+            'all': ('admin/css/integrated_admin.css',)
+        }
+
+
+@admin.register(RoleExtension)
+class IntegratedRoleExtensionAdmin(admin.ModelAdmin):
+    """角色增项配置中心
+    
+    统一管理：
+    - 角色模板配置
+    - 增项字段定义
+    - 数据验证规则
+    - 显示排序设置
+    """
+    
+    list_display = [
+        'role', 'field_label', 'field_type', 'is_required', 
+        'get_usage_count', 'is_active', 'sort_order', 'config_actions'
+    ]
+    list_filter = ['role', 'field_type', 'is_required', 'is_active']
+    search_fields = ['field_label', 'field_name', 'help_text']
+    ordering = ['role', 'sort_order', 'field_name']
+    
+    fieldsets = (
+        ('基本配置', {
+            'fields': ('role', 'field_name', 'field_label', 'field_type')
+        }),
+        ('高级配置', {
+            'fields': ('field_choices', 'is_required', 'help_text'),
+            'description': '字段选项仅在选择字段类型时需要配置'
+        }),
+        ('显示设置', {
+            'fields': ('sort_order', 'is_active'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def get_usage_count(self, obj):
+        """获取使用统计"""
+        count = UserExtensionData.objects.filter(role_extension=obj).count()
+        if count > 0:
+            return format_html(
+                '<span style="color: #007cba; font-weight: bold;">{} 个用户</span>',
+                count
+            )
+        return format_html('<span style="color: #6c757d;">未使用</span>')
+    
+    get_usage_count.short_description = '使用统计'  # type: ignore
+    
+    def config_actions(self, obj):
+        """配置操作"""
+        actions = []
+        
+        # 预览配置
+        actions.append(
+            f'<a href="#" onclick="previewConfig({obj.pk})" '
+            f'class="button" style="background: #17a2b8; color: white; padding: 2px 6px; '
+            f'text-decoration: none; border-radius: 3px; font-size: 11px; margin-right: 3px;">'
+            f'👁️ 预览</a>'
+        )
+        
+        # 数据统计
+        if obj.field_type == 'choice':
+            actions.append(
+                f'<a href="{reverse("admin:accounts_extension_stats", args=[obj.pk])}" '
+                f'class="button" style="background: #28a745; color: white; padding: 2px 6px; '
+                f'text-decoration: none; border-radius: 3px; font-size: 11px;">'
+                f'📊 统计</a>'
+            )
+        
+        return format_html(''.join(actions))
+    
+    config_actions.short_description = '操作'  # type: ignore
+    
+    def get_urls(self):
+        """添加自定义URL"""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'template-config/',
+                self.admin_site.admin_view(self.template_config_view),
+                name='accounts_template_config'
+            ),
+            path(
+                'stats/<int:extension_id>/',
+                self.admin_site.admin_view(self.extension_stats_view),
+                name='accounts_extension_stats'
+            ),
+        ]
+        return custom_urls + urls
+    
+    def template_config_view(self, request):
+        """模板配置视图"""
+        context = {
+            'title': '角色增项模板配置',
+            'role_templates': self.get_role_templates(),
+        }
+        return render(request, 'admin/accounts/template_config.html', context)
+    
+    def get_role_templates(self):
+        """获取角色模板配置"""
+        templates = {}
+        for role_code, role_name in UserRole.choices:
+            extensions = RoleExtension.objects.filter(
+                role=role_code, is_active=True
+            ).order_by('sort_order')
+            templates[role_name] = {
+                'code': role_code,
+                'extensions': extensions,
+                'user_count': CustomUser.objects.filter(role=role_code).count()
+            }
+        return templates
+    
+    def extension_stats_view(self, request, extension_id):
+        """增项统计视图"""
+        from django.shortcuts import get_object_or_404
+        
+        extension = get_object_or_404(RoleExtension, pk=extension_id)
+        stats = self.get_extension_statistics(extension)
+        
+        context = {
+            'title': f'增项统计: {extension.field_label}',
+            'extension': extension,
+            'stats': stats,
+        }
+        return render(request, 'admin/accounts/extension_stats.html', context)
+    
+    def get_extension_statistics(self, extension):
+        """获取增项统计数据"""
+        data = UserExtensionData.objects.filter(role_extension=extension)
+        
+        if extension.field_type == 'choice':
+            # 选择字段统计
+            from collections import Counter
+            values = data.values_list('field_value', flat=True)
+            return {
+                'type': 'choice',
+                'total_count': data.count(),
+                'value_distribution': dict(Counter(values)),
+                'choices': extension.get_field_choices() if hasattr(extension, 'get_field_choices') else []
+            }
+        else:
+            # 其他字段类型统计
+            return {
+                'type': 'general',
+                'total_count': data.count(),
+                'filled_count': data.exclude(field_value='').count(),
+                'empty_count': data.filter(field_value='').count(),
+            }
+
+
+# 注销原有的分散注册，使用新的整合管理
+# admin.site.unregister(CustomUser)
+# admin.site.unregister(RoleExtension)
+
+# 注册整合管理页面
+# admin.site.register(CustomUser, IntegratedUserAdmin)
+# admin.site.register(RoleExtension, IntegratedRoleExtensionAdmin)

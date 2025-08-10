@@ -1,0 +1,203 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{% if cl.formset and cl.formset.errors %}{% translate "Error:" %} {% endif %}{{ block.super }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static "admin/css/changelists.css" %}">
+  {% if cl.formset %}
+    <link rel="stylesheet" href="{% static "admin/css/forms.css" %}">
+  {% endif %}
+  {% if cl.formset or action_form %}
+    <script src="{% url 'admin:jsi18n' %}"></script>
+  {% endif %}
+  {{ media.css }}
+  {% if not actions_on_top and not actions_on_bottom %}
+    <style>
+      #changelist table thead th:first-child {width: inherit}
+    </style>
+  {% endif %}
+{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  {{ media.js }}
+  {% if action_form %}{% if action_form.is_popup %}<script>window.name='_popup';</script>{% endif %}{% endif %}
+  {% if cl.formset %}
+    <script src="{% static "admin/js/core.js" %}"></script>
+    <script src="{% static "admin/js/vendor/jquery/jquery.js" %}"></script>
+    <script src="{% static "admin/js/jquery.init.js" %}"></script>
+    <script src="{% static "admin/js/SelectBox.js" %}"></script>
+    <script src="{% static "admin/js/SelectFilter2.js" %}"></script>
+  {% endif %}
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-list{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=cl.opts.app_label %}">{{ cl.opts.app_config.verbose_name }}</a>
+&rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
+</div>
+{% endblock %}
+
+{% block coltype %}{% endblock %}
+
+{% block object-tools %}
+  {% if has_add_permission %}
+    <ul class="object-tools">
+      {% block object-tools-items %}
+        {% url cl.opts|admin_urlname:'add' as add_url %}
+        <li>
+          <a href="{% add_preserved_filters add_url is_popup to_field %}" class="addlink">
+            {% blocktranslate with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktranslate %}
+          </a>
+        </li>
+      {% endblock %}
+    </ul>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+    
+    {% if cl.formset and cl.formset.errors %}
+        <p class="errornote">
+        {% blocktranslate count counter=cl.formset.total_error_count %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+        </p>
+        {{ cl.formset.non_form_errors }}
+    {% endif %}
+    <form id="changelist-form" method="post"{% if cl.formset and cl.formset.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
+    {% if cl.formset %}
+      <div>{{ cl.formset.management_form }}</div>
+    {% endif %}
+    {% block result_list %}
+        {% if action_form and actions_on_top and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+        {% result_list cl %}
+        {% if action_form and actions_on_bottom and cl.show_admin_actions %}{% admin_actions %}{% endif %}
+    {% endblock %}
+    {% block pagination %}
+        {% pagination cl %}
+        
+        <!-- 每页显示条数选择器 -->
+        <div class="paginator-controls" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="items-per-page" style="font-weight: bold; color: #495057;">每页显示：</label>
+                <select id="items-per-page" style="padding: 4px 8px; border: 1px solid #ced4da; border-radius: 3px; background: white;">
+                    <option value="10" {% if request.GET.show == '10' or not request.GET.show %}selected{% endif %}>10 条</option>
+                    <option value="20" {% if request.GET.show == '20' %}selected{% endif %}>20 条</option>
+                    <option value="50" {% if request.GET.show == '50' %}selected{% endif %}>50 条</option>
+                    <option value="100" {% if request.GET.show == '100' %}selected{% endif %}>100 条</option>
+                    <option value="200" {% if request.GET.show == '200' %}selected{% endif %}>200 条</option>
+                    <option value="500" {% if request.GET.show == '500' %}selected{% endif %}>500 条</option>
+                    <option value="all" {% if request.GET.show == 'all' %}selected{% endif %}>全部</option>
+                </select>
+                <button type="button" id="apply-items-per-page-btn" style="padding: 4px 12px; background: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px;">
+                    应用
+                </button>
+                <span style="font-size: 12px; color: #6c757d; margin-left: 10px;">
+                    当前显示：{{ cl.result_count }} 条记录
+                </span>
+            </div>
+        </div>
+    {% endblock %}
+    </form>
+  </div>
+{% endblock %}
+
+
+
+{% block extrajs %}
+    {{ block.super }}
+    <script>
+        // 每页显示条数功能
+        function applyItemsPerPage() {
+            const select = document.getElementById('items-per-page');
+            const selectedValue = select.value;
+            
+            // 获取当前URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (selectedValue === 'all') {
+                // 显示全部记录
+                urlParams.set('show', 'all');
+                // 移除分页参数
+                urlParams.delete('p');
+            } else {
+                // 设置每页显示条数
+                urlParams.set('show', selectedValue);
+                // 重置到第一页
+                urlParams.delete('p');
+            }
+            
+            // 构建新URL
+            const newUrl = window.location.pathname + '?' + urlParams.toString();
+            window.location.href = newUrl;
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 保存用户选择到localStorage
+            const select = document.getElementById('items-per-page');
+            const applyBtn = document.getElementById('apply-items-per-page-btn');
+            
+            if (select) {
+                // 从localStorage恢复用户选择
+                const savedValue = localStorage.getItem('admin_items_per_page');
+                if (savedValue) {
+                    select.value = savedValue;
+                }
+                
+                // 监听选择变化
+                select.addEventListener('change', function() {
+                    localStorage.setItem('admin_items_per_page', this.value);
+                });
+            }
+            
+            // 为应用按钮添加事件监听器
+            if (applyBtn) {
+                applyBtn.addEventListener('click', function() {
+                    try {
+                        applyItemsPerPage();
+                    } catch (error) {
+                        console.error('Error applying items per page:', error);
+                    }
+                });
+            }
+        });
+        
+        // 键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+数字键快速切换每页显示条数
+            if (e.ctrlKey && e.key >= '1' && e.key <= '6') {
+                e.preventDefault();
+                const select = document.getElementById('items-per-page');
+                if (select) {
+                    const options = ['10', '20', '50', '100', '200', '500'];
+                    const index = parseInt(e.key) - 1;
+                    if (index < options.length) {
+                        select.value = options[index];
+                        applyItemsPerPage();
+                    }
+                }
+            }
+        });
+    </script>
+    
+    <style>
+        .paginator-controls {
+            border: 1px solid #dee2e6;
+            margin-top: 15px;
+        }
+        
+        .paginator-controls select {
+            font-size: 12px;
+        }
+        
+        .paginator-controls button:hover {
+            background: #005a8b !important;
+        }
+    </style>
+{% endblock %}

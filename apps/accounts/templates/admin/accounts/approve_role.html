@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='accounts' %}">Accounts</a>
+&rsaquo; <a href="{% url 'admin:accounts_roleapproval_changelist' %}">角色审批</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module aligned">
+        <h2>{{ title }}</h2>
+        
+        <div class="form-row">
+            <div class="field-box">
+                <h3>申请信息</h3>
+                <p><strong>申请用户：</strong>{{ approval.user.username }} ({{ approval.user.real_name }})</p>
+                <p><strong>当前角色：</strong>{{ approval.get_current_role_display }}</p>
+                <p><strong>申请角色：</strong>{{ approval.get_requested_role_display }}</p>
+                <p><strong>申请时间：</strong>{{ approval.created_at }}</p>
+                <p><strong>申请理由：</strong></p>
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-top: 5px;">
+                    {{ approval.reason|linebreaks }}
+                </div>
+            </div>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="field-box">
+                    <label for="admin_notes"><strong>管理员备注：</strong></label>
+                    <textarea name="admin_notes" id="admin_notes" rows="4" cols="50" 
+                              placeholder="请输入审批备注（可选）"
+                              style="width: 100%; margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                </div>
+            </div>
+            
+            <div class="submit-row">
+                <input type="submit" value="✅ 确认批准" class="default" 
+                       style="background: #28a745; border-color: #28a745;" 
+                       onclick="return confirm('确定要批准此管理员角色申请吗？')">
+                <a href="{% url 'admin:accounts_roleapproval_changelist' %}" class="button cancel-link">取消</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

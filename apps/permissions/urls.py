@@ -1,0 +1,60 @@
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from . import views
+from .api_views import (
+    MenuModuleConfigViewSet, RoleMenuPermissionViewSet, GroupViewSet,
+    PermissionViewSet, RoleGroupMappingViewSet, PermissionSyncLogViewSet
+)
+
+# API路由配置
+router = DefaultRouter()
+router.register(r'menu-modules', MenuModuleConfigViewSet, basename='menumoduleconfig')
+router.register(r'role-menu-permissions', RoleMenuPermissionViewSet, basename='rolemenupermission')
+router.register(r'groups', GroupViewSet, basename='group')
+router.register(r'permissions', PermissionViewSet, basename='permission')
+router.register(r'role-group-mappings', RoleGroupMappingViewSet, basename='rolegroupmapping')
+router.register(r'sync-logs', PermissionSyncLogViewSet, basename='permissionsynclog')
+
+app_name = 'permissions'
+
+urlpatterns = [
+    # API路由
+    path('api/', include(router.urls)),
+    
+    # 权限管理主页
+    path('', views.PermissionIndexView.as_view(), name='index'),
+    
+    # 菜单模块配置
+    path('menu-modules/', views.MenuModuleListView.as_view(), name='menu_module_list'),
+    path('menu-modules/create/', views.MenuModuleCreateView.as_view(), name='menu_module_create'),
+    path('menu-modules/<int:pk>/', views.MenuModuleDetailView.as_view(), name='menu_module_detail'),
+    path('menu-modules/<int:pk>/edit/', views.MenuModuleUpdateView.as_view(), name='menu_module_update'),
+    path('menu-modules/<int:pk>/delete/', views.MenuModuleDeleteView.as_view(), name='menu_module_delete'),
+    
+    # 角色菜单权限
+    path('role-menu-permissions/', views.RoleMenuPermissionListView.as_view(), name='role_menu_permission_list'),
+    path('role-menu-permissions/create/', views.RoleMenuPermissionCreateView.as_view(), name='role_menu_permission_create'),
+    path('role-menu-permissions/<int:pk>/', views.RoleMenuPermissionDetailView.as_view(), name='role_menu_permission_detail'),
+    path('role-menu-permissions/<int:pk>/edit/', views.RoleMenuPermissionUpdateView.as_view(), name='role_menu_permission_update'),
+    path('role-menu-permissions/<int:pk>/delete/', views.RoleMenuPermissionDeleteView.as_view(), name='role_menu_permission_delete'),
+    
+    # 角色组映射
+    path('role-group-mappings/', views.RoleGroupMappingListView.as_view(), name='role_group_mapping_list'),
+    path('role-group-mappings/create/', views.RoleGroupMappingCreateView.as_view(), name='role_group_mapping_create'),
+    path('role-group-mappings/<int:pk>/', views.RoleGroupMappingDetailView.as_view(), name='role_group_mapping_detail'),
+    path('role-group-mappings/<int:pk>/edit/', views.RoleGroupMappingUpdateView.as_view(), name='role_group_mapping_update'),
+    path('role-group-mappings/<int:pk>/delete/', views.RoleGroupMappingDeleteView.as_view(), name='role_group_mapping_delete'),
+    
+    # 权限同步日志
+    path('sync-logs/', views.PermissionSyncLogListView.as_view(), name='permission_sync_log_list'),
+    path('sync-logs/<int:pk>/', views.PermissionSyncLogDetailView.as_view(), name='permission_sync_log_detail'),
+    
+    # AJAX接口
+    path('ajax/sync-permissions/', views.sync_permissions_ajax, name='sync_permissions_ajax'),
+    path('ajax/check-permission/', views.check_permission_ajax, name='check_permission_ajax'),
+    path('ajax/get-role-permissions/', views.get_role_permissions_ajax, name='get_role_permissions_ajax'),
+    
+    # 批量操作
+    path('batch/assign-permissions/', views.BatchAssignPermissionsView.as_view(), name='batch_assign_permissions'),
+    path('batch/remove-permissions/', views.BatchRemovePermissionsView.as_view(), name='batch_remove_permissions'),
+]

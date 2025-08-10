@@ -1,0 +1,412 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}单词例句{% endblock %}
+
+{% block extra_css %}
+<style>
+    .word-examples-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .search-section {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .word-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .word-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .word-title {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .phonetic {
+        font-size: 1.2rem;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    .definition {
+        font-size: 1.1rem;
+        color: #34495e;
+        margin: 15px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #3498db;
+    }
+    
+    .example-section {
+        margin-top: 20px;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        color: white;
+    }
+    
+    .example-text {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        margin: 0;
+        font-style: italic;
+    }
+    
+    .word-meta {
+        display: flex;
+        gap: 15px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .meta-tag {
+        background: #ecf0f1;
+        color: #2c3e50;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .meta-tag.grade {
+        background: #e8f5e8;
+        color: #27ae60;
+    }
+    
+    .meta-tag.pos {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .search-form {
+        display: flex;
+        gap: 15px;
+        align-items: end;
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 15px;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-search {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 10px;
+        font-weight: 500;
+        transition: transform 0.2s ease;
+    }
+    
+    .btn-search:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+    
+    .btn-clear {
+        background: #6c757d;
+        border: none;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+    }
+    
+    .stats-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .pagination {
+        justify-content: center;
+        margin-top: 30px;
+    }
+    
+    .page-link {
+        border-radius: 10px;
+        margin: 0 5px;
+        border: none;
+        color: #667eea;
+    }
+    
+    .page-link:hover {
+        background-color: #667eea;
+        color: white;
+    }
+    
+    .page-item.active .page-link {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .no-results i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        color: #dee2e6;
+    }
+    
+    @media (max-width: 768px) {
+        .word-examples-container {
+            padding: 10px;
+        }
+        
+        .word-title {
+            font-size: 1.5rem;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        
+        .search-form {
+            flex-direction: column;
+        }
+        
+        .form-group {
+            min-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="word-examples-container">
+    <!-- 页面标题 -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2 mb-0">
+            <i class="fas fa-quote-left me-2"></i>
+            单词例句
+        </h1>
+    </div>
+    
+    <!-- 统计信息 -->
+    <div class="stats-section">
+        <div class="stats-number">{{ total_words }}</div>
+        <div>个单词包含例句</div>
+    </div>
+    
+    <!-- 搜索区域 -->
+    <div class="search-section">
+        <form method="get" class="search-form">
+            <div class="form-group">
+                <label for="search" class="form-label">搜索单词或例句</label>
+                <input type="text" 
+                       class="form-control" 
+                       id="search" 
+                       name="search" 
+                       value="{{ search_query }}"
+                       placeholder="输入单词、释义或例句内容...">
+            </div>
+            
+            <div class="form-group">
+                <label for="grade" class="form-label">年级筛选</label>
+                <select class="form-control" id="grade" name="grade">
+                    <option value="">所有年级</option>
+                    {% for grade_value, grade_label in grade_choices %}
+                        <option value="{{ grade_value }}" 
+                                {% if grade_filter == grade_value %}selected{% endif %}>
+                            {{ grade_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-search">
+                    <i class="fas fa-search me-2"></i>搜索
+                </button>
+                <a href="{% url 'words:word_examples' %}" class="btn btn-clear ms-2">
+                    <i class="fas fa-times me-2"></i>清除
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- 单词列表 -->
+    {% if page_obj %}
+        {% for word in page_obj %}
+            <div class="word-card">
+                <div class="word-title">
+                    <span>{{ word.word }}</span>
+                    {% if word.phonetic %}
+                        <span class="phonetic">{{ word.phonetic }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if word.definition %}
+                    <div class="definition">
+                        <i class="fas fa-book-open me-2"></i>
+                        {{ word.definition }}
+                    </div>
+                {% endif %}
+                
+                <div class="example-section">
+                    <h6 class="mb-3">
+                        <i class="fas fa-quote-left me-2"></i>
+                        例句
+                    </h6>
+                    <p class="example-text">{{ word.example }}</p>
+                </div>
+                
+                <div class="word-meta">
+                    {% if word.part_of_speech %}
+                        <span class="meta-tag pos">
+                            <i class="fas fa-tag me-1"></i>
+                            {{ word.part_of_speech }}
+                        </span>
+                    {% endif %}
+                    
+                    {% if word.grade %}
+                        <span class="meta-tag grade">
+                            <i class="fas fa-graduation-cap me-1"></i>
+                            {{ word.get_grade_display }}
+                        </span>
+                    {% endif %}
+                    
+                    {% if word.textbook_version %}
+                        <span class="meta-tag">
+                            <i class="fas fa-book me-1"></i>
+                            {{ word.textbook_version }}
+                        </span>
+                    {% endif %}
+                    
+                    {% if word.difficulty_level %}
+                        <span class="meta-tag">
+                            <i class="fas fa-star me-1"></i>
+                            难度 {{ word.difficulty_level }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <!-- 分页 -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="单词例句分页">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if grade_filter %}grade={{ grade_filter }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if grade_filter %}grade={{ grade_filter }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if grade_filter %}grade={{ grade_filter }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="no-results">
+            <i class="fas fa-search"></i>
+            <h4>没有找到相关单词</h4>
+            <p>请尝试调整搜索条件或清除筛选器</p>
+            <a href="{% url 'words:word_examples' %}" class="btn btn-primary">
+                <i class="fas fa-refresh me-2"></i>查看所有例句
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// 搜索表单增强
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search');
+    const gradeSelect = document.getElementById('grade');
+    
+    // 回车键搜索
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.closest('form').submit();
+        }
+    });
+    
+    // 年级选择自动搜索
+    gradeSelect.addEventListener('change', function() {
+        this.closest('form').submit();
+    });
+    
+    // 平滑滚动到搜索结果
+    if (window.location.search.includes('search=') || window.location.search.includes('grade=')) {
+        const firstCard = document.querySelector('.word-card');
+        if (firstCard) {
+            setTimeout(() => {
+                firstCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }
+});
+</script>
+{% endblock %}

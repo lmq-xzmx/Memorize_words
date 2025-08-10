@@ -1,0 +1,171 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='article_factory' %}">文章解析工厂</a>
+&rsaquo; <a href="{% url 'admin:article_factory_article_changelist' %}">文章</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="module aligned">
+            <h2>文章信息</h2>
+            <div class="form-row">
+                <div><label>标题:</label> {{ article.title }}</div>
+            </div>
+            <div class="form-row">
+                <div><label>用户:</label> {{ article.user.username }}</div>
+            </div>
+        </div>
+        
+        <div class="module aligned">
+            <h2>源码编辑</h2>
+            <div class="form-row">
+                <div>
+                    <label for="id_edited_content">编辑内容:</label>
+                    <textarea name="edited_content" id="id_edited_content" rows="20" cols="80">{{ article.edited_content|default:article.content }}</textarea>
+                    <p class="help">在此编辑文章的源码内容</p>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label>
+                        <input type="checkbox" name="trigger_reparse">
+                        保存后触发重新解析
+                    </label>
+                    <p class="help">勾选此项将使用编辑后的内容重新解析文章</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="module aligned">
+            <h2>保存后操作</h2>
+            <div class="form-row">
+                <div>
+                    <label for="id_next_action">保存完成后:</label>
+                    <select name="next_action" id="id_next_action">
+                        <option value="stay">继续编辑</option>
+                        <option value="preview">预览文章</option>
+                        <option value="list">返回列表</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" value="保存" class="default" name="_save">
+            <a href="{% url 'admin:article_factory_article_preview' article.pk %}" class="button">预览</a>
+            <a href="{% url 'admin:article_factory_article_changelist' %}" class="button cancel-link">取消</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.module h2 {
+    background: #f8f8f8;
+    color: #666;
+    font-size: 11px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    padding: 8px 10px;
+    text-transform: uppercase;
+}
+
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    display: inline-block;
+    width: 150px;
+    font-weight: bold;
+    vertical-align: top;
+}
+
+.form-row textarea {
+    width: 100%;
+    max-width: 800px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.form-row select {
+    width: 200px;
+    padding: 5px;
+}
+
+.help {
+    color: #666;
+    font-size: 11px;
+    margin: 5px 0 0 155px;
+}
+
+input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+.submit-row {
+    margin-top: 20px;
+    padding: 10px 0;
+    border-top: 1px solid #ddd;
+}
+
+.submit-row .button {
+    margin-right: 10px;
+}
+</style>
+
+<script>
+// 添加编辑器增强功能
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('id_edited_content');
+    
+    // 添加行号显示（简单实现）
+    function updateLineNumbers() {
+        const lines = textarea.value.split('\n').length;
+        console.log('Lines:', lines);
+    }
+    
+    textarea.addEventListener('input', updateLineNumbers);
+    textarea.addEventListener('scroll', function() {
+        // 同步滚动行号（如果有的话）
+    });
+    
+    // 添加快捷键支持
+    textarea.addEventListener('keydown', function(e) {
+        // Tab键插入缩进
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            const start = this.selectionStart;
+            const end = this.selectionEnd;
+            
+            this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+            this.selectionStart = this.selectionEnd = start + 4;
+        }
+        
+        // Ctrl+S 保存
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            document.querySelector('input[type="submit"]').click();
+        }
+    });
+    
+    updateLineNumbers();
+});
+</script>
+{% endblock %}

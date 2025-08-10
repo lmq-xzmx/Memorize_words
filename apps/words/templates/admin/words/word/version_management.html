@@ -1,0 +1,205 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}">
+  <style>
+    .version-management {
+      padding: 20px;
+    }
+    .word-versions {
+      margin-top: 20px;
+    }
+    .word-item {
+      border: 1px solid #ddd;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .word-header {
+      background: #f8f9fa;
+      padding: 10px 15px;
+      border-bottom: 1px solid #ddd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .word-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .version-count {
+      color: #666;
+      font-size: 14px;
+    }
+    .versions-list {
+      padding: 15px;
+    }
+    .version-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .version-item:last-child {
+      border-bottom: none;
+    }
+    .version-info {
+      flex: 1;
+    }
+    .version-number {
+      font-weight: bold;
+      color: #007cba;
+    }
+    .version-details {
+      color: #666;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .version-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 4px 8px;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      text-decoration: none;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #007cba;
+      color: white;
+    }
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+    .btn:hover {
+      opacity: 0.8;
+    }
+    .no-versions {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+    .create-version-form {
+      margin-top: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="version-management">
+  <h1>单词版本管理</h1>
+  
+  {% if words_with_versions %}
+    <div class="word-versions">
+      {% for word in words_with_versions %}
+        <div class="word-item">
+          <div class="word-header">
+            <div class="word-title">{{ word.word }}</div>
+            <div class="version-count">{{ word.get_version_count }} 个版本</div>
+          </div>
+          <div class="versions-list">
+            {% for version in word.get_all_versions %}
+              <div class="version-item">
+                <div class="version-info">
+                  <div class="version-number">
+                    {% if version.is_main_word %}
+                      主单词 (版本 1)
+                    {% else %}
+                      版本 {{ version.version_number }}
+                    {% endif %}
+                  </div>
+                  <div class="version-details">
+                    音标: {{ version.phonetic|default:"无" }} | 
+                    词性: {{ version.part_of_speech|default:"无" }} | 
+                    释义: {{ version.definition|truncatechars:50|default:"无" }} | 
+                    创建时间: {{ version.created_at|date:"Y-m-d H:i" }}
+                  </div>
+                </div>
+                <div class="version-actions">
+                  <a href="{% url 'admin:words_word_change' version.pk %}" class="btn btn-primary">编辑</a>
+                  {% if version.is_main_word %}
+                    <button onclick="createVersion({{ word.pk }})" class="btn btn-primary">创建新版本</button>
+                  {% else %}
+                    <button onclick="deleteVersion({{ word.pk }}, {{ version.version_number }})" class="btn btn-danger">删除</button>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="no-versions">
+      <h3>暂无多版本单词</h3>
+      <p>当前没有包含多个版本的单词。</p>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+function createVersion(wordId) {
+  if (confirm('确定要创建新版本吗？')) {
+    fetch('{% url "admin:words_word_version_management" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: `action=create_version&word_id=${wordId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('错误: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('操作失败');
+    });
+  }
+}
+
+function deleteVersion(wordId, versionNumber) {
+  if (confirm(`确定要删除版本 ${versionNumber} 吗？`)) {
+    fetch('{% url "admin:words_word_version_management" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      },
+      body: `action=delete_version&word_id=${wordId}&version_number=${versionNumber}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('错误: ' + data.error);
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('操作失败');
+    });
+  }
+}
+</script>
+
+{% csrf_token %}
+{% endblock %} 

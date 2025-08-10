@@ -1,0 +1,137 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='article_factory' %}">文章解析工厂</a>
+&rsaquo; <a href="{% url 'admin:article_factory_article_changelist' %}">文章</a>
+&rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="module aligned">
+            <h2>文章信息</h2>
+            <div class="form-row">
+                <div><label>标题:</label> {{ article.title }}</div>
+            </div>
+
+            <div class="form-row">
+                <div><label>创建时间:</label> {{ article.created_at }}</div>
+            </div>
+        </div>
+        
+        <div class="module aligned">
+            <h2>解析配置</h2>
+            
+            <div class="form-row">
+                <div>
+                    <label for="id_vocabulary_source">词库来源:</label>
+                    <select name="vocabulary_source" id="id_vocabulary_source">
+                        <option value="default" {% if article.vocabulary_source == 'default' %}selected{% endif %}>默认词库</option>
+                        {% for vocab_list in vocabulary_lists %}
+                        <option value="{{ vocab_list.id }}" {% if article.vocabulary_source == vocab_list.id|stringformat:'s' %}selected{% endif %}>
+                            {{ vocab_list.name }} ({{ vocab_list.word_count }} 词)
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label for="id_variant_preference">变体偏好:</label>
+                    <select name="variant_preference" id="id_variant_preference">
+                        <option value="us" {% if article.variant_preference == 'us' %}selected{% endif %}>美式英语</option>
+                        <option value="uk" {% if article.variant_preference == 'uk' %}selected{% endif %}>英式英语</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label>
+                        <input type="checkbox" name="enable_paragraph_analysis" checked>
+                        启用段落类型分析
+                    </label>
+                    <p class="help">自动识别标题、列表项、缩进文本、普通段落等</p>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label>
+                        <input type="checkbox" name="enable_tooltip" checked>
+                        启用工具提示
+                    </label>
+                    <p class="help">鼠标悬停显示单词详细信息</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="module aligned">
+            <h2>解析后操作</h2>
+            <div class="form-row">
+                <div>
+                    <label for="id_next_action">解析完成后:</label>
+                    <select name="next_action" id="id_next_action">
+                        <option value="preview">预览文章</option>
+                        <option value="edit_source">源码编辑</option>
+        
+                        <option value="list">返回列表</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" value="开始解析" class="default" name="_save">
+            <a href="{% url 'admin:article_factory_article_changelist' %}" class="button cancel-link">取消</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.module h2 {
+    background: #f8f8f8;
+    color: #666;
+    font-size: 11px;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    padding: 8px 10px;
+    text-transform: uppercase;
+}
+
+.form-row {
+    margin-bottom: 10px;
+}
+
+.form-row label {
+    display: inline-block;
+    width: 150px;
+    font-weight: bold;
+}
+
+.form-row select, .form-row input[type="text"] {
+    width: 300px;
+    padding: 5px;
+}
+
+.help {
+    color: #666;
+    font-size: 11px;
+    margin: 2px 0 0 155px;
+}
+
+input[type="checkbox"] {
+    margin-right: 5px;
+}
+</style>
+{% endblock %}

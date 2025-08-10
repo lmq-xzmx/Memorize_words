@@ -1,0 +1,485 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}学习中（看板） | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'vocabulary_manager:dashboard' %}">成长中心</a>
+&rsaquo; 学习中（看板）
+</div>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div id="content-main">
+    <div class="module">
+        <h2>学习中（看板）</h2>
+        
+        {% if current_goal %}
+        <div class="goal-info">
+            <h3>当前学习目标：{{ current_goal.name }}</h3>
+            <p><strong>目标类型：</strong>{{ current_goal.get_goal_type_display }}</p>
+            <p><strong>总单词数：</strong>{{ total_words }}</p>
+            <p><strong>目标描述：</strong>{{ current_goal.description|default:"无描述" }}</p>
+        </div>
+        
+        <!-- 看板表格 -->
+        <div class="kanban-board">
+            <h3>学习进度看板</h3>
+            <div class="kanban-grid">
+                <!-- 第1次复习 -->
+                <div class="kanban-cell review-cell">
+                    <div class="cell-header">
+                        <h4>第1次复习</h4>
+                        <span class="count">{{ kanban_data.review_1 }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>已复习1次的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 第2次复习 -->
+                <div class="kanban-cell review-cell">
+                    <div class="cell-header">
+                        <h4>第2次复习</h4>
+                        <span class="count">{{ kanban_data.review_2 }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>已复习2次的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 第3次复习 -->
+                <div class="kanban-cell review-cell">
+                    <div class="cell-header">
+                        <h4>第3次复习</h4>
+                        <span class="count">{{ kanban_data.review_3 }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>已复习3次的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 第4次复习 -->
+                <div class="kanban-cell review-cell">
+                    <div class="cell-header">
+                        <h4>第4次复习</h4>
+                        <span class="count">{{ kanban_data.review_4 }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>已复习4次的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 第5次复习 -->
+                <div class="kanban-cell review-cell">
+                    <div class="cell-header">
+                        <h4>第5次复习</h4>
+                        <span class="count">{{ kanban_data.review_5 }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>已复习5次的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 第6次复习 -->
+                <div class="kanban-cell review-cell">
+                    <div class="cell-header">
+                        <h4>第6次复习</h4>
+                        <span class="count">{{ kanban_data.review_6 }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>已复习6次的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 已掌握 -->
+                <div class="kanban-cell mastered-cell">
+                    <div class="cell-header">
+                        <h4>已掌握</h4>
+                        <span class="count">{{ kanban_data.mastered }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>复习6次以上的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 已遗忘 -->
+                <div class="kanban-cell forgotten-cell">
+                    <div class="cell-header">
+                        <h4>已遗忘</h4>
+                        <span class="count">{{ kanban_data.forgotten }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>之前学过但未掌握的单词</p>
+                    </div>
+                </div>
+                
+                <!-- 剩余待学习 -->
+                <div class="kanban-cell remaining-cell">
+                    <div class="cell-header">
+                        <h4>剩余待学习</h4>
+                        <span class="count">{{ kanban_data.remaining }}</span>
+                    </div>
+                    <div class="cell-content">
+                        <p>当前目标下的待学习总数</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 单词列表 -->
+        <div class="word-list-section">
+            <h3>单词列表</h3>
+            <div class="word-filters">
+                <button class="filter-btn active" data-filter="all">全部</button>
+                <button class="filter-btn" data-filter="remaining">待学习</button>
+                <button class="filter-btn" data-filter="review">复习中</button>
+                <button class="filter-btn" data-filter="mastered">已掌握</button>
+                <button class="filter-btn" data-filter="forgotten">已遗忘</button>
+            </div>
+            
+            <div class="word-list">
+                {% for word in current_goal.get_words %}
+                <div class="word-item" data-word-id="{{ word.id }}" data-status="{% for progress in progress_records %}{% if progress.word_id == word.id %}{{ progress.status }}{% else %}not_started{% endif %}{% endfor %}">
+                    <div class="word-info">
+                        <span class="word-text">{{ word.word }}</span>
+                        <span class="word-status">
+                            {% for progress in progress_records %}
+                                {% if progress.word_id == word.id %}
+                                    {{ progress.status_display }}
+                                {% else %}
+                                    未开始
+                                {% endif %}
+                            {% empty %}
+                                未开始
+                            {% endfor %}
+                        </span>
+                    </div>
+                    <div class="word-actions">
+                        <button class="action-btn review-btn" onclick="updateWordProgress({{ word.id }}, 'review')">复习</button>
+                        <button class="action-btn master-btn" onclick="updateWordProgress({{ word.id }}, 'master')">掌握</button>
+                        <button class="action-btn forget-btn" onclick="updateWordProgress({{ word.id }}, 'forget')">遗忘</button>
+                        <button class="action-btn reset-btn" onclick="updateWordProgress({{ word.id }}, 'reset')">重置</button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="no-goal-message">
+            <p>请先设置当前学习目标</p>
+            <a href="{% url 'vocabulary_manager:learning_goals' %}" class="btn btn-primary">设置学习目标</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .goal-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .kanban-board {
+        margin: 20px 0;
+    }
+    
+    .kanban-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .kanban-cell {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .kanban-cell:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .review-cell {
+        border-color: #007bff;
+    }
+    
+    .mastered-cell {
+        border-color: #28a745;
+        background: #d4edda;
+    }
+    
+    .forgotten-cell {
+        border-color: #dc3545;
+        background: #f8d7da;
+    }
+    
+    .remaining-cell {
+        border-color: #ffc107;
+        background: #fff3cd;
+    }
+    
+    .cell-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .cell-header h4 {
+        margin: 0;
+        color: #495057;
+    }
+    
+    .count {
+        background: #007bff;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .cell-content p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 12px;
+    }
+    
+    .word-list-section {
+        margin-top: 30px;
+    }
+    
+    .word-filters {
+        margin-bottom: 15px;
+    }
+    
+    .filter-btn {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 8px 16px;
+        margin-right: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    .word-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+    
+    .word-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 15px;
+        border-bottom: 1px solid #f1f3f4;
+        transition: background-color 0.3s ease;
+    }
+    
+    .word-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .word-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .word-text {
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .word-status {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+    
+    .word-actions {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .action-btn {
+        padding: 4px 8px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .review-btn {
+        background: #007bff;
+        color: white;
+    }
+    
+    .master-btn {
+        background: #28a745;
+        color: white;
+    }
+    
+    .forget-btn {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .reset-btn {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .action-btn:hover {
+        opacity: 0.8;
+    }
+    
+    .no-goal-message {
+        text-align: center;
+        padding: 40px;
+        color: #6c757d;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #0056b3;
+    }
+</style>
+
+<script>
+    // 更新单词进度
+    function updateWordProgress(wordId, action) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch('{% url "vocabulary_manager:update_word_progress" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': csrfToken,
+            },
+            body: `word_id=${wordId}&action=${action}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 显示成功消息
+                alert(data.message);
+                
+                // 更新看板数据
+                updateKanbanBoard(data.kanban_data);
+                
+                // 更新单词状态
+                updateWordStatus(wordId, data.progress);
+                
+                // 刷新页面以显示最新数据
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                alert('操作失败：' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失败，请重试');
+        });
+    }
+    
+    // 更新看板数据
+    function updateKanbanBoard(kanbanData) {
+        Object.keys(kanbanData).forEach(key => {
+            const countElement = document.querySelector(`[data-key="${key}"] .count`);
+            if (countElement) {
+                countElement.textContent = kanbanData[key];
+            }
+        });
+    }
+    
+    // 更新单词状态
+    function updateWordStatus(wordId, progress) {
+        const wordItem = document.querySelector(`[data-word-id="${wordId}"]`);
+        if (wordItem) {
+            const statusElement = wordItem.querySelector('.word-status');
+            if (statusElement) {
+                statusElement.textContent = progress.status_display;
+            }
+            wordItem.setAttribute('data-status', progress.status);
+        }
+    }
+    
+    // 单词过滤功能
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const wordItems = document.querySelectorAll('.word-item');
+        
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                
+                // 更新按钮状态
+                filterBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 过滤单词
+                wordItems.forEach(item => {
+                    const status = item.getAttribute('data-status');
+                    let show = false;
+                    
+                    switch(filter) {
+                        case 'all':
+                            show = true;
+                            break;
+                        case 'remaining':
+                            show = status === 'not_started';
+                            break;
+                        case 'review':
+                            show = status.startsWith('review_');
+                            break;
+                        case 'mastered':
+                            show = status === 'mastered';
+                            break;
+                        case 'forgotten':
+                            show = status === 'forgotten';
+                            break;
+                    }
+                    
+                    item.style.display = show ? 'flex' : 'none';
+                });
+            });
+        });
+    });
+</script>
+{% endblock %} 

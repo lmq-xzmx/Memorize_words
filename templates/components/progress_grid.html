@@ -1,0 +1,275 @@
+{% comment %}
+九宫格进度展示组件
+用途：显示学习进度、任务完成情况等数据
+技术栈：Django + Bootstrap5
+可复用性：支持动态数据传入
+{% endcomment %}
+
+<div class="progress-grid-container">
+    <div class="progress-grid">
+        <!-- 中心圆形区域 -->
+        <div class="center-circle">
+            <div class="center-content">
+                <h3 class="center-title">{{ grid_title|default:"九宫格进程" }}</h3>
+                <p class="center-subtitle">{{ grid_subtitle|default:"" }}</p>
+            </div>
+        </div>
+        
+        <!-- 八个扇形区域 -->
+        {% for item in grid_items %}
+        <div class="grid-item grid-item-{{ forloop.counter }}" 
+             data-category="{{ item.category }}" 
+             data-value="{{ item.value }}" 
+             data-color="{{ item.color }}">
+            <div class="item-content">
+                <div class="item-label">{{ item.label }}</div>
+                <div class="item-value">{{ item.value }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.progress-grid-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 400px;
+}
+
+.progress-grid {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.center-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.center-content {
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.center-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.center-subtitle {
+    font-size: 0.7rem;
+    color: #6c757d;
+    margin: 0.2rem 0 0 0;
+}
+
+.grid-item {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.grid-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.item-content {
+    text-align: center;
+    padding: 0.5rem;
+}
+
+.item-label {
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem;
+    opacity: 0.9;
+}
+
+.item-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* 八个位置的定位 */
+.grid-item-1 { /* 掌握 */
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+.grid-item-2 { /* 遗忘 */
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+}
+
+.grid-item-3 { /* 学习中 */
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #FFC107, #FF8F00);
+}
+
+.grid-item-4 { /* 测试 */
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #8BC34A, #689F38);
+}
+
+.grid-item-5 { /* 口音文本 */
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #4CAF50, #388E3C);
+}
+
+.grid-item-6 { /* 口音文件 */
+    bottom: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+}
+
+.grid-item-7 { /* 区域化任务 */
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #4CAF50, #1B5E20);
+}
+
+.grid-item-8 { /* 解决方案 */
+    top: 20px;
+    left: 20px;
+    background: linear-gradient(135deg, #4CAF50, #0D4F0C);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .progress-grid {
+        width: 250px;
+        height: 250px;
+    }
+    
+    .center-circle {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .center-title {
+        font-size: 0.8rem;
+    }
+    
+    .grid-item {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .item-value {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-grid {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .center-circle {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .grid-item {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .item-label {
+        font-size: 0.6rem;
+    }
+    
+    .item-value {
+        font-size: 0.9rem;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.grid-item {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.grid-item-1 { animation-delay: 0.1s; }
+.grid-item-2 { animation-delay: 0.2s; }
+.grid-item-3 { animation-delay: 0.3s; }
+.grid-item-4 { animation-delay: 0.4s; }
+.grid-item-5 { animation-delay: 0.5s; }
+.grid-item-6 { animation-delay: 0.6s; }
+.grid-item-7 { animation-delay: 0.7s; }
+.grid-item-8 { animation-delay: 0.8s; }
+</style>
+
+<script>
+// JavaScript交互功能
+document.addEventListener('DOMContentLoaded', function() {
+    const gridItems = document.querySelectorAll('.grid-item');
+    
+    gridItems.forEach(item => {
+        item.addEventListener('click', function() {
+            const category = this.dataset.category;
+            const value = this.dataset.value;
+            
+            // 触发自定义事件，便于外部监听
+            const event = new CustomEvent('gridItemClick', {
+                detail: { category, value }
+            });
+            document.dispatchEvent(event);
+            
+            // 可选：显示详细信息
+            console.log(`点击了 ${category}，数值：${value}`);
+        });
+    });
+});
+</script>

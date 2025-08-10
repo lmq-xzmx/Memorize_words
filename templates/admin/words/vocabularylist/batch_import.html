@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}批量导入词库列表{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">首页</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='words' %}">单词管理</a>
+    &rsaquo; <a href="{% url 'admin:words_vocabularylist_changelist' %}">词库列表</a>
+    &rsaquo; 批量导入
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>批量导入词库列表</h1>
+
+<div class="module aligned">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div>
+                <label for="id_csv_file" class="required">CSV文件:</label>
+                <input type="file" name="csv_file" id="id_csv_file" accept=".csv" required>
+                <p class="help">请选择要导入的CSV文件</p>
+            </div>
+        </div>
+        
+        <div class="submit-row">
+            <input type="submit" value="开始导入" class="default">
+            <a href="{% url 'admin:words_vocabularylist_changelist' %}" class="button cancel-link">取消</a>
+        </div>
+    </form>
+</div>
+
+<div class="module">
+    <h2>CSV文件格式说明</h2>
+    <p>CSV文件应包含以下列（第一行为标题行）：</p>
+    <ul>
+        <li><strong>name</strong> - 词库列表名称（必填）</li>
+        <li><strong>source</strong> - 词库来源（可选）</li>
+        <li><strong>description</strong> - 描述（可选）</li>
+        <li><strong>is_active</strong> - 是否激活（可选，默认true）</li>
+    </ul>
+    
+    <h3>示例CSV内容：</h3>
+    <pre>name,source,description,is_active
+高中英语必修一,人教版,高中英语必修一词汇,true
+大学英语四级,CET-4,大学英语四级核心词汇,true
+托福词汇,TOEFL,托福考试必备词汇,false</pre>
+    
+    <div class="help">
+        <h4>注意事项：</h4>
+        <ul>
+            <li>文件编码请使用UTF-8</li>
+            <li>如果词库列表名称已存在，将跳过该条记录</li>
+            <li>如果指定的词库来源不存在，系统会自动创建</li>
+            <li>is_active字段可以是true/false、1/0、yes/no</li>
+            <li>导入过程中会自动跳过空白行和无效数据</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

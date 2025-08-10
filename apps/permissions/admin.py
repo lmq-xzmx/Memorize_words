@@ -1,0 +1,775 @@
+from django.contrib import admin
+from django.utils.html import format_html
+from django.contrib import messages
+from django.http import HttpResponseRedirect, JsonResponse
+from django.urls import path, reverse
+from django.forms import ModelForm
+from django.core.exceptions import ValidationError
+from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, PermissionSyncLog, RoleManagement
+from .signals import sync_all_permissions
+from .widgets import StandardRoleSelectWidget, StandardRoleChoiceField, RoleTextInputWidget
+from .role_selector_config import StandardRoleAdminMixin, RoleCreationAdminMixin
+from apps.accounts.models import UserRole
+from apps.accounts.services.role_service import RoleService
+from typing import TYPE_CHECKING, Any, Tuple, List
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
+
+
+@admin.register(MenuModuleConfig)
+class MenuModuleConfigAdmin(admin.ModelAdmin):
+    """菜单模块配置Admin"""
+    list_display = ['name', 'key', 'get_menu_level_display', 'icon', 'sort_order', 'is_active', 'created_at']
+    list_filter = ['menu_level', 'is_active', 'created_at']
+    search_fields = ['name', 'key', 'description']
+    ordering = ['menu_level', 'sort_order', 'name']
+    
+    def get_menu_level_display(self, obj):
+        """显示菜单级别"""
+        level_colors = {
+            'root': '#007bff',      # 蓝色 - 根目录
+            'level1': '#28a745',    # 绿色 - 一级目录
+            'level2': '#ffc107',    # 黄色 - 二级目录
+        }
+        color = level_colors.get(obj.menu_level, '#6c757d')
+        return format_html(
+            '<span style="color: {}; background: {}20; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold;">{}</span>',
+            color, color, obj.get_menu_level_display()
+        )
+    
+    get_menu_level_display.short_description = '菜单级别'  # type: ignore
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('name', 'key', 'menu_level', 'description')
+        }),
+        ('显示设置', {
+            'fields': ('icon', 'url', 'sort_order', 'is_active')
+        }),
+    )
+
+
+@admin.register(RoleMenuPermission)
+class RoleMenuPermissionAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
+    """角色菜单权限Admin"""
+    list_display = ['role', 'menu_module', 'get_permission_status', 'created_at']
+    list_filter = ['role', 'can_access', 'created_at']
+    search_fields = ['menu_module__name', 'menu_module__key']
+    ordering = ['role', 'menu_module__name']
+    
+    class Media:
+        js = ('admin/js/dynamic_role_selector.js',)
+        css = {
+            'all': ('admin/css/dynamic_role_selector.css',)
+        }
+    
+    def get_permission_status(self, obj):
+        """显示权限状态"""
+        if obj.can_access:
+            return format_html(
+                '<span style="color: #28a745; background: #d4edda; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
+                '✓ 可访问</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
+                '✗ 禁止访问</span>'
+            )
+    
+    get_permission_status.short_description = '权限状态'  # type: ignore
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('role', 'menu_module')
+        }),
+        ('权限设置', {
+            'fields': ('can_access',)
+        }),
+    )
+    
+    def get_urls(self):
+        """添加自定义URL"""
+        urls = super().get_urls()
+        custom_urls = [
+            path('get-role-list/', self.admin_site.admin_view(self.get_role_list_view), name='rolemenupermission_get_role_list'),
+        ]
+        return custom_urls + urls
+    
+    def get_role_list_view(self, request):
+        """获取角色列表API"""
+        if request.method == 'GET':
+            try:
+                # 使用统一的角色服务获取所有角色
+                role_choices = RoleService.get_role_choices(include_empty=False)
+                role_list = [{
+                    'value': choice[0],
+                    'display_name': choice[1]
+                } for choice in role_choices]
+                
+                return JsonResponse({
+                    'success': True,
+                    'roles': role_list
+                })
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持GET请求'})
+
+
+@admin.register(RoleGroupMapping)
+class RoleGroupMappingAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
+    """角色组映射Admin"""
+    list_display = ['role', 'group', 'get_mapping_status', 'created_at']
+    list_filter = ['role', 'auto_sync', 'created_at']
+    search_fields = ['group__name']
+    ordering = ['role', 'group__name']
+    change_form_template = 'admin/permissions/rolegroupmapping/change_form.html'
+    
+    class Media:
+        js = ('admin/js/dynamic_role_selector.js',)
+        css = {
+            'all': ('admin/css/dynamic_role_selector.css', 'admin/css/role_group_mapping.css')
+        }
+    
+    def get_mapping_status(self, obj):
+        """显示映射状态"""
+        if obj.auto_sync:
+            return format_html(
+                '<span style="color: #28a745; background: #d4edda; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
+                '🔗 自动同步</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
+                '❌ 手动同步</span>'
+            )
+    
+    get_mapping_status.short_description = '同步状态'  # type: ignore
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """自定义外键字段"""
+        if db_field.name == "group":
+            # 为组字段添加自定义widget
+            from django import forms
+            from django.contrib.auth.models import Group
+            
+            class GroupSelectWidget(forms.Select):
+                def __init__(self, *args, **kwargs):
+                    super().__init__(*args, **kwargs)
+                    self.attrs.update({
+                        'id': 'id_group',
+                        'class': 'form-control'
+                    })
+            
+            kwargs['widget'] = GroupSelectWidget
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('role', 'group')
+        }),
+        ('同步设置', {
+            'fields': ('auto_sync',)
+        }),
+    )
+    
+    # 角色选择器配置已通过StandardRoleAdminMixin自动处理
+    
+    def get_urls(self):
+        """添加自定义URL"""
+        urls = super().get_urls()
+        custom_urls = [
+            path('sync-role-groups/', self.admin_site.admin_view(self.sync_role_groups_view), name='sync_role_groups'),
+            path('create-group-for-role/', self.admin_site.admin_view(self.create_group_for_role_view), name='create_group_for_role'),
+            path('get-group-list/', self.admin_site.admin_view(self.get_group_list_view), name='get_group_list'),
+            path('get-role-list/', self.admin_site.admin_view(self.get_role_list_view), name='get_role_list'),
+            path('check-sync-status/', self.admin_site.admin_view(self.check_sync_status_view), name='check_sync_status'),
+            path('refresh-all-sync/', self.admin_site.admin_view(self.refresh_all_sync_view), name='refresh_all_sync'),
+        ]
+        return custom_urls + urls
+    
+    def sync_role_groups_view(self, request):
+        """同步角色组视图"""
+        from django.contrib.auth.models import Group
+        import json
+        
+        if request.method == 'POST':
+            try:
+                data = json.loads(request.body)
+                role = data.get('role')
+                
+                if role:
+                    # 获取或创建对应的组
+                    role_display = RoleService.get_role_display_name(role)
+                    group_name = f"{role_display}组"
+                    group, created = Group.objects.get_or_create(name=group_name)
+                    
+                    # 更新或创建角色组映射
+                    mapping, mapping_created = RoleGroupMapping.objects.get_or_create(  # type: ignore
+                        role=role,
+                        defaults={'group': group, 'auto_sync': True}
+                    )
+                    
+                    if not mapping_created:
+                        mapping.group = group
+                        mapping.save()
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'group_id': group.pk,
+                        'group_name': group.name,
+                        'created': created or mapping_created
+                    })
+                else:
+                    return JsonResponse({'success': False, 'error': '角色参数缺失'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持POST请求'})
+    
+    def create_group_for_role_view(self, request):
+        """为角色创建组视图"""
+        from django.contrib.auth.models import Group
+        import json
+        
+        if request.method == 'POST':
+            try:
+                data = json.loads(request.body)
+                role = data.get('role')
+                group_name = data.get('group_name')
+                
+                if role and group_name:
+                    # 创建新组
+                    group = Group.objects.create(name=group_name)
+                    
+                    # 创建或更新角色组映射
+                    mapping, created = RoleGroupMapping.objects.get_or_create(  # type: ignore
+                        role=role,
+                        defaults={'group': group, 'auto_sync': True}
+                    )
+                    
+                    if not created:
+                        mapping.group = group
+                        mapping.save()
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'group_id': group.pk,
+                        'group_name': group.name
+                    })
+                else:
+                    return JsonResponse({'success': False, 'error': '参数缺失'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持POST请求'})
+    
+    def get_group_list_view(self, request):
+        """获取组列表API"""
+        from django.contrib.auth.models import Group
+        
+        if request.method == 'GET':
+            try:
+                groups = Group.objects.all().order_by('name')
+                group_list = [{
+                    'id': group.pk,
+                    'name': group.name
+                } for group in groups]
+                
+                return JsonResponse({
+                    'success': True,
+                    'groups': group_list
+                })
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持GET请求'})
+    
+    def get_role_list_view(self, request):
+        """获取角色列表API"""
+        if request.method == 'GET':
+            try:
+                # 使用统一的角色服务获取所有角色
+                role_choices = RoleService.get_role_choices(include_empty=False)
+                role_list = [{
+                    'value': choice[0],
+                    'display_name': str(choice[1])
+                } for choice in role_choices]
+                
+                return JsonResponse({
+                    'success': True,
+                    'roles': role_list
+                })
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持GET请求'})
+    
+    def check_sync_status_view(self, request):
+        """检查角色同步状态API"""
+        if request.method == 'GET':
+            try:
+                role = request.GET.get('role')
+                
+                if not role:
+                    return JsonResponse({'success': False, 'error': '缺少角色参数'})
+                
+                # 获取角色对应的组映射
+                try:
+                    mapping = RoleGroupMapping.objects.select_related('group').get(role=role)  # type: ignore
+                    return JsonResponse({
+                        'success': True,
+                        'group_id': mapping.group.pk,
+                        'group_name': mapping.group.name,
+                        'has_mapping': True
+                    })
+                except RoleGroupMapping.DoesNotExist:  # type: ignore
+                    return JsonResponse({
+                        'success': True,
+                        'group_id': None,
+                        'group_name': None,
+                        'has_mapping': False
+                    })
+                
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        elif request.method == 'POST':
+            try:
+                import json
+                data = json.loads(request.body)
+                role = data.get('role')
+                user_id = data.get('user_id')
+                
+                if not role:
+                    return JsonResponse({'success': False, 'error': '缺少角色参数'})
+                
+                # 获取角色权限数量
+                try:
+                    role_mgmt = RoleManagement.objects.get(role=role)  # type: ignore
+                    role_perms = len(role_mgmt.get_all_permissions())
+                except RoleManagement.DoesNotExist:  # type: ignore
+                    role_perms = 0
+                
+                # 获取组权限数量和映射状态
+                try:
+                    mapping = RoleGroupMapping.objects.select_related('group').get(role=role)  # type: ignore
+                    group_perms = mapping.group.permissions.count()
+                    has_mapping = True
+                except RoleGroupMapping.DoesNotExist:  # type: ignore
+                    group_perms = 0
+                    has_mapping = False
+                
+                return JsonResponse({
+                    'success': True,
+                    'sync_data': {
+                        'role': role,
+                        'user_id': user_id,
+                        'role_perms': role_perms,
+                        'group_perms': group_perms,
+                        'has_mapping': has_mapping,
+                        'is_synced': group_perms == role_perms and role_perms > 0
+                    }
+                })
+                
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持GET和POST请求'})
+    
+    def refresh_all_sync_view(self, request):
+        """刷新所有同步数据API"""
+        if request.method == 'POST':
+            try:
+                from .utils import PermissionUtils
+                
+                # 获取所有活跃角色
+                active_roles = RoleManagement.objects.filter(is_active=True)  # type: ignore
+                success_count = 0
+                total_count = active_roles.count()
+                
+                for role in active_roles:
+                    try:
+                        # 同步角色权限到组
+                        sync_success = PermissionUtils.sync_role_permissions(role)
+                        if sync_success:
+                            success_count += 1
+                        
+                        # 记录日志
+                        PermissionSyncLog.objects.create(  # type: ignore
+                            sync_type='auto_refresh',
+                            target_type='role',
+                            target_id=role.role,
+                            action=f'自动刷新同步: {role.display_name}',
+                            result=f'角色 {role.display_name} 同步刷新: {"成功" if sync_success else "失败"}',
+                            success=sync_success
+                        )
+                    except Exception as e:
+                        # 记录失败日志
+                        PermissionSyncLog.objects.create(  # type: ignore
+                            sync_type='auto_refresh',
+                            target_type='role',
+                            target_id=role.role,
+                            action=f'自动刷新同步失败: {role.display_name}',
+                            result=f'错误: {str(e)}',
+                            success=False
+                        )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'同步刷新完成：{success_count}/{total_count} 个角色刷新成功',
+                    'success_count': success_count,
+                    'total_count': total_count
+                })
+                
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持POST请求'})
+
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('role', 'group')
+        }),
+        ('同步设置', {
+            'fields': ('auto_sync',)
+        }),
+    )
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        """自定义修改视图"""
+        extra_context = extra_context or {}
+        extra_context['role_choices'] = RoleService.get_role_choices(include_empty=False)
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        """自定义添加视图"""
+        extra_context = extra_context or {}
+        extra_context['role_choices'] = RoleService.get_role_choices(include_empty=False)
+        return super().add_view(request, form_url, extra_context)
+
+
+@admin.register(PermissionSyncLog)
+class PermissionSyncLogAdmin(admin.ModelAdmin):
+    """权限同步日志Admin"""
+    list_display = ['sync_type', 'target_type', 'get_sync_status', 'action', 'created_at']
+    list_filter = ['sync_type', 'target_type', 'success', 'created_at']
+    search_fields = ['action', 'result']
+    readonly_fields = ['sync_type', 'target_type', 'target_id', 'action', 'result', 'success', 'created_at']
+    ordering = ['-created_at']
+    
+    def get_sync_status(self, obj):
+        """显示同步状态"""
+        if obj.success:
+            return format_html(
+                '<span style="color: #28a745; background: #d4edda; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
+                '✅ 成功</span>'
+            )
+        else:
+            return format_html(
+                '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
+                '❌ 失败</span>'
+            )
+    
+    get_sync_status.short_description = '同步状态'  # type: ignore
+    
+    def has_add_permission(self, request):
+        """禁止手动添加日志"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """禁止修改日志"""
+        return False
+
+
+# 自定义Admin动作
+class PermissionManagementAdmin(admin.ModelAdmin):
+    """权限管理Admin基类"""
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('sync-permissions/', self.admin_site.admin_view(self.sync_permissions_view), name='sync_permissions'),
+        ]
+        return custom_urls + urls
+    
+    def sync_permissions_view(self, request):
+        """同步权限视图"""
+        if request.method == 'POST':
+            success = sync_all_permissions()
+            if success:
+                messages.success(request, '权限同步成功！')
+            else:
+                messages.error(request, '权限同步失败，请查看日志。')
+        
+        return HttpResponseRedirect(reverse('admin:permissions_rolemenuPermission_changelist'))
+
+
+# 为RoleMenuPermissionAdmin添加自定义功能
+class EnhancedRoleMenuPermissionAdmin(RoleMenuPermissionAdmin, PermissionManagementAdmin):
+    """增强的角色菜单权限Admin"""
+    
+    def changelist_view(self, request, extra_context=None):
+        """自定义列表视图"""
+        extra_context = extra_context or {}
+        extra_context['sync_permissions_url'] = reverse('admin:sync_permissions')
+        return super().changelist_view(request, extra_context)
+
+
+# 重新注册增强版Admin
+try:
+    admin.site.unregister(RoleMenuPermission)
+except:
+    pass
+admin.site.register(RoleMenuPermission, EnhancedRoleMenuPermissionAdmin)
+
+
+@admin.register(RoleManagement)
+class RoleManagementAdmin(StandardRoleAdminMixin, admin.ModelAdmin, RoleCreationAdminMixin):
+    """角色管理Admin - 支持角色继承"""
+    list_display = ['display_name', 'get_role_display_name', 'get_parent_role', 'is_active', 'sort_order', 'get_permissions_count', 'get_inherited_permissions_count', 'created_at']
+    list_filter = ['role', 'is_active', 'parent', 'created_at']
+    search_fields = ['display_name', 'description']
+    ordering = ['sort_order', 'role']
+    filter_horizontal = ['permissions']
+    
+    class Media:
+        js = ('admin/js/role_management_auto_fill.js', 'admin/js/dynamic_role_selector.js', 'admin/js/role_permission_sync.js')
+        css = {
+            'all': ('admin/css/dynamic_role_selector.css',)
+        }
+    
+    def get_urls(self):
+        """添加自定义URL"""
+        urls = super().get_urls()
+        custom_urls = [
+            path('get-role-list/', self.admin_site.admin_view(self.get_role_list_view), name='get_role_list'),
+            path('sync-role-to-groups/', self.admin_site.admin_view(self.sync_role_to_groups_view), name='sync_role_to_groups'),
+            path('sync-all-roles-to-groups/', self.admin_site.admin_view(self.sync_all_roles_to_groups_view), name='sync_all_roles_to_groups'),
+        ]
+        return custom_urls + urls
+    
+    def get_role_list_view(self, request):
+        """获取角色列表API"""
+        if request.method == 'GET':
+            try:
+                roles = RoleManagement.objects.filter(is_active=True).order_by('sort_order', 'role')  # type: ignore
+                role_list = [{
+                    'value': role.role,
+                    'display_name': role.get_role_display()
+                } for role in roles]
+                
+                return JsonResponse({
+                    'success': True,
+                    'roles': role_list
+                })
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持GET请求'})
+    
+    def sync_role_to_groups_view(self, request):
+        """同步单个角色权限到组"""
+        if request.method == 'POST':
+            try:
+                import json
+                data = json.loads(request.body)
+                role_id = data.get('role_id')
+                
+                if not role_id:
+                    return JsonResponse({'success': False, 'error': '缺少角色ID'})
+                
+                role = RoleManagement.objects.get(role=role_id)  # type: ignore
+                
+                # 同步权限到Django组
+                from .utils import PermissionUtils
+                sync_success = PermissionUtils.sync_role_permissions(role)
+                
+                # 记录日志
+                PermissionSyncLog.objects.create(  # type: ignore
+                    sync_type='manual',
+                    target_type='role',
+                    target_id=role.role,
+                    action=f'手动同步角色权限: {role.display_name}',
+                    result=f'角色 {role.display_name} 权限同步: {"成功" if sync_success else "失败"}',
+                    success=sync_success
+                )
+                
+                return JsonResponse({
+                    'success': sync_success,
+                    'message': f'角色 "{role.display_name}" 权限同步{"成功" if sync_success else "失败"}'
+                })
+                
+            except RoleManagement.DoesNotExist:  # type: ignore
+                return JsonResponse({'success': False, 'error': '角色不存在'})
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持POST请求'})
+    
+    def sync_all_roles_to_groups_view(self, request):
+        """同步所有角色权限到组"""
+        if request.method == 'POST':
+            try:
+                roles = RoleManagement.objects.filter(is_active=True)  # type: ignore
+                success_count = 0
+                total_count = roles.count()
+                
+                from .utils import PermissionUtils
+                
+                for role in roles:
+                    sync_success = PermissionUtils.sync_role_permissions(role)
+                    if sync_success:
+                        success_count += 1
+                    
+                    # 记录日志
+                    PermissionSyncLog.objects.create(  # type: ignore
+                        sync_type='batch',
+                        target_type='role',
+                        target_id=role.role,
+                        action=f'批量同步角色权限: {role.display_name}',
+                        result=f'角色 {role.display_name} 权限同步: {"成功" if sync_success else "失败"}',
+                        success=sync_success
+                    )
+                
+                return JsonResponse({
+                    'success': True,
+                    'message': f'批量同步完成：{success_count}/{total_count} 个角色同步成功',
+                    'success_count': success_count,
+                    'total_count': total_count
+                })
+                
+            except Exception as e:
+                return JsonResponse({'success': False, 'error': str(e)})
+        
+        return JsonResponse({'success': False, 'error': '仅支持POST请求'})
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('role', 'display_name', 'description', 'is_active', 'sort_order')
+        }),
+        ('角色继承', {
+            'fields': ('parent',),
+            'description': '选择父角色，子角色将自动继承父角色的所有权限'
+        }),
+        ('权限配置 - 单向同步到组', {
+            'fields': ('permissions',),
+            'classes': ('wide',),
+            'description': '🔄 <strong>权限单向同步特性</strong>：此处配置的权限将自动同步到对应的Django组中。<br/>'
+                          '📋 角色管理中的所有权限都会在组管理中创建对应的权限。<br/>'
+                          '🎯 组管理中也可以创建独立于角色管理的组，用于特殊控制。<br/>'
+                          '⚠️ 注意：权限同步是单向的（角色→组），组中的权限修改不会影响角色配置。'
+        }),
+    )
+    
+    # 角色选择器配置已通过RoleCreationAdminMixin自动处理
+    
+    def get_role_display_name(self, obj):
+        """显示角色名称"""
+        return obj.get_role_display()
+    
+    get_role_display_name.short_description = '角色'  # type: ignore
+    
+    def get_parent_role(self, obj):
+        """显示父角色"""
+        if obj.parent:
+            return format_html(
+                '<span style="color: #007bff;">📁 {}</span>',
+                obj.parent.display_name
+            )
+        else:
+            return format_html(
+                '<span style="color: #6c757d;">🏠 根角色</span>'
+            )
+    
+    get_parent_role.short_description = '父角色'  # type: ignore
+    
+    def get_permissions_count(self, obj):
+        """显示直接权限数量"""
+        count = obj.permissions.count()
+        if count > 0:
+            return format_html(
+                '<span style="color: #28a745; font-weight: bold;">{} 个</span>',
+                count
+            )
+        else:
+            return format_html(
+                '<span style="color: #6c757d;">0 个</span>'
+            )
+    
+    get_permissions_count.short_description = '直接权限'  # type: ignore
+    
+    def get_inherited_permissions_count(self, obj):
+        """显示总权限数量（包括继承）"""
+        all_perms = obj.get_all_permissions()
+        direct_count = obj.permissions.count()
+        total_count = len(all_perms)
+        inherited_count = total_count - direct_count
+        
+        if inherited_count > 0:
+            return format_html(
+                '<span style="color: #17a2b8; font-weight: bold;">{} 个 (继承 {})</span>',
+                total_count, inherited_count
+            )
+        else:
+            return format_html(
+                '<span style="color: #28a745; font-weight: bold;">{} 个</span>',
+                total_count
+            )
+    
+    get_inherited_permissions_count.short_description = '总权限'  # type: ignore
+    
+    def clean_model(self, request, obj, form, change):
+        """模型验证"""
+        try:
+            obj.clean()
+        except ValidationError as e:
+            form.add_error(None, e)
+    
+    def save_model(self, request, obj, form, change):
+        """保存模型时的处理"""
+        # 先进行模型验证
+        self.clean_model(request, obj, form, change)
+        
+        super().save_model(request, obj, form, change)
+        
+        # 同步权限到Django组
+        from .utils import PermissionUtils
+        sync_success = PermissionUtils.sync_role_permissions(obj)
+        
+        # 记录操作日志
+        action = '更新角色' if change else '创建角色'
+        PermissionSyncLog.objects.create(  # type: ignore
+            sync_type='manual',
+            target_type='role',
+            target_id=obj.role,
+            action=f'{action}: {obj.display_name}',
+            result=f'角色 {obj.display_name} 已成功{action}，权限同步: {"成功" if sync_success else "失败"}',
+            success=True
+        )
+        
+        if change:
+            messages.success(request, f'角色 "{obj.display_name}" 已成功更新！权限同步: {"成功" if sync_success else "失败"}')
+        else:
+            messages.success(request, f'角色 "{obj.display_name}" 已成功创建！权限同步: {"成功" if sync_success else "失败"}')
+    
+    def delete_model(self, request, obj):
+        """删除模型时的处理"""
+        role_name = obj.display_name
+        super().delete_model(request, obj)
+        
+        # 记录操作日志
+        PermissionSyncLog.objects.create(  # type: ignore
+            sync_type='manual',
+            target_type='role',
+            target_id=obj.role,
+            action=f'删除角色: {role_name}',
+            result=f'角色 {role_name} 已成功删除',
+            success=True
+        )
+        
+        messages.success(request, f'角色 "{role_name}" 已成功删除！')
+    
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).prefetch_related('permissions')

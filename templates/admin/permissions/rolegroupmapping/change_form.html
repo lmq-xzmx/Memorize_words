@@ -1,0 +1,78 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}
+    {% if original %}修改角色组映射{% else %}添加角色组映射{% endif %} | {{ site_title|default:_("Django site admin") }}
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/dynamic_role_selector.css' %}">
+{% endblock %}
+
+{% block content %}
+    <!-- Django标准提示信息 -->
+    <div class="help">
+        <p><strong>提示：</strong>角色权限会同步至"组"；但"组"允许自定义自己的组，并用于特殊场景。</p>
+    </div>
+    
+    {{ block.super }}
+{% endblock %}
+
+{% block admin_change_form_document_ready %}
+    {{ block.super }}
+    
+    <script>
+    (function($) {
+        'use strict';
+        
+        $(document).ready(function() {
+            initRoleGroupMapping();
+        });
+        
+        function initRoleGroupMapping() {
+            // 监听角色变化，自动匹配对应组
+            $('#id_role').on('change', function() {
+                var selectedRole = $(this).val();
+                if (selectedRole) {
+                    findMatchingGroup(selectedRole);
+                }
+            });
+        }
+        
+        function findMatchingGroup(role) {
+            $.ajax({
+                url: '/admin/permissions/rolegroupmapping/check-sync-status/',
+                method: 'GET',
+                data: { role: role },
+                success: function(response) {
+                    if (response.success && response.group_id) {
+                        $('#id_group').val(response.group_id);
+                        showMessage('已自动选择对应组: ' + response.group_name, 'success');
+                    }
+                },
+                error: function() {
+                    // 静默处理错误，用户可手动选择
+                }
+            });
+        }
+        
+        function showMessage(message, type) {
+            var messageClass = type === 'success' ? 'success' : 'error';
+            var messageHtml = '<div class="messagelist"><div class="' + messageClass + '">' + message + '</div></div>';
+            
+            // 移除现有消息
+            $('.messagelist').remove();
+            
+            // 添加新消息
+            $('#content').prepend(messageHtml);
+            
+            // 自动隐藏消息
+            setTimeout(function() {
+                $('.messagelist').fadeOut();
+            }, 3000);
+        }
+        
+    })(django.jQuery || jQuery || $);
+    </script>
+{% endblock %}

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XPath表达式优化测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007cba;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .original-xpath {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .optimized-xpath {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .test-form {
+            border: 2px solid #007cba;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .fieldset {
+            border: 1px solid #ccc;
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 3px;
+        }
+        .fieldset h2 {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 16px;
+        }
+        .form-row {
+            margin: 10px 0;
+            padding: 8px;
+            border: 1px solid #eee;
+            background: white;
+        }
+        .test-button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #005a8b;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .strategy-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .strategy-list li {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 4px solid #007cba;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 XPath表达式优化测试</h1>
+        
+        <div class="section">
+            <h2>📋 原始问题分析</h2>
+            <div class="original-xpath">
+                <h3>⚠️ 原始XPath表达式:</h3>
+                <code>//*[@id="customuser_form"]/div/fieldset/div[4]/div/div/text()</code>
+                
+                <h4>存在的问题:</h4>
+                <ul>
+                    <li>🔴 使用硬编码位置索引 <code>[4]</code>，DOM结构变化时容易失效</li>
+                    <li>🔴 直接获取 <code>text()</code> 节点，可能获取不到完整内容</li>
+                    <li>🔴 路径过于具体，缺乏灵活性</li>
+                    <li>🔴 没有容错机制，一旦失败就完全无法定位</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>✅ 优化方案</h2>
+            <div class="optimized-xpath">
+                <h3>🎯 多重定位策略:</h3>
+                <ul class="strategy-list">
+                    <li><strong>策略1 - 基于字段名:</strong> <code>//div[contains(@class, "field-is_active")]</code></li>
+                    <li><strong>策略2 - 基于fieldset标题:</strong> <code>//fieldset[contains(.//h2, "权限")]//div[@class="form-row"]</code></li>
+                    <li><strong>策略3 - CSS选择器:</strong> <code>#customuser_form .fieldset:nth-child(4) .form-row</code></li>
+                    <li><strong>策略4 - 混合定位:</strong> <code>#customuser_form fieldset:has(h2:contains("权限")) .form-row</code></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 模拟Django Admin表单结构 -->
+        <div class="test-form" id="customuser_form">
+            <h2>🧪 模拟CustomUser表单</h2>
+            
+            <div class="fieldset">
+                <h2>基本信息</h2>
+                <div class="form-row field-username">用户名字段</div>
+            </div>
+            
+            <div class="fieldset">
+                <h2>个人信息</h2>
+                <div class="form-row field-real_name">真实姓名字段</div>
+                <div class="form-row field-email">邮箱字段</div>
+            </div>
+            
+            <div class="fieldset">
+                <h2>学习信息</h2>
+                <div class="form-row field-grade_level">年级字段</div>
+                <div class="form-row field-english_level">英语水平字段</div>
+            </div>
+            
+            <div class="fieldset">
+                <h2>权限</h2>
+                <div class="form-row field-is_active">激活状态: 用户账户是否激活</div>
+                <div class="form-row field-is_staff">员工状态: 是否可以访问管理站点</div>
+                <div class="form-row field-is_superuser">超级用户状态: 拥有所有权限</div>
+            </div>
+            
+            <div class="fieldset">
+                <h2>重要日期</h2>
+                <div class="form-row field-last_login">最后登录时间</div>
+                <div class="form-row field-date_joined">注册时间</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🧪 测试功能</h2>
+            <button class="test-button" onclick="testOriginalXPath()">测试原始XPath</button>
+            <button class="test-button" onclick="testOptimizedSelectors()">测试优化选择器</button>
+            <button class="test-button" onclick="testPermissionsText()">获取权限字段文本</button>
+            <button class="test-button" onclick="analyzeXPathIssues()">分析XPath问题</button>
+            <button class="test-button" onclick="demonstrateRobustness()">演示健壮性</button>
+            
+            <div id="test-results"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📖 使用指南</h2>
+            <div class="info">
+                <h3>在实际项目中使用:</h3>
+                <pre><code>// 1. 引入优化器
+&lt;script src="/static/admin/js/xpath_optimizer.js"&gt;&lt;/script&gt;
+
+// 2. 获取权限字段文本
+const permissionsText = getPermissionsText();
+
+// 3. 分析现有XPath
+const analysis = analyzeXPath('//*[@id="customuser_form"]/div/fieldset/div[4]/div/div/text()');
+
+// 4. 使用优化器实例
+const optimizer = window.XPathOptimizer;
+const selectors = optimizer.getOptimizedSelectors('customUserForm', 'permissions');
+const element = optimizer.findElementWithFallback(selectors);</code></pre>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/admin/js/xpath_optimizer.js"></script>
+    <script>
+        function testOriginalXPath() {
+            const resultsDiv = document.getElementById('test-results');
+            try {
+                // 尝试使用原始XPath
+                const result = document.evaluate(
+                    '//*[@id="customuser_form"]/div/fieldset/div[4]/div/div/text()',
+                    document,
+                    null,
+                    XPathResult.FIRST_ORDERED_NODE_TYPE,
+                    null
+                );
+                
+                if (result.singleNodeValue) {
+                    resultsDiv.innerHTML = '<div class="result success">✅ 原始XPath成功: ' + result.singleNodeValue.textContent + '</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div class="result error">❌ 原始XPath失败: 未找到元素</div>';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="result error">❌ 原始XPath错误: ' + error.message + '</div>';
+            }
+        }
+        
+        function testOptimizedSelectors() {
+            const resultsDiv = document.getElementById('test-results');
+            const optimizer = window.XPathOptimizer;
+            const selectors = optimizer.getOptimizedSelectors('customUserForm', 'permissions');
+            
+            if (selectors) {
+                const element = optimizer.findElementWithFallback(selectors);
+                if (element) {
+                    resultsDiv.innerHTML = '<div class="result success">✅ 优化选择器成功找到元素: ' + element.textContent + '</div>';
+                } else {
+                    resultsDiv.innerHTML = '<div class="result error">❌ 优化选择器失败: 未找到元素</div>';
+                }
+            } else {
+                resultsDiv.innerHTML = '<div class="result error">❌ 未找到对应的选择器配置</div>';
+            }
+        }
+        
+        function testPermissionsText() {
+            const resultsDiv = document.getElementById('test-results');
+            const text = getPermissionsText();
+            
+            if (text) {
+                resultsDiv.innerHTML = '<div class="result success">✅ 权限字段文本: ' + text + '</div>';
+            } else {
+                resultsDiv.innerHTML = '<div class="result error">❌ 无法获取权限字段文本</div>';
+            }
+        }
+        
+        function analyzeXPathIssues() {
+            const resultsDiv = document.getElementById('test-results');
+            const analysis = analyzeXPath('//*[@id="customuser_form"]/div/fieldset/div[4]/div/div/text()');
+            
+            let html = '<div class="result info">';
+            html += '<h4>📊 XPath分析结果:</h4>';
+            html += '<p><strong>原始表达式:</strong> ' + analysis.original + '</p>';
+            
+            if (analysis.issues.length > 0) {
+                html += '<p><strong>发现的问题:</strong></p><ul>';
+                analysis.issues.forEach(issue => {
+                    html += '<li>⚠️ ' + issue + '</li>';
+                });
+                html += '</ul>';
+            }
+            
+            if (analysis.recommendations.length > 0) {
+                html += '<p><strong>优化建议:</strong></p><ul>';
+                analysis.recommendations.forEach(rec => {
+                    html += '<li>💡 ' + rec + '</li>';
+                });
+                html += '</ul>';
+            }
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+        
+        function demonstrateRobustness() {
+            const resultsDiv = document.getElementById('test-results');
+            
+            // 模拟DOM结构变化
+            const form = document.getElementById('customuser_form');
+            const newFieldset = document.createElement('div');
+            newFieldset.className = 'fieldset';
+            newFieldset.innerHTML = '<h2>新增字段</h2><div class="form-row">动态添加的字段</div>';
+            
+            // 在权限字段前插入新字段，改变原有的位置索引
+            const permissionsFieldset = form.children[3]; // 权限字段集
+            form.insertBefore(newFieldset, permissionsFieldset);
+            
+            // 测试原始XPath是否还能工作
+            setTimeout(() => {
+                const originalResult = document.evaluate(
+                    '//*[@id="customuser_form"]/div/fieldset/div[4]/div/div/text()',
+                    document,
+                    null,
+                    XPathResult.FIRST_ORDERED_NODE_TYPE,
+                    null
+                );
+                
+                // 测试优化后的选择器
+                const optimizedText = getPermissionsText();
+                
+                let html = '<div class="result info">';
+                html += '<h4>🔄 健壮性测试结果 (DOM结构已改变):</h4>';
+                
+                if (originalResult.singleNodeValue) {
+                    html += '<p>❌ 原始XPath: 仍然有效，但可能定位到错误元素</p>';
+                } else {
+                    html += '<p>❌ 原始XPath: 失效，无法找到元素</p>';
+                }
+                
+                if (optimizedText) {
+                    html += '<p>✅ 优化选择器: 仍然有效，正确定位到权限字段</p>';
+                } else {
+                    html += '<p>❌ 优化选择器: 失效</p>';
+                }
+                
+                html += '<p><em>这演示了为什么需要使用基于内容而非位置的选择器</em></p>';
+                html += '</div>';
+                
+                resultsDiv.innerHTML = html;
+                
+                // 恢复原始结构
+                setTimeout(() => {
+                    form.removeChild(newFieldset);
+                }, 3000);
+            }, 100);
+        }
+    </script>
+</body>
+</html>

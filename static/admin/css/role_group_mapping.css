@@ -1,0 +1,111 @@
+/* 角色组映射管理样式 - Django标准风格 */
+
+/* 基础布局 */
+.form-row {
+    overflow: hidden;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid #eee;
+}
+
+.form-row label {
+    float: left;
+    width: 160px;
+    padding-top: 3px;
+    padding-right: 10px;
+    text-align: right;
+    color: #666;
+    font-weight: normal;
+}
+
+/* Django标准消息样式 */
+.messagelist {
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.messagelist li {
+    display: block;
+    margin: 0 0 10px;
+    padding: 10px 15px;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.messagelist .success {
+    background: #dfd;
+    border: 1px solid #6c6;
+    color: #060;
+}
+
+.messagelist .error {
+    background: #fdd;
+    border: 1px solid #c66;
+    color: #600;
+}
+
+/* Django标准帮助文本样式 */
+.help {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #666;
+}
+
+/* 表单字段布局 */
+.form-row .field-box {
+    margin-left: 170px;
+}
+
+.form-row select, .form-row input[type="text"] {
+    width: 200px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .form-row label {
+        float: none;
+        width: auto;
+        text-align: left;
+        margin-bottom: 5px;
+        display: block;
+    }
+    
+    .form-row .field-box {
+        margin-left: 0;
+    }
+}
+
+/* 提交按钮区域 */
+.submit-row {
+    padding: 12px 14px;
+    margin: 0 0 20px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    text-align: right;
+    overflow: hidden;
+}
+
+.submit-row input[type="submit"] {
+    background: #417690;
+    color: white;
+    border: 1px solid #417690;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-left: 5px;
+}
+
+.submit-row input[type="submit"]:hover {
+    background: #205067;
+    border-color: #205067;
+}

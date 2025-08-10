@@ -1,0 +1,59 @@
+from django.core.management.base import BaseCommand
+from apps.permissions.models import RoleGroupMapping
+from apps.accounts.models import UserRole
+from django.contrib.auth.models import Group
+from apps.accounts.services.role_service import RoleService
+
+
+class Command(BaseCommand):
+    help = '检查角色组映射状态'
+    
+    def handle(self, *args, **options):
+        """检查角色组映射"""
+        
+        self.stdout.write("📊 角色组映射状态检查")
+        self.stdout.write("=" * 50)
+        
+        # 显示现有映射
+        self.stdout.write("\n✅ 现有角色组映射:")
+        mappings = RoleGroupMapping.objects.all()
+        if mappings:
+            for mapping in mappings:
+                status = "🟢 活跃" if mapping.auto_sync else "🔴 非活跃"
+                self.stdout.write(f"  {mapping.get_role_display()} -> {mapping.group.name} ({status})")
+        else:
+            self.stdout.write("  ❌ 没有找到任何角色组映射")
+        
+        # 检查缺失的映射
+        self.stdout.write("\n❌ 缺失的角色映射:")
+        existing_roles = set(RoleGroupMapping.objects.values_list('role', flat=True))
+        all_roles = set([choice[0] for choice in RoleService.get_role_choices(include_empty=False)])
+        missing_roles = all_roles - existing_roles
+        
+        if missing_roles:
+            for role in missing_roles:
+                role_display = dict(RoleService.get_role_choices(include_empty=False)).get(role, role)
+                self.stdout.write(f"  ❌ {role_display} ({role})")
+        else:
+            self.stdout.write("  ✅ 所有角色都有对应的组映射")
+        
+        # 显示可用的Django组
+        self.stdout.write("\n📋 可用的Django组:")
+        groups = Group.objects.all()
+        if groups:
+            for group in groups:
+                # 检查是否已被映射
+                mapped = RoleGroupMapping.objects.filter(group=group).exists()
+                status = "🔗 已映射" if mapped else "🆓 可用"
+                self.stdout.write(f"  {group.name} ({status})")
+        else:
+            self.stdout.write("  ❌ 没有找到任何Django组")
+        
+        # 提供修复建议
+        if missing_roles:
+            self.stdout.write("\n🔧 修复建议:")
+            self.stdout.write("  1. 运行 'python manage.py create_role_group_mappings' 创建缺失的映射")
+            self.stdout.write("  2. 或者在Django管理后台手动创建角色组映射")
+        
+        self.stdout.write("\n" + "=" * 50)
+        self.stdout.write("检查完成！")

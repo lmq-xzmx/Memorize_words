@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="planeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" fill="#E8F4FD" rx="10"/>
+  <g transform="translate(50,50)">
+    <!-- 机身 -->
+    <ellipse cx="0" cy="0" rx="25" ry="8" fill="url(#planeGrad)"/>
+    <!-- 机翼 -->
+    <ellipse cx="-5" cy="0" rx="15" ry="20" fill="url(#planeGrad)" opacity="0.8"/>
+    <!-- 机头 -->
+    <circle cx="20" cy="0" r="6" fill="#2C5282"/>
+    <!-- 尾翼 -->
+    <polygon points="-20,-3 -25,-8 -25,8 -20,3" fill="#2C5282"/>
+    <!-- 窗户 -->
+    <circle cx="5" cy="-2" r="2" fill="#87CEEB"/>
+    <circle cx="0" cy="-2" r="2" fill="#87CEEB"/>
+    <circle cx="-5" cy="-2" r="2" fill="#87CEEB"/>
+  </g>
+</svg>

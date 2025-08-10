@@ -1,0 +1,262 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}冲突解决记录{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .resolution-table {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .resolution-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .resolution-keep_original { background-color: #e3f2fd; color: #1976d2; }
+    .resolution-use_imported { background-color: #e8f5e8; color: #388e3c; }
+    .resolution-merge { background-color: #fff3e0; color: #f57c00; }
+    .resolution-skip { background-color: #fce4ec; color: #c2185b; }
+    .resolution-manual { background-color: #f3e5f5; color: #7b1fa2; }
+    
+    .word-info {
+        font-size: 14px;
+        color: #666;
+        margin-top: 4px;
+    }
+    
+    .back-link {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .back-link:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- 返回链接 -->
+    <div class="mb-3">
+        <a href="{% url 'words:batch_operations' %}" class="back-link">
+            ← 返回批量操作中心
+        </a>
+    </div>
+    
+    <!-- 页面标题 -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">冲突解决记录</h2>
+        </div>
+    </div>
+    
+    <!-- 统计摘要 -->
+    <div class="stats-card">
+        <div class="row">
+            <div class="col-md-2">
+                <h4>{{ page_obj.paginator.count }}</h4>
+                <p class="mb-0">总解决记录</p>
+            </div>
+            <div class="col-md-2">
+                <h4>{{ page_obj.object_list|length }}</h4>
+                <p class="mb-0">当前页记录</p>
+            </div>
+            <div class="col-md-8">
+                <div class="row">
+                    {% for choice in resolution_types %}
+                    <div class="col-md-3">
+                        <small>{{ choice.1 }}: 
+                            {% with count=page_obj.object_list|length %}
+                                {{ count }}
+                            {% endwith %}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 过滤功能 -->
+    <div class="filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="resolution_type" class="form-label">解决方式</label>
+                <select name="resolution_type" id="resolution_type" class="form-select">
+                    <option value="">全部</option>
+                    {% for choice in resolution_types %}
+                        <option value="{{ choice.0 }}" {% if choice.0 == current_resolution_type %}selected{% endif %}>
+                            {{ choice.1 }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="search" class="form-label">单词搜索</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="搜索单词、备注..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">筛选</button>
+                    <a href="{% url 'words:conflict_resolution_list' %}" class="btn btn-outline-secondary">重置</a>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <!-- 冲突解决记录表格 -->
+    <div class="resolution-table">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>单词</th>
+                        <th>解决方式</th>
+                        <th>原单词信息</th>
+                        <th>新单词信息</th>
+                        <th>解决人</th>
+                        <th>解决时间</th>
+                        <th>备注</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for resolution in page_obj %}
+                    <tr>
+                        <td>
+                            <strong>{{ resolution.imported_vocabulary.word }}</strong>
+                            {% if resolution.imported_vocabulary.phonetic %}
+                                <div class="word-info">{{ resolution.imported_vocabulary.phonetic }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="resolution-badge resolution-{{ resolution.resolution_type }}">
+                                {{ resolution.get_resolution_type_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if resolution.existing_word %}
+                                <div><strong>{{ resolution.existing_word.word }}</strong></div>
+                                {% if resolution.existing_word.definition %}
+                                    <div class="word-info">{{ resolution.existing_word.definition|truncatechars:50 }}</div>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">无</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div><strong>{{ resolution.imported_vocabulary.word }}</strong></div>
+                            {% if resolution.imported_vocabulary.definition %}
+                                <div class="word-info">{{ resolution.imported_vocabulary.definition|truncatechars:50 }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if resolution.resolved_by %}
+                                {{ resolution.resolved_by.username }}
+                            {% else %}
+                                <span class="text-muted">系统</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ resolution.created_at|date:"Y-m-d H:i" }}</small>
+                        </td>
+                        <td>
+                            {% if resolution.notes %}
+                                {{ resolution.notes|truncatechars:30 }}
+                            {% else %}
+                                <span class="text-muted">无</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2"></i>
+                                <p>暂无冲突解决记录</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 分页 -->
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="分页导航" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if current_resolution_type %}&resolution_type={{ current_resolution_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        首页
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_resolution_type %}&resolution_type={{ current_resolution_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        上一页
+                    </a>
+                </li>
+            {% endif %}
+            
+            <li class="page-item active">
+                <span class="page-link">
+                    第 {{ page_obj.number }} 页，共 {{ page_obj.paginator.num_pages }} 页
+                </span>
+            </li>
+            
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_resolution_type %}&resolution_type={{ current_resolution_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        下一页
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_resolution_type %}&resolution_type={{ current_resolution_type }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        末页
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // 自动提交表单当选择框改变时
+    $('#resolution_type').change(function() {
+        $(this).closest('form').submit();
+    });
+});
+</script>
+{% endblock %}

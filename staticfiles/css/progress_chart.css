@@ -1,0 +1,716 @@
+/* 九宫格进度图表组件样式 - 圆形扇形布局 */
+
+.progress-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px 20px;
+  min-height: 450px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin: 20px auto;
+  max-width: 600px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-chart {
+  position: relative;
+  width: 360px;
+  height: 360px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #f8f9fa 100%);
+  animation: fadeInScale 0.8s ease-out;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+/* 中心圆形区域 */
+.center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 3px solid rgba(0, 123, 255, 0.2);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.center-content {
+  text-align: center;
+}
+
+.center-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.center-subtitle {
+  font-size: 0.85rem;
+  color: #666;
+  margin: 2px 0 0 0;
+  line-height: 1;
+}
+
+/* 扇形项目容器 */
+.grid-items {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 基础扇形项目样式 */
+.grid-item {
+  position: absolute;
+  width: 180px;
+  height: 90px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInScale 0.8s ease-out;
+  opacity: 0;
+  animation-fill-mode: forwards;
+  overflow: hidden;
+  transform-origin: center bottom;
+  border-radius: 90px 90px 0 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.grid-item:hover {
+  transform: scale(1.08);
+  z-index: 5;
+  filter: brightness(1.15) saturate(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* 扇形形状 */
+.grid-item::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 180px 180px 0 0;
+  background: inherit;
+  transform-origin: center bottom;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);
+}
+
+/* 扇形边框效果 */
+.grid-item::after {
+  content: '';
+  position: absolute;
+  width: calc(100% - 4px);
+  height: calc(100% - 2px);
+  border-radius: 178px 178px 0 0;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  top: 0;
+  left: 2px;
+  pointer-events: none;
+}
+
+.item-content {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* 修正旋转后的文字方向 */
+.grid-item[data-position="2"] .item-content {
+  transform: rotate(-45deg);
+}
+
+.grid-item[data-position="3"] .item-content {
+  transform: rotate(-90deg);
+}
+
+.grid-item[data-position="4"] .item-content {
+  transform: rotate(-135deg);
+}
+
+.grid-item[data-position="5"] .item-content {
+  transform: rotate(-180deg);
+}
+
+.grid-item[data-position="6"] .item-content {
+  transform: rotate(-225deg);
+}
+
+.grid-item[data-position="7"] .item-content {
+  transform: rotate(-270deg);
+}
+
+.grid-item[data-position="8"] .item-content {
+  transform: rotate(-315deg);
+}
+
+.item-label {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  opacity: 0.95;
+  line-height: 1.1;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.item-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
+}
+
+/* 位置定位 - 8个扇形区域 */
+
+/* 位置1: 上方中央（掌握） */
+.grid-item[data-position="1"] {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) rotate(0deg);
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+.grid-item[data-position="1"]:hover {
+  transform: translateX(-50%) rotate(0deg) scale(1.05);
+}
+
+/* 位置2: 右上角（遗忘） */
+.grid-item[data-position="2"] {
+  top: 11%;
+  right: 11%;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+}
+
+.grid-item[data-position="2"]:hover {
+  transform: rotate(45deg) scale(1.05);
+}
+
+/* 位置3: 右方中央（学习中） */
+.grid-item[data-position="3"] {
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%) rotate(90deg);
+  background: linear-gradient(135deg, #FFC107, #FF8F00);
+}
+
+.grid-item[data-position="3"]:hover {
+  transform: translateY(-50%) rotate(90deg) scale(1.05);
+}
+
+/* 位置4: 右下角（测试） */
+.grid-item[data-position="4"] {
+  bottom: 11%;
+  right: 11%;
+  transform: rotate(135deg);
+  background: linear-gradient(135deg, #2196F3, #1976D2);
+}
+
+.grid-item[data-position="4"]:hover {
+  transform: rotate(135deg) scale(1.05);
+}
+
+/* 位置5: 下方中央（口音文本） */
+.grid-item[data-position="5"] {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%) rotate(180deg);
+  background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+}
+
+.grid-item[data-position="5"]:hover {
+  transform: translateX(-50%) rotate(180deg) scale(1.05);
+}
+
+/* 位置6: 左下角（口音文件） */
+.grid-item[data-position="6"] {
+  bottom: 11%;
+  left: 11%;
+  transform: rotate(225deg);
+  background: linear-gradient(135deg, #00BCD4, #0097A7);
+}
+
+.grid-item[data-position="6"]:hover {
+  transform: rotate(225deg) scale(1.05);
+}
+
+/* 位置7: 左方中央（区域化任务） */
+.grid-item[data-position="7"] {
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%) rotate(270deg);
+  background: linear-gradient(135deg, #8BC34A, #689F38);
+}
+
+.grid-item[data-position="7"]:hover {
+  transform: translateY(-50%) rotate(270deg) scale(1.05);
+}
+
+/* 位置8: 左上角（解决方案） */
+.grid-item[data-position="8"] {
+  top: 11%;
+  left: 11%;
+  transform: rotate(315deg);
+  background: linear-gradient(135deg, #FF5722, #D84315);
+}
+
+.grid-item[data-position="8"]:hover {
+  transform: rotate(315deg) scale(1.05);
+}
+
+/* 数值为0时的样式 */
+.grid-item[data-value="0"] {
+  opacity: 0.7;
+  filter: grayscale(0.3);
+}
+
+.grid-item[data-value="0"] .item-value {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.2rem;
+}
+
+.grid-item[data-value="0"] .item-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.75rem;
+}
+
+.grid-item[data-value="0"]:hover {
+  opacity: 0.85;
+  filter: grayscale(0.1);
+}
+
+/* 动画效果 */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .progress-chart-container {
+    padding: 25px 15px;
+    min-height: 380px;
+    margin: 15px auto;
+  }
+  
+  .progress-chart {
+    width: 300px;
+    height: 300px;
+  }
+  
+  .center-circle {
+    width: 110px;
+    height: 110px;
+  }
+  
+  .center-title {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+  
+  .center-subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .grid-item {
+    width: 150px;
+    height: 75px;
+  }
+  
+  .item-label {
+    font-size: 0.7rem;
+    margin-bottom: 3px;
+  }
+  
+  .item-value {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-chart-container {
+    padding: 20px 10px;
+    min-height: 320px;
+    margin: 10px auto;
+    border-radius: 12px;
+  }
+  
+  .progress-chart {
+    width: 260px;
+    height: 260px;
+  }
+  
+  .center-circle {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .center-title {
+    font-size: 0.9rem;
+    line-height: 1.1;
+  }
+  
+  .center-subtitle {
+    font-size: 0.7rem;
+  }
+  
+  .grid-item {
+    width: 130px;
+    height: 65px;
+  }
+  
+  .item-content {
+    padding: 8px 6px;
+  }
+  
+  .item-label {
+    font-size: 0.6rem;
+    margin-bottom: 2px;
+    letter-spacing: 0.3px;
+  }
+  
+  .item-value {
+    font-size: 1.1rem;
+    letter-spacing: 0.3px;
+  }
+  
+  .grid-item[data-value="0"] .item-value {
+    font-size: 1rem;
+  }
+  
+  .grid-item[data-value="0"] .item-label {
+    font-size: 0.55rem;
+  }
+}
+
+/* 加载状态 */
+.progress-chart.loading {
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.progress-chart.loading .grid-item {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.progress-chart.loading .center-circle {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+/* 错误状态 */
+.progress-chart.error .grid-item {
+  background: linear-gradient(135deg, #ccc, #999) !important;
+}
+
+/* 主题支持 */
+.progress-chart.theme-dark {
+  background: radial-gradient(circle, #2d3748 0%, #1a202c 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.progress-chart-container.theme-dark {
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+}
+
+.progress-chart.theme-dark .center-circle {
+  background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.progress-chart.theme-dark .center-title {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.progress-chart.theme-dark .center-subtitle {
+  color: #a0aec0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* 动画延迟 */
+.grid-item[data-position="1"] { animation-delay: 0.1s; }
+.grid-item[data-position="2"] { animation-delay: 0.2s; }
+.grid-item[data-position="3"] { animation-delay: 0.3s; }
+.grid-item[data-position="4"] { animation-delay: 0.4s; }
+.grid-item[data-position="5"] { animation-delay: 0.5s; }
+.grid-item[data-position="6"] { animation-delay: 0.6s; }
+.grid-item[data-position="7"] { animation-delay: 0.7s; }
+.grid-item[data-position="8"] { animation-delay: 0.8s; }
+
+/* 响应式设计 */
+
+/* 平板设备 */
+@media (max-width: 768px) {
+  .progress-chart {
+    width: 280px;
+    height: 280px;
+  }
+  
+  .center-circle {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .center-title {
+    font-size: 1rem;
+  }
+  
+  .center-subtitle {
+    font-size: 0.8rem;
+  }
+  
+  .grid-item {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .item-label {
+    font-size: 0.6rem;
+  }
+  
+  .item-value {
+    font-size: 1.2rem;
+  }
+  
+  /* 调整位置偏移 */
+  .grid-item[data-position="1"] {
+    top: -35px;
+  }
+  
+  .grid-item[data-position="2"] {
+    top: -15px;
+    right: -35px;
+  }
+  
+  .grid-item[data-position="3"] {
+    right: -35px;
+  }
+  
+  .grid-item[data-position="4"] {
+    bottom: -15px;
+    right: -35px;
+  }
+  
+  .grid-item[data-position="5"] {
+    bottom: -35px;
+  }
+  
+  .grid-item[data-position="6"] {
+    bottom: -15px;
+    left: -35px;
+  }
+  
+  .grid-item[data-position="7"] {
+    left: -35px;
+  }
+  
+  .grid-item[data-position="8"] {
+    top: -15px;
+    left: -35px;
+  }
+}
+
+/* 手机设备 */
+@media (max-width: 480px) {
+  .progress-chart-container {
+    padding: 15px;
+    min-height: 320px;
+  }
+  
+  .progress-chart {
+    width: 240px;
+    height: 240px;
+  }
+  
+  .center-circle {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .center-title {
+    font-size: 0.9rem;
+  }
+  
+  .center-subtitle {
+    font-size: 0.7rem;
+  }
+  
+  .grid-item {
+    width: 55px;
+    height: 55px;
+  }
+  
+  .item-content {
+    padding: 4px;
+  }
+  
+  .item-label {
+    font-size: 0.5rem;
+    margin-bottom: 2px;
+  }
+  
+  .item-value {
+    font-size: 1rem;
+  }
+  
+  /* 调整位置偏移 */
+  .grid-item[data-position="1"] {
+    top: -28px;
+  }
+  
+  .grid-item[data-position="2"] {
+    top: -12px;
+    right: -28px;
+  }
+  
+  .grid-item[data-position="3"] {
+    right: -28px;
+  }
+  
+  .grid-item[data-position="4"] {
+    bottom: -12px;
+    right: -28px;
+  }
+  
+  .grid-item[data-position="5"] {
+    bottom: -28px;
+  }
+  
+  .grid-item[data-position="6"] {
+    bottom: -12px;
+    left: -28px;
+  }
+  
+  .grid-item[data-position="7"] {
+    left: -28px;
+  }
+  
+  .grid-item[data-position="8"] {
+    top: -12px;
+    left: -28px;
+  }
+}
+
+/* 动画定义 */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 加载状态 */
+.progress-chart.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.progress-chart.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  z-index: 100;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 主题变体 */
+.progress-chart.theme-dark {
+  background: #2d3748;
+  color: #fff;
+}
+
+.progress-chart.theme-dark .center-circle {
+  background: #2d3748;
+  border-color: #4a5568;
+}
+
+.progress-chart.theme-dark .center-title {
+  color: #fff;
+}
+
+.progress-chart.theme-dark .center-subtitle {
+  color: #a0aec0;
+}
+
+/* 可访问性支持 */
+.grid-item:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.grid-item[tabindex="0"] {
+  cursor: pointer;
+}
+
+/* 打印样式 */
+@media print {
+  .progress-chart-container {
+    break-inside: avoid;
+  }
+  
+  .grid-item {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .grid-item:hover {
+    transform: none;
+    filter: none;
+  }
+}

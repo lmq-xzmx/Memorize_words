@@ -1,0 +1,14 @@
+Django>=4.2.0,<5.0
+django-bootstrap5>=23.3
+django-crispy-forms>=2.0
+crispy-bootstrap5>=0.7
+Pillow>=10.0.0
+django-extensions>=3.2.0
+djangorestframework>=3.14.0
+django-cors-headers>=4.0.0
+nltk>=3.8.1
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+numpy>=1.24.0
+scipy>=1.10.0

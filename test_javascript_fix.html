@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>测试JavaScript修复</title>
+    <script src="staticfiles/admin/js/role_group_mapping.js"></script>
+</head>
+<body>
+    <h1>测试handleRoleChange函数</h1>
+    
+    <select id="test-role-select" onchange="handleRoleChange(this.value)">
+        <option value="">请选择角色</option>
+        <option value="student">学生</option>
+        <option value="teacher">教师</option>
+        <option value="parent">家长</option>
+        <option value="admin">管理员</option>
+    </select>
+    
+    <div id="result"></div>
+    
+    <script>
+        // 测试函数是否存在
+        console.log('handleRoleChange function exists:', typeof window.handleRoleChange === 'function');
+        
+        // 添加结果显示
+        const originalHandleRoleChange = window.handleRoleChange;
+        window.handleRoleChange = function(roleValue) {
+            document.getElementById('result').innerHTML = `<p>角色已更改为: ${roleValue}</p>`;
+            console.log('handleRoleChange called with:', roleValue);
+            
+            // 调用原始函数
+            if (originalHandleRoleChange) {
+                originalHandleRoleChange(roleValue);
+            }
+        };
+    </script>
+</body>
+</html>
