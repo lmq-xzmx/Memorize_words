@@ -477,7 +477,7 @@ class ResourceIntegrationService:
     @staticmethod
     def migrate_vocabulary_resources():
         """迁移Vocabulary_Manager应用的资源到授权系统"""
-        from apps.vocabulary_manager.models import LearningGoal as VocabGoal
+        from apps.teaching.models import LearningGoal as VocabGoal
         
         # 迁移词汇学习目标
         for goal in VocabGoal.objects.all():

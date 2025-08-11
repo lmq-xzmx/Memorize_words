@@ -115,6 +115,11 @@
             <div v-if="loadingExtensions" class="loading-text">加载中...</div>
           </div>
           
+          <!-- 管理员申请提示 -->
+          <div v-if="form.role === 'admin'" class="admin-notice">
+            申请管理员时，需等待后台审批
+          </div>
+          
           <div v-for="extension in roleExtensions" :key="extension.field_name" class="form-row">
             <div class="form-group">
               <label :for="extension.field_name">
@@ -381,7 +386,7 @@ export default {
       
       this.loadingRoles = true
       try {
-        const response = await fetch('http://127.0.0.1:8000/accounts/api/auth/roles/')
+        const response = await fetch('http://127.0.0.1:8001/accounts/api/auth/roles/')
         if (response.ok) {
           const data = await response.json()
           // 转换API返回的数组格式 [value, label] 为对象格式 {value, label}
@@ -432,7 +437,7 @@ export default {
       
       this.loadingExtensions = true
       try {
-        const response = await fetch(`http://127.0.0.1:8000/accounts/api/auth/role-extensions/?role=${role}`)
+        const response = await fetch(`http://127.0.0.1:8001/accounts/api/auth/role-extensions/?role=${role}`)
         if (response.ok) {
           const data = await response.json()
           this.roleExtensions = data.extensions || []
@@ -487,7 +492,7 @@ export default {
           })
           
           // 使用动态注册接口
-          const response = await fetch('http://127.0.0.1:8000/accounts/api/auth/register-with-extensions/', {
+          const response = await fetch('http://127.0.0.1:8001/accounts/api/auth/register-with-extensions/', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -830,6 +835,18 @@ export default {
   font-size: 12px;
   margin-top: 4px;
   font-style: italic;
+}
+
+.admin-notice {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #856404;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #f39c12;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.1);
 }
 
 .form-group textarea {

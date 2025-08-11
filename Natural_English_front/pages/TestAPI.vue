@@ -43,7 +43,7 @@ export default {
     async testRoles() {
       this.loading = true
       try {
-        const response = await fetch('http://127.0.0.1:8000/accounts/api/auth/roles/')
+        const response = await fetch('http://127.0.0.1:8001/accounts/api/auth/roles/')
         const data = await response.json()
         this.rolesResult = data
         console.log('角色API结果:', data)
@@ -62,7 +62,7 @@ export default {
       }
       
       try {
-        const response = await fetch(`http://127.0.0.1:8000/accounts/api/auth/role-extensions/?role=${this.selectedRole}`)
+        const response = await fetch(`http://127.0.0.1:8001/accounts/api/auth/role-extensions/?role=${this.selectedRole}`)
         const data = await response.json()
         this.extensionsResult = data
         console.log(`${this.selectedRole} 角色增项结果:`, data)

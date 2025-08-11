@@ -4,7 +4,7 @@ from . import views
 from .api_views import (
     CustomAuthToken, RegisterViewSet, UserViewSet,
     LearningProfileViewSet, UserLoginLogViewSet,
-    RoleExtensionViewSet
+    RoleExtensionViewSet, StudentListViewSet
 )
 from .template_api_views import (
     RoleTemplateViewSet, EnhancedUserExtensionDataViewSet
@@ -16,6 +16,7 @@ app_name = 'accounts'
 # 创建API路由器
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
+router.register(r'students', StudentListViewSet, basename='student')
 router.register(r'learning-profiles', LearningProfileViewSet, basename='learningprofile')
 router.register(r'login-logs', UserLoginLogViewSet, basename='userloginlog')
 router.register(r'role-extensions', RoleExtensionViewSet, basename='roleextension')
@@ -54,6 +55,8 @@ urlpatterns = [
     path('ajax/check-username/', views.check_username_ajax, name='check_username_ajax'),
     path('ajax/user-info/<int:user_id>/', views.get_user_info_ajax, name='user_info_ajax'),
     
-    # 角色所辖用户增项管理
-    path('', include('apps.accounts.urls_role_hierarchy')),
+    # 开发期快捷登录
+    path('dev-login/', views.dev_login_view, name='dev_login'),
+    
+    # 角色所辖用户增项管理已整合到主要视图中
 ]

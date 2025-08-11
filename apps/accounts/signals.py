@@ -10,7 +10,15 @@ from .services.role_service import RoleService
 def create_user_profile(sender, instance, created, **kwargs):
     """用户创建后自动创建学习档案"""
     if created and instance.role == UserRole.STUDENT:
-        LearningProfile.objects.get_or_create(user=instance)
+        LearningProfile.objects.get_or_create(
+            user=instance,
+            defaults={
+                'total_study_time': 0,
+                'completed_lessons': 0,
+                'current_streak': 0,
+                'max_streak': 0
+            }
+        )
 
 
 @receiver(post_save, sender=CustomUser)

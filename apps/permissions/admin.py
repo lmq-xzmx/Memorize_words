@@ -25,6 +25,9 @@ class MenuModuleConfigAdmin(admin.ModelAdmin):
     search_fields = ['name', 'key', 'description']
     ordering = ['menu_level', 'sort_order', 'name']
     
+
+    
+    @admin.display(description='菜单级别')
     def get_menu_level_display(self, obj):
         """显示菜单级别"""
         level_colors = {
@@ -37,8 +40,6 @@ class MenuModuleConfigAdmin(admin.ModelAdmin):
             '<span style="color: {}; background: {}20; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold;">{}</span>',
             color, color, obj.get_menu_level_display()
         )
-    
-    get_menu_level_display.short_description = '菜单级别'  # type: ignore
     
     fieldsets = (
         ('基本信息', {
@@ -64,6 +65,9 @@ class RoleMenuPermissionAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
             'all': ('admin/css/dynamic_role_selector.css',)
         }
     
+
+    
+    @admin.display(description='权限状态')
     def get_permission_status(self, obj):
         """显示权限状态"""
         if obj.can_access:
@@ -76,8 +80,6 @@ class RoleMenuPermissionAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
                 '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
                 '✗ 禁止访问</span>'
             )
-    
-    get_permission_status.short_description = '权限状态'  # type: ignore
     
     fieldsets = (
         ('基本信息', {
@@ -132,6 +134,9 @@ class RoleGroupMappingAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
             'all': ('admin/css/dynamic_role_selector.css', 'admin/css/role_group_mapping.css')
         }
     
+
+    
+    @admin.display(description='同步状态')
     def get_mapping_status(self, obj):
         """显示映射状态"""
         if obj.auto_sync:
@@ -144,8 +149,6 @@ class RoleGroupMappingAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
                 '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
                 '❌ 手动同步</span>'
             )
-    
-    get_mapping_status.short_description = '同步状态'  # type: ignore
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """自定义外键字段"""
@@ -458,6 +461,9 @@ class PermissionSyncLogAdmin(admin.ModelAdmin):
     readonly_fields = ['sync_type', 'target_type', 'target_id', 'action', 'result', 'success', 'created_at']
     ordering = ['-created_at']
     
+
+    
+    @admin.display(description='同步状态')
     def get_sync_status(self, obj):
         """显示同步状态"""
         if obj.success:
@@ -470,8 +476,6 @@ class PermissionSyncLogAdmin(admin.ModelAdmin):
                 '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
                 '❌ 失败</span>'
             )
-    
-    get_sync_status.short_description = '同步状态'  # type: ignore
     
     def has_add_permission(self, request):
         """禁止手动添加日志"""
@@ -664,12 +668,16 @@ class RoleManagementAdmin(StandardRoleAdminMixin, admin.ModelAdmin, RoleCreation
     
     # 角色选择器配置已通过RoleCreationAdminMixin自动处理
     
+
+    
+    @admin.display(description='角色')
     def get_role_display_name(self, obj):
         """显示角色名称"""
         return obj.get_role_display()
     
-    get_role_display_name.short_description = '角色'  # type: ignore
+
     
+    @admin.display(description='父角色')
     def get_parent_role(self, obj):
         """显示父角色"""
         if obj.parent:
@@ -682,8 +690,9 @@ class RoleManagementAdmin(StandardRoleAdminMixin, admin.ModelAdmin, RoleCreation
                 '<span style="color: #6c757d;">🏠 根角色</span>'
             )
     
-    get_parent_role.short_description = '父角色'  # type: ignore
+
     
+    @admin.display(description='直接权限')
     def get_permissions_count(self, obj):
         """显示直接权限数量"""
         count = obj.permissions.count()
@@ -697,8 +706,9 @@ class RoleManagementAdmin(StandardRoleAdminMixin, admin.ModelAdmin, RoleCreation
                 '<span style="color: #6c757d;">0 个</span>'
             )
     
-    get_permissions_count.short_description = '直接权限'  # type: ignore
+
     
+    @admin.display(description='总权限')
     def get_inherited_permissions_count(self, obj):
         """显示总权限数量（包括继承）"""
         all_perms = obj.get_all_permissions()
@@ -716,8 +726,6 @@ class RoleManagementAdmin(StandardRoleAdminMixin, admin.ModelAdmin, RoleCreation
                 '<span style="color: #28a745; font-weight: bold;">{} 个</span>',
                 total_count
             )
-    
-    get_inherited_permissions_count.short_description = '总权限'  # type: ignore
     
     def clean_model(self, request, obj, form, change):
         """模型验证"""

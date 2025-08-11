@@ -29,6 +29,9 @@ class EnhancedRBACMiddleware:
             '/api/auth/',
             '/api/accounts/api/auth/',
             '/accounts/api/auth/',
+            '/accounts/api/users/',  # 添加用户API路径
+            '/accounts/api/',  # 添加所有accounts API路径
+            '/api/teaching/learning-goals/',  # 允许匿名访问学习目标列表
         ]
         
         # 需要特殊处理的路径模式

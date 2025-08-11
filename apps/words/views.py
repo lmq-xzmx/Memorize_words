@@ -12,11 +12,11 @@ from typing import Type, Union
 from .models import (
     Word, WordResource, VocabularySource, VocabularyList
 )
-from apps.vocabulary_manager.models import UserStreak, StudySession
+from apps.teaching.models import LearningSession as StudySession
 from .serializers import (
     WordSerializer, WordListSerializer, WordResourceSerializer,
     VocabularySourceSerializer, VocabularyListSerializer,
-    UserStreakSerializer, StudySessionSerializer, WordStatisticsSerializer,
+    StudySessionSerializer, WordStatisticsSerializer,
     BulkWordOperationSerializer
 )
 
@@ -171,11 +171,7 @@ class WordViewSet(viewsets.ModelViewSet):
         word.learned_at = timezone.now()
         word.save()
         
-        # 更新用户学习记录
-        streak, created = UserStreak.objects.get_or_create(user=request.user)
-        streak.update_streak()
-        streak.total_words_learned += 1
-        streak.save()
+        # 用户学习记录更新功能已移除
         
         return Response({'message': '单词已标记为已学习'})
     
@@ -233,21 +229,7 @@ class VocabularyListViewSet(viewsets.ModelViewSet):
 # ImportedVocabularyViewSet已合并到WordViewSet中
 
 
-class UserStreakViewSet(viewsets.ReadOnlyModelViewSet):
-    """用户学习记录视图集"""
-    serializer_class = UserStreakSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self) -> QuerySet:
-        """获取当前用户的学习记录"""
-        return UserStreak.objects.filter(user=self.request.user)
-    
-    @action(detail=False, methods=['get'])
-    def my_streak(self, request):
-        """获取我的学习记录"""
-        streak, created = UserStreak.objects.get_or_create(user=request.user)
-        serializer = self.get_serializer(streak)
-        return Response(serializer.data)
+# UserStreakViewSet已移除，因为UserStreak模型不存在
 
 
 class StudySessionViewSet(viewsets.ModelViewSet):

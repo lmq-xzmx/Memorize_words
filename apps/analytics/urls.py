@@ -7,11 +7,23 @@ from .api_views import AnalyticsViewSet
 router = DefaultRouter()
 router.register(r'analytics', AnalyticsViewSet, basename='analytics')
 
+# 用户粘性游戏化系统的额外URL模式
+engagement_patterns = [
+    path('user-engagement-metrics/', AnalyticsViewSet.as_view({'get': 'user_engagement_metrics'}), name='user_engagement_metrics'),
+    path('behavior-analysis/', AnalyticsViewSet.as_view({'get': 'behavior_analysis'}), name='behavior_analysis'),
+    path('game-element-effectiveness/', AnalyticsViewSet.as_view({'get': 'game_element_effectiveness'}), name='game_element_effectiveness'),
+    path('create-ab-test/', AnalyticsViewSet.as_view({'post': 'create_ab_test'}), name='create_ab_test'),
+    path('ab-test-results/', AnalyticsViewSet.as_view({'get': 'ab_test_results'}), name='ab_test_results'),
+]
+
 app_name = 'analytics'
 
 urlpatterns = [
     # API路由
     path('api/', include(router.urls)),
+    
+    # 用户粘性游戏化系统API
+    path('api/engagement/', include(engagement_patterns)),
     
     # 分析主页
     path('', views.AnalyticsIndexView.as_view(), name='index'),

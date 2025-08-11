@@ -1,46 +1,22 @@
 import axios from 'axios'
 
-// 获取CSRF token的函数
-function getCsrfToken() {
-  const name = 'csrftoken'
-  let cookieValue = null
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';')
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim()
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
-        break
-      }
-    }
-  }
-  return cookieValue
-}
-
-// 创建axios实例
+// 创建 axios 实例
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/accounts/api',
+  baseURL: process.env.NODE_ENV === 'production' ? '/api' : 'http://127.0.0.1:8001/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
-  },
-  withCredentials: true
+  }
 })
 
-// 请求拦截器 - 自动添加Token和CSRF token
+// 请求拦截器
 api.interceptors.request.use(
   config => {
+    // 添加认证token
     const token = localStorage.getItem('token')
     if (token) {
-      config.headers.Authorization = `Token ${token}`
+      config.headers.Authorization = `Bearer ${token}`
     }
-    
-    // 添加CSRF token
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      config.headers['X-CSRFToken'] = csrfToken
-    }
-    
     return config
   },
   error => {
@@ -48,263 +24,280 @@ api.interceptors.request.use(
   }
 )
 
-// 响应拦截器 - 统一错误处理
+// 响应拦截器
 api.interceptors.response.use(
   response => {
     return response.data
   },
   error => {
     if (error.response?.status === 401) {
-      // Token过期或无效，清除本地存储并跳转到登录页
+      // 清除token并跳转到登录页
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
       window.location.href = '/login'
     }
-    return Promise.reject(error.response?.data || error.message)
-  }
-)
-
-// 用户认证相关API
-export const authAPI = {
-  // 用户注册
-  register(userData) {
-    return api.post('/auth/register/', userData)
-  },
-  
-  // 用户登录
-  login(username, password) {
-    return api.post('/auth/login/', { username, password })
-  },
-  
-  // 用户登出
-  logout() {
-    return api.post('/users/logout/')
-  }
-}
-
-// 用户信息相关API
-export const userAPI = {
-  // 获取用户信息
-  getProfile() {
-    return api.get('/users/profile/')
-  },
-  
-  // 更新用户信息
-  updateProfile(userData) {
-    return api.put('/users/profile/', userData)
-  },
-  
-  // 修改密码
-  changePassword(passwordData) {
-    return api.post('/users/change_password/', passwordData)
-  }
-}
-
-// 学习档案相关API
-export const learningAPI = {
-  // 获取学习档案
-  getProfiles() {
-    return api.get('/learning-profiles/')
-  },
-  
-  // 创建学习档案
-  createProfile(profileData) {
-    return api.post('/learning-profiles/', profileData)
-  }
-}
-
-// 创建单词API实例
-const wordApi = axios.create({
-  baseURL: 'http://127.0.0.1:8000/words/api',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  withCredentials: true
-})
-
-// 单词API请求拦截器
-wordApi.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Token ${token}`
-    }
-    
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      config.headers['X-CSRFToken'] = csrfToken
-    }
-    
-    return config
-  },
-  error => {
     return Promise.reject(error)
   }
 )
 
-// 单词API响应拦截器
-wordApi.interceptors.response.use(
-  response => {
-    return response.data
+// 认证相关API
+export const authAPI = {
+  // 登录
+  login(username, password) {
+    return api.post('/accounts/api/auth/login/', { username, password })
   },
-  error => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error.response?.data || error.message)
+  
+  // 注册
+  register(userData) {
+    return api.post('/accounts/api/auth/register/', userData)
+  },
+  
+  // 登出
+  logout() {
+    return api.post('/accounts/api/users/logout/', {})
+  },
+  
+  // 刷新token
+  refreshToken() {
+    return api.post('/accounts/api/auth/refresh-token/')
+  },
+  
+  // 验证token
+  verifyToken() {
+    return api.post('/accounts/api/auth/verify-token/')
   }
-)
+}
+
+// 用户相关API
+export const userAPI = {
+  // 登录
+  login(credentials) {
+    return api.post('/accounts/api/auth/login/', credentials)
+  },
+  
+  // 注册
+  register(userData) {
+    return api.post('/accounts/api/auth/register/', userData)
+  },
+  
+  // 获取用户信息
+  getProfile() {
+    return api.get('/accounts/api/users/profile/')
+  },
+  
+  // 更新用户信息
+  updateProfile(data) {
+    return api.put('/accounts/api/users/profile/', data)
+  },
+  
+  // 登出
+  logout() {
+    return api.post('/accounts/api/users/logout/', {})
+  }
+}
 
 // 单词相关API
 export const wordAPI = {
   // 获取单词列表
   getWords(params = {}) {
-    return wordApi.get('/words/', { params })
+    return api.get('/words/', { params })
+  },
+  
+  // 获取单词详情
+  getWordDetail(id) {
+    return api.get(`/words/${id}/`)
+  },
+  
+  // 搜索单词
+  searchWords(query, params = {}) {
+    return api.get('/words/search/', { 
+      params: { q: query, ...params } 
+    })
   },
   
   // 获取单词例句
   getWordExamples(params = {}) {
-    return wordApi.get('/word-examples/', { params })
+    return api.get('/words/examples/', { params })
   },
   
-  // 标记单词为已学习
-  markAsLearned(wordId) {
-    return wordApi.post(`/words/${wordId}/mark_learned/`)
+  // 添加学习记录
+  addLearningRecord(data) {
+    return api.post('/words/learning-records/', data)
   },
   
-  // 更新单词掌握程度
-  updateMastery(wordId, masteryLevel) {
-    return wordApi.post(`/words/${wordId}/update_mastery/`, { mastery_level: masteryLevel })
+  // 获取学习统计
+  getLearningStats() {
+    return api.get('/words/learning-stats/')
   }
 }
 
-// 创建资源授权API实例
-const resourceAuthApi = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/resource-auth',
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json'
+// 学习相关API
+export const learningAPI = {
+  // 获取学习目标
+  getLearningGoals() {
+    return api.get('/teaching/learning-goals/')
   },
-  withCredentials: true
-})
-
-// 资源授权API请求拦截器
-resourceAuthApi.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token')
-    if (token) {
-      config.headers.Authorization = `Token ${token}`
-    }
-    
-    const csrfToken = getCsrfToken()
-    if (csrfToken) {
-      config.headers['X-CSRFToken'] = csrfToken
-    }
-    
-    return config
+  
+  // 创建学习目标
+  createLearningGoal(data) {
+    return api.post('/teaching/learning-goals/', data)
   },
-  error => {
-    return Promise.reject(error)
+  
+  // 更新学习目标
+  updateLearningGoal(id, data) {
+    return api.put(`/teaching/learning-goals/${id}/`, data)
+  },
+  
+  // 删除学习目标
+  deleteLearningGoal(id) {
+    return api.delete(`/teaching/learning-goals/${id}/`)
+  },
+  
+  // 获取学习进度
+  getLearningProgress() {
+    return api.get('/analytics/learning-progress/')
   }
-)
-
-// 资源授权API响应拦截器
-resourceAuthApi.interceptors.response.use(
-  response => {
-    return response.data
-  },
-  error => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error.response?.data || error.message)
-  }
-)
+}
 
 // 资源授权相关API
 export const resourceAuthAPI = {
-  // 订阅管理
-  getSubscriptionInfo() {
-    return resourceAuthApi.get('/subscriptions/current/')
+  // 获取资源授权信息
+  getResourceAuth() {
+    return api.get('/resource-auth/')
   },
   
+  // 更新资源授权
+  updateResourceAuth(data) {
+    return api.put('/resource-auth/', data)
+  },
+  
+  // 获取订阅信息
+  getSubscriptions() {
+    return api.get('/subscriptions/')
+  },
+  
+  // 获取当前订阅
+  getMySubscription() {
+    return api.get('/subscriptions/current/')
+  },
+  
+  // 获取我的授权
+  getMyAuthorizations(params = {}) {
+    return api.get('/authorizations/', { params })
+  },
+  
+  // 获取我的分享
+  getMyShares() {
+    return api.get('/shares/')
+  },
+  
+  // 获取分类
+  getCategories() {
+    return api.get('/categories/')
+  },
+  
+  // 获取订阅功能
   getSubscriptionFeatures() {
-    return resourceAuthApi.get('/subscriptions/features/')
+    return api.get('/subscriptions/features/')
   },
   
-  subscribeToFeature(featureId) {
-    return resourceAuthApi.post('/subscriptions/subscribe/', { feature_id: featureId })
+  // 订阅功能
+  subscribe(featureId) {
+    return api.post('/subscriptions/subscribe/', { feature_id: featureId })
   },
   
-  unsubscribeFromFeature(featureId) {
-    return resourceAuthApi.post('/subscriptions/unsubscribe/', { feature_id: featureId })
-  },
-  
-  getSubscriptionHistory() {
-    return resourceAuthApi.get('/subscriptions/history/')
-  },
-  
-  renewSubscription(subscriptionId) {
-    return resourceAuthApi.post(`/subscriptions/${subscriptionId}/renew/`)
-  },
-  
-  // 资源授权管理
-  getResourceAuthorizations() {
-    return resourceAuthApi.get('/authorizations/')
-  },
-  
-  getResourceCategories() {
-    return resourceAuthApi.get('/categories/')
-  },
-  
-  checkResourceAccess(resourceId) {
-    return resourceAuthApi.get(`/authorizations/check-access/${resourceId}/`)
-  },
-  
-  requestResourceAccess(resourceId) {
-    return resourceAuthApi.post('/authorizations/request-access/', { resource_id: resourceId })
-  },
-  
-  grantResourceAccess(resourceId, userId) {
-    return resourceAuthApi.post('/authorizations/grant-access/', { 
-      resource_id: resourceId, 
-      user_id: userId 
-    })
-  },
-  
-  revokeResourceAccess(authorizationId) {
-    return resourceAuthApi.delete(`/authorizations/${authorizationId}/`)
-  },
-  
-  // 资源分享管理
-  getResourceShares() {
-    return resourceAuthApi.get('/shares/')
-  },
-  
+  // 分享资源
   shareResource(resourceId, shareData) {
-    return resourceAuthApi.post('/shares/', {
-      resource_id: resourceId,
-      ...shareData
-    })
+    return api.post('/shares/', { resource_id: resourceId, ...shareData })
   },
   
-  revokeResourceShare(shareId) {
-    return resourceAuthApi.delete(`/shares/${shareId}/`)
+  // 撤销分享
+  revokeShare(shareId) {
+    return api.delete(`/shares/${shareId}/`)
   },
   
-  getShareLink(shareId) {
-    return resourceAuthApi.get(`/shares/${shareId}/link/`)
+  // 获取订阅信息
+  getSubscriptionInfo() {
+    return api.get('/subscriptions/info/')
   },
   
-  // 统计信息
+  // 获取订阅历史
+  getSubscriptionHistory() {
+    return api.get('/subscriptions/history/')
+  },
+  
+  // 订阅功能
+  subscribeToFeature(featureId) {
+    return api.post('/subscriptions/subscribe/', { feature_id: featureId })
+  },
+  
+  // 续订
+  renewSubscription(subscriptionId) {
+    return api.post(`/subscriptions/${subscriptionId}/renew/`)
+  },
+  
+  // 取消订阅功能
+  unsubscribeFromFeature(featureId) {
+    return api.post('/subscriptions/unsubscribe/', { feature_id: featureId })
+  },
+  
+  // 获取资源分享
+  getResourceShares() {
+    return api.get('/shares/')
+  },
+  
+  // 获取授权统计
   getAuthorizationStats() {
-    return resourceAuthApi.get('/authorizations/stats/')
+    return api.get('/authorizations/stats/')
+  },
+  
+  // 撤销资源分享
+  revokeResourceShare(shareId) {
+    return api.delete(`/shares/${shareId}/`)
+  },
+  
+  // 获取分享链接
+  getShareLink(shareId) {
+    return api.get(`/shares/${shareId}/link/`)
+  },
+  
+  // 创建订阅
+  createSubscription(data) {
+    return api.post('/subscriptions/', data)
+  },
+  
+  // 取消订阅
+  cancelSubscription(id) {
+    return api.delete(`/subscriptions/${id}/`)
   }
 }
 
+// 教学相关API
+export const teachingAPI = {
+  // 获取教学内容
+  getTeachingContent() {
+    return api.get('/teaching/content/')
+  },
+  
+  // 获取课程列表
+  getCourses() {
+    return api.get('/teaching/courses/')
+  },
+  
+  // 获取课程详情
+  getCourseDetail(id) {
+    return api.get(`/teaching/courses/${id}/`)
+  },
+  
+  // 创建课程
+  createCourse(data) {
+    return api.post('/teaching/courses/', data)
+  },
+  
+  // 更新课程
+  updateCourse(id, data) {
+    return api.put(`/teaching/courses/${id}/`, data)
+  }
+}
+
+// 默认导出
 export default api

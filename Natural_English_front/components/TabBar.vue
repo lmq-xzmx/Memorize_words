@@ -57,9 +57,9 @@
     <div class="popup-container">
       <!-- 工具一级菜单（开发中心） -->
       <transition name="popup-fade">
-        <div v-if="activeMenu === 'tools'" class="popup-menu tools-menu level-1" :style="toolsMenuPosition">
+        <div v-if="activeMenu === 'tools'" class="popup-menu tools-menu level-1" :style="toolsMenuPosition" @click.stop>
           <!-- 开发中心菜单项 -->
-          <div class="menu-item dev-center-item" @click="toggleDevCenter">
+          <div class="menu-item dev-center-item" @click.stop="toggleDevCenter">
             <span class="menu-icon">🛠️</span>
             <span class="menu-text">开发中心</span>
             <span class="menu-arrow">{{ showDevCenter ? '▼' : '▶' }}</span>
@@ -68,16 +68,16 @@
           <!-- 启用的功能菜单项（单选框模式） -->
           <div v-if="enabledMenuItems.length > 0" class="enabled-tools">
             <div class="menu-divider"></div>
-            <div v-for="item in enabledMenuItems" :key="item.id" class="tool-menu-item">
+            <div v-for="item in enabledMenuItems" :key="item.id" class="tool-menu-item" @click.stop>
               <input 
                 type="radio" 
                 :id="'radio-' + item.id"
                 :value="item.id"
                 v-model="selectedTool"
-                @change="selectTool(item)"
+                @change.stop="selectTool(item)"
                 class="tool-radio"
               >
-              <label :for="'radio-' + item.id" class="tool-label">
+              <label :for="'radio-' + item.id" class="tool-label" @click.stop>
                 <span class="tool-name">{{ item.name }}</span>
               </label>
             </div>
@@ -102,16 +102,20 @@
             <span class="menu-icon">🌟</span>
             <span class="menu-text">时尚趋势</span>
           </div>
-          <div class="menu-item" @click="navigateTo('/discover')">
+          <div class="menu-item" @click="navigateTo('/dev-index')">
             <span class="menu-icon">🔍</span>
-            <span class="menu-text">发现</span>
+            <span class="menu-text">发现新工具</span>
+          </div>
+          <div class="menu-item" @click="navigateTo('/learning-modes?no-redirect=true')">
+            <span class="menu-icon">📚</span>
+            <span class="menu-text">词汇阅读中心</span>
           </div>
         </div>
       </transition>
 
       <!-- 开发中心二级菜单 -->
       <transition name="popup-fade">
-        <div v-if="showDevCenter && activeMenu === 'tools'" class="popup-menu dev-center-menu level-2" :style="devCenterMenuPosition">
+        <div v-if="showDevCenter && activeMenu === 'tools'" class="popup-menu dev-center-menu level-2" :style="devCenterMenuPosition" @click.stop>
           <div class="dev-center-header">
             <h3>开发中心 ({{ enabledMenuItems.length }}/{{ allDevTools.length }})</h3>
           </div>
@@ -124,14 +128,14 @@
                   <span class="tool-desc">{{ tool.description }}</span>
                 </div>
               </div>
-              <div class="tool-switch">
+              <div class="tool-switch" @click.stop>
                 <input 
                   type="checkbox" 
                   :id="'dev-switch-' + tool.id"
                   v-model="tool.enabled"
-                  @change="toggleDevTool(tool)"
+                  @change.stop="toggleDevTool(tool)"
                 >
-                <label :for="'dev-switch-' + tool.id" class="switch-label"></label>
+                <label :for="'dev-switch-' + tool.id" class="switch-label" @click.stop></label>
               </div>
             </div>
           </div>
@@ -165,6 +169,7 @@ export default {
       toolsMenuPosition: {}, // 工具菜单位置
       fashionMenuPosition: {}, // 时尚菜单位置
       devCenterMenuPosition: {}, // 开发中心菜单位置
+      userId: null, // 当前用户ID
       allDevTools: [
         {
           id: 'word-reading',
@@ -287,6 +292,12 @@ export default {
     },
     '$route.path'(newPath) {
       this.currentTab = newPath
+    },
+    // 监听用户变化，重新初始化偏好设置
+    userId(newUserId, oldUserId) {
+      if (newUserId && newUserId !== oldUserId) {
+        this.restoreUserMenuPreferences()
+      }
     }
   },
   mounted() {
@@ -294,11 +305,14 @@ export default {
     if (this.$route) {
       this.currentTab = this.$route.path
     }
+    
+    // 获取用户ID并恢复菜单偏好
+    this.initializeUserPreferences()
   },
   methods: {
     // 处理斩词点击
     handleWordClick() {
-      this.navigateTo('/word-selection-practice')
+      this.navigateTo('/learning-modes')
     },
     // 处理工具点击
     handleToolsClick() {
@@ -365,9 +379,13 @@ export default {
     toggleMenu(menuType) {
       if (this.activeMenu === menuType) {
         this.activeMenu = null
+        this.showDevCenter = false // 关闭开发中心
       } else {
         this.activeMenu = menuType
-        this.showDevCenter = false // 关闭开发中心
+        // 只有在切换到非工具菜单时才关闭开发中心
+        if (menuType !== 'tools') {
+          this.showDevCenter = false
+        }
         if (menuType === 'fashion') {
           this.calculateMenuPosition('fashion')
         }
@@ -380,11 +398,9 @@ export default {
     },
     // 处理遮罩层点击
     handleOverlayClick() {
-      if (this.showDevCenter) {
-        this.showDevCenter = false
-      } else {
-        this.closeMenu()
-      }
+      // 关闭所有菜单状态
+      this.activeMenu = null
+      this.showDevCenter = false
     },
     // 导航到指定页面
     navigateTo(path) {
@@ -402,12 +418,16 @@ export default {
       this.showDevCenter = !this.showDevCenter
       if (this.showDevCenter) {
         this.calculateDevCenterPosition()
+      } else {
+        // 当关闭开发中心时，也关闭一级菜单
+        this.activeMenu = null
       }
-      // 不关闭activeMenu，保持工具菜单状态
     },
     // 关闭开发中心
     closeDevCenter() {
       this.showDevCenter = false
+      // 同时关闭一级菜单
+      this.activeMenu = null
     },
     // 切换开发工具开关
     toggleDevTool(tool) {
@@ -428,6 +448,9 @@ export default {
           this.selectedTool = null
         }
       }
+      
+      // 保存用户菜单偏好
+      this.saveUserMenuPreferences()
     },
     // 选择工具
     selectTool(item) {
@@ -436,14 +459,125 @@ export default {
       this.navigateTo(item.path)
       // 关闭工具菜单
       this.activeMenu = null
+      
+      // 保存用户菜单偏好
+      this.saveUserMenuPreferences()
     },
     // 更新徽章（保留原有功能）
     updateBadge(path, badge) {
       // 可以根据需要实现徽章功能
       console.log('更新徽章:', path, badge)
-    }
-  }
-}
+    },
+    
+    // 初始化用户偏好设置
+    initializeUserPreferences() {
+      // 获取用户ID
+      this.getUserId()
+      
+      // 恢复用户菜单偏好
+      this.restoreUserMenuPreferences()
+    },
+    
+    // 获取用户ID
+    getUserId() {
+      try {
+        // 从localStorage获取用户信息
+        const userInfo = localStorage.getItem('user')
+        if (userInfo) {
+          const user = JSON.parse(userInfo)
+          this.userId = user.id || user.user_id || 'default'
+        } else {
+          // 如果没有用户信息，使用默认ID
+          this.userId = 'default'
+        }
+      } catch (error) {
+        console.error('获取用户ID失败:', error)
+        this.userId = 'default'
+      }
+    },
+    
+    // 恢复用户菜单偏好
+    restoreUserMenuPreferences() {
+      try {
+        const storageKey = `menuPreferences_${this.userId}`
+        const savedPreferences = localStorage.getItem(storageKey)
+        
+        if (savedPreferences) {
+          const preferences = JSON.parse(savedPreferences)
+          
+          // 恢复启用的菜单项
+          if (preferences.enabledMenuItems) {
+            this.enabledMenuItems = preferences.enabledMenuItems
+          }
+          
+          // 恢复选中的工具
+          if (preferences.selectedTool) {
+            this.selectedTool = preferences.selectedTool
+          }
+          
+          // 恢复工具启用状态
+          if (preferences.toolsEnabled) {
+            this.allDevTools.forEach(tool => {
+              const savedTool = preferences.toolsEnabled.find(t => t.id === tool.id)
+              if (savedTool) {
+                tool.enabled = savedTool.enabled
+              }
+            })
+          }
+          
+          console.log('用户菜单偏好已恢复:', preferences)
+        }
+      } catch (error) {
+        console.error('恢复用户菜单偏好失败:', error)
+      }
+    },
+    
+    // 保存用户菜单偏好
+    saveUserMenuPreferences() {
+      try {
+        const preferences = {
+          enabledMenuItems: this.enabledMenuItems,
+          selectedTool: this.selectedTool,
+          toolsEnabled: this.allDevTools.map(tool => ({
+            id: tool.id,
+            enabled: tool.enabled
+          })),
+          lastUpdated: new Date().toISOString()
+        }
+        
+        const storageKey = `menuPreferences_${this.userId}`
+        localStorage.setItem(storageKey, JSON.stringify(preferences))
+        
+        console.log('用户菜单偏好已保存:', preferences)
+      } catch (error) {
+         console.error('保存用户菜单偏好失败:', error)
+       }
+     },
+     
+     // 重置用户偏好（用于用户登出时调用）
+     resetUserPreferences() {
+       this.enabledMenuItems = []
+       this.selectedTool = null
+       this.allDevTools.forEach(tool => {
+         tool.enabled = false
+       })
+       this.activeMenu = null
+       this.showDevCenter = false
+     },
+     
+     // 刷新用户偏好（用于用户登录时调用）
+     refreshUserPreferences() {
+       this.initializeUserPreferences()
+     }
+   },
+   
+   // 组件销毁前保存用户偏好
+   beforeUnmount() {
+     if (this.userId && this.userId !== 'default') {
+       this.saveUserMenuPreferences()
+     }
+   }
+ }
 </script>
 
 <style scoped>
@@ -452,7 +586,7 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 9999;
 }
 
 .tab-bar {
@@ -466,7 +600,7 @@ export default {
   padding-bottom: env(safe-area-inset-bottom);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
-  z-index: 1500;
+  z-index: 10000;
 }
 
 .popup-container {
@@ -600,18 +734,18 @@ export default {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   min-width: 160px;
   padding: 8px 0;
-  z-index: 2000;
+  z-index: 10001;
   pointer-events: auto;
 }
 
 /* 一级菜单样式 */
 .popup-menu.level-1 {
-  z-index: 2000;
+  z-index: 10001;
 }
 
 /* 二级菜单样式 */
 .popup-menu.level-2 {
-  z-index: 2001;
+  z-index: 10002;
   min-width: 280px;
   max-width: 320px;
   max-height: 400px;
@@ -883,7 +1017,7 @@ export default {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 1999;
+  z-index: 9998;
   pointer-events: auto;
 }
 

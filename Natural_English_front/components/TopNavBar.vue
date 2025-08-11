@@ -62,7 +62,7 @@ export default {
         '/profile': '个人中心',
         '/community': '社区互动',
         '/fashion': '时尚趋势',
-        '/discover': '发现'
+        '/dev-index': '发现'
       }
     }
   },
@@ -88,7 +88,7 @@ export default {
         '/profile',
         '/community',
         '/fashion',
-        '/discover'
+        '/dev-index'
       ]
       return tabBarPages.some(page => this.$route.path.startsWith(page))
     },
@@ -139,7 +139,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
-  z-index: 1000;
+  z-index: 9997;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 

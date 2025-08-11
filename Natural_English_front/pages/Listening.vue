@@ -1,7 +1,7 @@
 <template>
   <div class="listening-container">
     <div class="page-header">
-      <h1>听说训练</h1>
+      <h1>听说训练中心</h1>
       <p>提升听力和口语能力</p>
     </div>
     

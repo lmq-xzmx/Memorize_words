@@ -15,8 +15,8 @@ django.setup()
 
 from django.contrib.auth import get_user_model
 from apps.accounts.models import CustomUser, UserRole, LearningProfile
-from apps.vocabulary_manager.models import (
-    StudySession, UserStreak, LearningGoal, LearningPlan, DailyStudyRecord
+from apps.teaching.models import (
+    LearningSession as StudySession, UserStreak, LearningGoal, LearningPlan, DailyStudyRecord
 )
 from apps.words.models import (
     Word, VocabularyList, VocabularySource, WordResource, PART_OF_SPEECH_CHOICES

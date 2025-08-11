@@ -52,6 +52,7 @@ class ArticleAdmin(admin.ModelAdmin):
         ]
         return custom_urls + urls
     
+    @admin.display(description='操作')
     def edit_actions(self, obj):
         """编辑操作按钮"""
         if obj.pk:
@@ -66,8 +67,6 @@ class ArticleAdmin(admin.ModelAdmin):
             ]
             return format_html(' '.join(buttons))
         return '-'
-    
-    setattr(edit_actions, 'short_description', '操作')
     
     def parse_article_view(self, request, article_id):
         """解析文章视图"""

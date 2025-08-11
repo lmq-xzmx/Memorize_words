@@ -129,6 +129,8 @@ class Word(models.Model):
     )
     textbook_version = models.CharField('教材版本', max_length=50, blank=True)
     grade = models.CharField('年级', max_length=20, choices=GRADE_CHOICES, blank=True)
+    book_volume = models.CharField('册别', max_length=20, blank=True, help_text='如：三上、三下、四上等')
+    unit = models.CharField('单元', max_length=20, blank=True, help_text='如：Unit 1、Unit 2等')
     
     # 学习状态相关字段
     learned_at = models.DateTimeField(_('学习时间'), null=True, blank=True)
@@ -216,35 +218,37 @@ class Word(models.Model):
                 if self.has_differences_from(parent_word):
                     # 有差异，设置为新版本
                     self.parent_word = parent_word
-                    self.version_number = parent_word.get_next_version_number()
-                    self.has_multiple_versions = False  # 版本本身不标记为多版本
-                    
-                    # 更新主单词的多版本标记
-                    parent_word.has_multiple_versions = True
-                    parent_word.save(update_fields=['has_multiple_versions'])
-                    
-                    # 记录版本信息
-                    self.version_data = {
-                        'parent_word_id': parent_word.pk,
-                        'differences': self.get_differences_from(parent_word),
-                        'created_as_version': True,
-                        'import_timestamp': timezone.now().isoformat()
-                    }
+                    if parent_word:
+                        self.version_number = parent_word.get_next_version_number()
+                        self.has_multiple_versions = False  # 版本本身不标记为多版本
+                        
+                        # 更新主单词的多版本标记
+                        parent_word.has_multiple_versions = True
+                        parent_word.save(update_fields=['has_multiple_versions'])
+                        
+                        # 记录版本信息
+                        self.version_data = {
+                            'parent_word_id': parent_word.pk,
+                            'differences': self.get_differences_from(parent_word),
+                            'created_as_version': True,
+                            'import_timestamp': timezone.now().isoformat()
+                        }
                 else:
                     # 无显著差异，但仍保存为版本
                     self.parent_word = parent_word
-                    self.version_number = parent_word.get_next_version_number()
-                    self.has_multiple_versions = False
-                    
-                    # 更新主单词的多版本标记
-                    parent_word.has_multiple_versions = True
-                    parent_word.save(update_fields=['has_multiple_versions'])
-                    
-                    self.version_data = {
-                        'parent_word_id': parent_word.pk,
-                        'duplicate_import': True,
-                        'import_timestamp': timezone.now().isoformat()
-                    }
+                    if parent_word:
+                        self.version_number = parent_word.get_next_version_number()
+                        self.has_multiple_versions = False
+                        
+                        # 更新主单词的多版本标记
+                        parent_word.has_multiple_versions = True
+                        parent_word.save(update_fields=['has_multiple_versions'])
+                        
+                        self.version_data = {
+                            'parent_word_id': parent_word.pk,
+                            'duplicate_import': True,
+                            'import_timestamp': timezone.now().isoformat()
+                        }
             else:
                 # 第一个单词，设置为主单词
                 self.parent_word = None

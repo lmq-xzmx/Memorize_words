@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from .models import (
     Word, WordResource, VocabularySource, VocabularyList
 )
-from apps.vocabulary_manager.models import UserStreak, StudySession
+from apps.teaching.models import LearningSession as StudySession
 
 User = get_user_model()
 
@@ -147,17 +147,7 @@ class VocabularyListSerializer(serializers.ModelSerializer):
 # ImportedVocabularySerializer已合并到WordSerializer中
 
 
-class UserStreakSerializer(serializers.ModelSerializer):
-    """用户学习记录序列化器"""
-    user_username = serializers.CharField(source='user.username', read_only=True)
-    
-    class Meta:
-        model = UserStreak
-        fields = [
-            'id', 'user', 'user_username', 'current_streak',
-            'longest_streak', 'last_activity_date', 'total_words_learned'
-        ]
-        read_only_fields = ['user', 'last_activity_date']
+# UserStreakSerializer已移除，因为UserStreak模型不存在
 
 
 class StudySessionSerializer(serializers.ModelSerializer):

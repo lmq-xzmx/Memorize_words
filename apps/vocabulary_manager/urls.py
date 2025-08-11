@@ -1,33 +1,22 @@
-from django.urls import path
-from . import views
-from .admin import vocabulary_manager_admin
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+# from . import views  # 暂时注释，因为views.py文件不存在
 
+# 应用命名空间
 app_name = 'vocabulary_manager'
 
+# 创建路由器
+router = DefaultRouter()
+
+# 注册视图集（如果有的话）
+# router.register(r'learning-goals', views.LearningGoalViewSet, basename='learninggoal')
+# router.register(r'learning-plans', views.LearningPlanViewSet, basename='learningplan')
+# router.register(r'daily-records', views.DailyStudyRecordViewSet, basename='dailystudyrecord')
+
+# URL模式
 urlpatterns = [
-    # 仪表板
-    path('', views.dashboard, name='dashboard'),
+    # API路由
+    path('api/', include(router.urls)),
     
-    # 学习目标管理
-    path('goals/', views.learning_goals, name='learning_goals'),
-    path('goals/create/', views.create_learning_goal, name='create_goal'),
-    path('goals/<int:goal_id>/set-current/', views.set_current_goal, name='set_current_goal'),
-    
-    # 学习计划管理
-    path('plans/', views.learning_plans, name='learning_plans'),
-    path('plans/create/', views.create_learning_plan, name='create_plan'),
-    path('plans/<int:plan_id>/', views.plan_detail, name='plan_detail'),
-    
-    # 学习进度更新
-    path('update-progress/', views.update_daily_progress, name='update_progress'),
-    
-    # 学习统计
-    path('statistics/', views.study_statistics, name='statistics'),
-    
-    # 学习中（看板）
-    path('kanban/', views.learning_kanban, name='learning_kanban'),
-    path('update-word-progress/', views.update_word_progress, name='update_word_progress'),
-    
-    # 自定义Admin站点
-    path('admin/', vocabulary_manager_admin.urls),
+    # 其他URL模式可以在这里添加
 ]

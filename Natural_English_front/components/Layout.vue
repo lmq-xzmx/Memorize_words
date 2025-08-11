@@ -1,127 +1,122 @@
 <template>
   <div class="layout">
-    <!-- 顶部菜单栏 -->
-    <header class="header">
-      <div class="header-content">
-        <div class="logo">
-          <h2>英语学习平台</h2>
+    <!-- 顶部导航栏 -->
+    <TopNavBar />
+    
+    <!-- 侧边栏（桌面端） -->
+    <aside class="sidebar" v-if="showSidebar">
+      <DynamicMenu />
+    </aside>
+    
+    <!-- 主要内容区域 -->
+    <main class="main-content" :class="{ 'with-sidebar': showSidebar }">
+      <!-- 权限检查提示 -->
+      <div v-if="!isUserAuthenticated && $route.meta.requiresAuth" class="auth-required">
+        <div class="auth-message">
+          <h3>🔒 需要登录</h3>
+          <p>此页面需要登录后才能访问</p>
+          <button @click="$router.push('/login')" class="btn-primary">立即登录</button>
         </div>
-        <nav class="top-nav">
-          <div class="nav-item" @click="toggleSidebar">
-            <i class="menu-icon">☰</i>
-          </div>
-          <div class="nav-item user-menu">
-            <span>{{ username }}</span>
-            <div class="dropdown">
-              <button @click="logout" class="logout-btn">退出登录</button>
-            </div>
-          </div>
-        </nav>
       </div>
-    </header>
-
-    <div class="main-container">
-      <!-- 侧边菜单 -->
-      <aside class="sidebar" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
-        <nav class="sidebar-nav">
-          <div class="menu-section">
-            <h3 class="menu-title">开发工具</h3>
-            <ul class="menu-list">
-              <li class="menu-item" :class="{ active: $route.path === '/dev-index' }">
-                <router-link to="/dev-index" class="menu-link">
-                  <i class="menu-icon">🔧</i>
-                  <span class="menu-text">开发期页面</span>
-                </router-link>
-              </li>
-            </ul>
-          </div>
-
-          <div class="menu-section">
-            <h3 class="menu-title">学习模块</h3>
-            <ul class="menu-list">
-              <li class="menu-item" :class="{ active: $route.path === '/dashboard' }">
-                <router-link to="/dashboard" class="menu-link">
-                  <i class="menu-icon">📊</i>
-                  <span class="menu-text">学习面板</span>
-                </router-link>
-              </li>
-              <li class="menu-item" :class="{ active: $route.path === '/word-examples' }">
-                <router-link to="/word-examples" class="menu-link">
-                  <i class="menu-icon">📖</i>
-                  <span class="menu-text">单词例句</span>
-                </router-link>
-              </li>
-              <li class="menu-item" :class="{ active: $route.path === '/word-reading' }">
-                <router-link to="/word-reading" class="menu-link">
-                  <i class="menu-icon">📚</i>
-                  <span class="menu-text">单词阅读</span>
-                </router-link>
-              </li>
-            </ul>
-          </div>
-
-          <div class="menu-section">
-            <h3 class="menu-title">练习模块</h3>
-            <ul class="menu-list">
-              <li class="menu-item" :class="{ active: $route.path.includes('/word-challenge') }">
-                <router-link to="/word-challenge/" class="menu-link">
-                  <i class="menu-icon">🎯</i>
-                  <span class="menu-text">单词挑战</span>
-                </router-link>
-              </li>
-              <li class="menu-item" :class="{ active: $route.path.includes('/word-review') }">
-                <router-link to="/word-review" class="menu-link">
-                  <i class="menu-icon">🔄</i>
-                  <span class="menu-text">单词复习</span>
-                </router-link>
-              </li>
-              <li class="menu-item" :class="{ active: $route.path.includes('/word-selection') }">
-                <router-link to="/word-selection" class="menu-link">
-                  <i class="menu-icon">✅</i>
-                  <span class="menu-text">单词选择</span>
-                </router-link>
-              </li>
-              <li class="menu-item" :class="{ active: $route.path === '/word-selection-practice' }">
-                <router-link to="/word-selection-practice" class="menu-link">
-                  <i class="menu-icon">📝</i>
-                  <span class="menu-text">选择练习</span>
-                </router-link>
-              </li>
-            </ul>
-          </div>
-        </nav>
-      </aside>
-
-      <!-- 主内容区域 -->
-      <main class="content" :class="{ 'content-expanded': sidebarCollapsed }">
+      
+      <!-- 权限不足提示 -->
+      <div v-else-if="!hasPagePermission" class="permission-denied">
+        <div class="permission-message">
+          <h3>⚠️ 权限不足</h3>
+          <p>您没有权限访问此页面</p>
+          <p class="role-info">当前角色：{{ roleDisplayName }}</p>
+          <button @click="$router.push('/dashboard')" class="btn-secondary">返回仪表板</button>
+        </div>
+      </div>
+      
+      <!-- 正常内容 -->
+      <div v-else class="content-wrapper">
         <router-view />
-      </main>
-    </div>
+      </div>
+    </main>
+    
+    <!-- 底部导航栏（移动端） -->
+    <BottomNavigation v-if="showBottomNav" />
   </div>
 </template>
 
 <script>
+import TopNavBar from './TopNavBar.vue'
+import BottomNavigation from './BottomNavigation.vue'
+import DynamicMenu from './DynamicMenu.vue'
+
 export default {
   name: 'Layout',
+  components: {
+    TopNavBar,
+    BottomNavigation,
+    DynamicMenu
+  },
+  
   data() {
     return {
-      sidebarCollapsed: false,
-      username: ''
+      windowWidth: window.innerWidth
     }
   },
-  mounted() {
-    // 获取用户名
-    this.username = localStorage.getItem('username') || '用户'
-  },
-  methods: {
-    toggleSidebar() {
-      this.sidebarCollapsed = !this.sidebarCollapsed
+  
+  computed: {
+    /**
+     * 是否显示侧边栏（桌面端）
+     */
+    showSidebar() {
+      return this.windowWidth >= 768 && this.isUserAuthenticated
     },
-    logout() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('username')
-      this.$router.push('/login')
+    
+    /**
+     * 是否显示底部导航（移动端）
+     */
+    showBottomNav() {
+      return this.windowWidth < 768 && this.isUserAuthenticated
+    },
+    
+    /**
+     * 检查当前页面权限
+     */
+    hasPagePermission() {
+      if (!this.$route.meta.requiresAuth) {
+        return true
+      }
+      
+      if (!this.isUserAuthenticated) {
+        return false
+      }
+      
+      return this.$canAccessPage(this.$route.path)
     }
+  },
+  
+  methods: {
+    /**
+     * 处理窗口大小变化
+     */
+    handleResize() {
+      this.windowWidth = window.innerWidth
+    },
+    
+    /**
+     * 处理权限变更
+     */
+    $onPermissionChange(user) {
+      // 检查当前页面权限
+      if (this.$route.meta.requiresAuth && (!user || !this.$canAccessPage(this.$route.path))) {
+        this.$router.push(user ? '/dashboard' : '/login')
+      }
+    }
+  },
+  
+  mounted() {
+    // 监听窗口大小变化
+    window.addEventListener('resize', this.handleResize)
+  },
+  
+  beforeUnmount() {
+    // 清理事件监听
+    window.removeEventListener('resize', this.handleResize)
   }
 }
 </script>
@@ -133,229 +128,176 @@ export default {
   flex-direction: column;
 }
 
-/* 顶部菜单栏 */
-.header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 60px;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 20px;
-  height: 100%;
-}
-
-.logo h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.top-nav {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.nav-item {
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.3s;
-}
-
-.nav-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.user-menu {
-  position: relative;
-}
-
-.dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 8px;
-  min-width: 120px;
-  display: none;
-}
-
-.user-menu:hover .dropdown {
-  display: block;
-}
-
-.logout-btn {
-  background: #ff4757;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 100%;
-  transition: background-color 0.3s;
-}
-
-.logout-btn:hover {
-  background: #ff3742;
-}
-
-/* 主容器 */
-.main-container {
-  display: flex;
-  margin-top: 60px;
-  min-height: calc(100vh - 60px);
-}
-
-/* 侧边菜单 */
 .sidebar {
-  width: 260px;
-  background: #2c3e50;
-  color: white;
-  transition: width 0.3s ease;
+  position: fixed;
+  left: 0;
+  top: 60px;
+  width: 250px;
+  height: calc(100vh - 60px);
+  z-index: 100;
+  background: #f8f9fa;
+  border-right: 1px solid #e9ecef;
   overflow-y: auto;
 }
 
-.sidebar-collapsed {
-  width: 60px;
-}
-
-.sidebar-nav {
-  padding: 20px 0;
-}
-
-.menu-section {
-  margin-bottom: 30px;
-}
-
-.menu-title {
-  color: #bdc3c7;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin: 0 0 15px 20px;
-  transition: opacity 0.3s;
-}
-
-.sidebar-collapsed .menu-title {
-  opacity: 0;
-}
-
-.menu-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.menu-item {
-  margin-bottom: 2px;
-}
-
-.menu-link {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;
-  color: #ecf0f1;
-  text-decoration: none;
-  transition: all 0.3s;
-  border-left: 3px solid transparent;
-}
-
-.menu-link:hover {
-  background-color: #34495e;
-  border-left-color: #3498db;
-}
-
-.menu-item.active .menu-link {
-  background-color: #3498db;
-  border-left-color: #2980b9;
-  color: white;
-}
-
-.menu-icon {
-  font-size: 18px;
-  margin-right: 12px;
-  min-width: 20px;
-  text-align: center;
-}
-
-.menu-text {
-  font-size: 14px;
-  font-weight: 500;
-  transition: opacity 0.3s;
-}
-
-.sidebar-collapsed .menu-text {
-  opacity: 0;
-}
-
-/* 主内容区域 */
-.content {
+.main-content {
   flex: 1;
-  padding: 30px;
-  background-color: #f8f9fa;
+  padding-top: 60px;
+  padding-bottom: 20px;
+  overflow-y: auto;
   transition: margin-left 0.3s ease;
 }
 
-.content-expanded {
-  margin-left: 0;
+.main-content.with-sidebar {
+  margin-left: 250px;
 }
 
-/* 响应式设计 */
+.content-wrapper {
+  padding: 20px;
+}
+
+.auth-required,
+.permission-denied {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 140px);
+  padding: 20px;
+}
+
+.auth-message,
+.permission-message {
+  text-align: center;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+}
+
+.auth-message {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 1px solid rgba(33, 150, 243, 0.2);
+}
+
+.permission-message {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border: 1px solid rgba(255, 152, 0, 0.2);
+}
+
+.auth-message h3 {
+  color: #1976d2;
+  margin-bottom: 16px;
+  font-size: 1.5rem;
+}
+
+.permission-message h3 {
+  color: #f57c00;
+  margin-bottom: 16px;
+  font-size: 1.5rem;
+}
+
+.auth-message p,
+.permission-message p {
+  color: #666;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.role-info {
+  font-weight: 600;
+  color: #f57c00;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+/* 移动端适配 */
 @media (max-width: 768px) {
   .sidebar {
-    position: fixed;
-    left: -260px;
-    top: 60px;
-    height: calc(100vh - 60px);
-    z-index: 999;
+    display: none;
   }
   
-  .sidebar.show {
-    left: 0;
+  .main-content {
+    margin-left: 0;
+    padding-bottom: 100px;
   }
   
-  .content {
+  .main-content.with-sidebar {
     margin-left: 0;
   }
   
-  .header-content {
-    padding: 0 15px;
+  .content-wrapper {
+    padding: 10px;
   }
   
-  .logo h2 {
-    font-size: 18px;
+  .auth-message,
+  .permission-message {
+    padding: 20px;
+    margin: 10px;
   }
 }
 
-/* 滚动条样式 */
-.sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: #34495e;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: #7f8c8d;
-  border-radius: 3px;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: #95a5a6;
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .sidebar {
+    background: #2d3748;
+    border-right-color: #4a5568;
+  }
+  
+  .auth-message {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    border-color: rgba(66, 165, 245, 0.3);
+  }
+  
+  .permission-message {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    border-color: rgba(255, 183, 77, 0.3);
+  }
+  
+  .auth-message h3 {
+    color: #42a5f5;
+  }
+  
+  .permission-message h3 {
+    color: #ffb74d;
+  }
+  
+  .auth-message p,
+  .permission-message p {
+    color: #a0aec0;
+  }
+  
+  .role-info {
+    color: #ffb74d;
+  }
 }
 </style>

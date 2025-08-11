@@ -32,6 +32,15 @@
         <!-- 学习设置 -->
         <div class="settings-section">
           <h2>学习设置</h2>
+          <div class="setting-item" @click="navigateTo('/learning-modes')">
+            <div class="setting-icon">📚</div>
+            <div class="setting-info">
+              <h3>学习模式</h3>
+              <p>选择和配置学习模式</p>
+            </div>
+            <div class="setting-arrow">›</div>
+          </div>
+          
           <div class="setting-item">
             <div class="setting-icon">🎯</div>
             <div class="setting-info">

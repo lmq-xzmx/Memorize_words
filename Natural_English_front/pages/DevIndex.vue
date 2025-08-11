@@ -16,12 +16,14 @@
       <p class="subtitle">探索英语学习的无限可能</p>
     </div>
 
+
+
     <div class="page-grid">
       <div 
-        v-for="page in pages" 
+        v-for="page in filteredPages" 
         :key="page.path"
         class="page-card"
-        :class="{ 'available': page.available, 'developing': !page.available }"
+        :class="{ 'available': page.available, 'developing': !page.available, [`category-${page.category}`]: true }"
         @click="navigateToPage(page)"
       >
         <div class="card-header">
@@ -61,17 +63,23 @@ export default {
   name: 'DevIndex',
   data() {
     return {
+      // 当前选中的分类
+      selectedCategory: 'all',
+      // 分类列表
+      categories: [
+        { id: 'all', name: '全部', icon: '🌟' },
+        { id: 'word-training', name: '单词训练', icon: '📝' },
+        { id: 'reading-training', name: '阅读训练', icon: '📖' },
+        { id: 'listening-training', name: '听力训练', icon: '👂' },
+        { id: 'conversation-training', name: '对话训练', icon: '💬' },
+        { id: 'speaking-practice', name: '口语练习', icon: '🗣️' },
+        { id: 'grammar-practice', name: '语法练习', icon: '📚' },
+        { id: 'teacher-companion', name: '教师陪伴', icon: '👨‍🏫' },
+        { id: 'management', name: '管理模块', icon: '⚙️' }
+      ],
+      // 所有页面项目（按分类整理）
       pages: [
-        {
-          title: '单词阅读',
-          description: 'H5版单词阅读页面，支持音频播放和进度跟踪',
-          path: '/word-reading',
-          icon: '📖',
-          status: 'completed',
-          statusText: '已完成',
-          available: true,
-          component: 'WordReading.vue'
-        },
+        // 单词训练
         {
           title: '单词学习',
           description: 'H5版单词学习页面，展示单词详情和多种释义',
@@ -80,27 +88,8 @@ export default {
           status: 'completed',
           statusText: '已完成',
           available: true,
-          component: 'WordLearning.vue'
-        },
-        {
-          title: '拼写练习',
-          description: '听音拼写练习页面，提升单词记忆',
-          path: '/word-learning/spelling',
-          icon: '✍️',
-          status: 'completed',
-          statusText: '已完成',
-          available: true,
-          component: 'WordSpelling.vue'
-        },
-        {
-          title: '闪卡学习',
-          description: '翻转卡片学习单词页面',
-          path: '/word-learning/flashcard',
-          icon: '🃏',
-          status: 'completed',
-          statusText: '已完成',
-          available: true,
-          component: 'WordFlashcard.vue'
+          component: 'WordLearning.vue',
+          category: 'word-training'
         },
         {
           title: '单词详情',
@@ -110,7 +99,8 @@ export default {
           status: 'completed',
           statusText: '已完成',
           available: true,
-          component: 'WordDetail.vue'
+          component: 'WordDetail.vue',
+          category: 'word-training'
         },
         {
           title: '词根分解',
@@ -120,7 +110,30 @@ export default {
           status: 'completed',
           statusText: '已完成',
           available: true,
-          component: 'WordRootAnalysis.vue'
+          component: 'WordRootAnalysis.vue',
+          category: 'word-training'
+        },
+        {
+          title: '拼写练习',
+          description: '听音拼写练习页面，提升单词记忆',
+          path: '/word-learning/spelling',
+          icon: '✍️',
+          status: 'completed',
+          statusText: '已完成',
+          available: true,
+          component: 'WordSpelling.vue',
+          category: 'word-training'
+        },
+        {
+          title: '闪卡学习',
+          description: '翻转卡片学习单词页面',
+          path: '/word-learning/flashcard',
+          icon: '🃏',
+          status: 'completed',
+          statusText: '已完成',
+          available: true,
+          component: 'WordFlashcard.vue',
+          category: 'word-training'
         },
         {
           title: '模式匹配记忆',
@@ -130,17 +143,8 @@ export default {
           status: 'completed',
           statusText: '已完成',
           available: true,
-          component: 'PatternMemory.vue'
-        },
-        {
-          title: '故事阅读',
-          description: '交互式故事阅读页面，支持词性标注和生词收集功能',
-          path: '/story-reading',
-          icon: '📚',
-          status: 'completed',
-          statusText: '已完成',
-          available: true,
-          component: 'StoryReading.vue'
+          component: 'PatternMemory.vue',
+          category: 'word-training'
         },
         {
           title: '单词挑战',
@@ -150,7 +154,8 @@ export default {
           status: 'completed',
           statusText: '已完成',
           available: true,
-          component: 'word-challenge/index.vue'
+          component: 'word-challenge/index.vue',
+          category: 'word-training'
         },
         {
           title: '单词复习',
@@ -160,7 +165,8 @@ export default {
           status: 'completed',
           statusText: '已完成',
           available: true,
-          component: 'word-review/index.vue'
+          component: 'word-review/index.vue',
+          category: 'word-training'
         },
         {
           title: '单词选择',
@@ -170,12 +176,140 @@ export default {
           status: 'completed',
           statusText: '已完成',
           available: true,
-          component: 'word-selection/index.vue'
+          component: 'word-selection/index.vue',
+          category: 'word-training'
+        },
+        {
+          title: '竞技模式',
+          description: '与其他学习者竞技对战，团队挑战',
+          path: '/word-selection-practice',
+          icon: '🏆',
+          status: 'completed',
+          statusText: '已完成',
+          available: true,
+          component: 'word-selection-practice/index.vue',
+          category: 'word-training'
+        },
+        {
+          title: '快刷模式',
+          description: '快速刷题模式，自动跳转下一题，提升学习效率',
+          path: '/word-selection-practice',
+          icon: '⚡',
+          status: 'completed',
+          statusText: '已完成',
+          available: true,
+          component: 'word-selection-practice/index.vue',
+          category: 'word-training'
+        },
+        // 阅读训练
+        {
+          title: '单词阅读',
+          description: 'H5版单词阅读页面，支持音频播放和进度跟踪',
+          path: '/word-reading',
+          icon: '📖',
+          status: 'completed',
+          statusText: '已完成',
+          available: true,
+          component: 'WordReading.vue',
+          category: 'reading-training'
+        },
+        {
+          title: '故事阅读',
+          description: '交互式故事阅读页面，支持词性标注和生词收集功能',
+          path: '/story-reading',
+          icon: '📚',
+          status: 'completed',
+          statusText: '已完成',
+          available: true,
+          component: 'StoryReading.vue',
+          category: 'reading-training'
+        },
+        // 对话训练
+        
+        // 教师陪伴
+        {
+          title: '师生互动',
+          description: '师生互动练习模式，支持单词选择和实时反馈',
+          path: '/word-selection-practice2',
+          icon: '👥',
+          status: 'completed',
+          statusText: '已完成',
+          available: true,
+          component: 'WordSelection.vue',
+          category: 'teacher-companion'
+        },
+        // 管理模块
+        {
+          title: '资源授权',
+          description: '资源授权管理页面，管理订阅、权限和资源分享',
+          path: '/resource-auth',
+          icon: '🔐',
+          status: 'developing',
+          statusText: '开发中',
+          available: false,
+          component: 'ResourceAuth.vue',
+          category: 'management'
+        },
+        {
+          title: '订阅管理',
+          description: '订阅功能管理页面，查看和管理您的订阅状态',
+          path: '/subscription-management',
+          icon: '💳',
+          status: 'developing',
+          statusText: '开发中',
+          available: false,
+          component: 'SubscriptionManagement.vue',
+          category: 'management'
+        },
+        {
+          title: '资源分享',
+          description: '资源分享管理页面，分享和管理您的学习资源',
+          path: '/resource-sharing',
+          icon: '📤',
+          status: 'developing',
+          statusText: '开发中',
+          available: false,
+          component: 'ResourceSharing.vue',
+          category: 'management'
         }
       ]
     }
   },
+  computed: {
+    // 根据选中分类过滤页面
+    filteredPages() {
+      if (this.selectedCategory === 'all') {
+        return this.pages
+      }
+      return this.pages.filter(page => page.category === this.selectedCategory)
+    },
+    // 统计信息
+    categoryStats() {
+      const stats = {}
+      this.categories.forEach(category => {
+        if (category.id === 'all') {
+          stats[category.id] = {
+            total: this.pages.length,
+            completed: this.pages.filter(p => p.status === 'completed').length,
+            developing: this.pages.filter(p => p.status === 'developing').length
+          }
+        } else {
+          const categoryPages = this.pages.filter(p => p.category === category.id)
+          stats[category.id] = {
+            total: categoryPages.length,
+            completed: categoryPages.filter(p => p.status === 'completed').length,
+            developing: categoryPages.filter(p => p.status === 'developing').length
+          }
+        }
+      })
+      return stats
+    }
+  },
   methods: {
+    // 选择分类
+    selectCategory(categoryId) {
+      this.selectedCategory = categoryId
+    },
     navigateToPage(page) {
       if (page.available) {
         this.$router.push(page.path)
@@ -330,6 +464,118 @@ export default {
   text-shadow: 1px 1px 4px rgba(0,0,0,0.3);
 }
 
+/* 分类选择器样式 */
+.category-selector {
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.category-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.category-tab {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 25px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-weight: 500;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.category-tab:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.category-tab.active {
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.category-icon {
+  font-size: 1.2rem;
+}
+
+.category-name {
+  font-size: 0.9rem;
+}
+
+.category-count {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* 统计信息样式 */
+.stats-summary {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 15px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 1rem;
+  padding: 2px 8px;
+  border-radius: 8px;
+  min-width: 25px;
+  text-align: center;
+}
+
+.stat-value.completed {
+  background: linear-gradient(45deg, #28a745, #20c997);
+  color: white;
+}
+
+.stat-value.developing {
+  background: linear-gradient(45deg, #ffc107, #fd7e14);
+  color: #333;
+}
+
+.stat-value.total {
+  background: linear-gradient(45deg, #6f42c1, #e83e8c);
+  color: white;
+}
+
 .page-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -378,6 +624,31 @@ export default {
 
 .page-card.developing {
   border-left: 4px solid #ffc107;
+}
+
+/* 分类特定样式 */
+.page-card.category-learning {
+  border-top: 3px solid #007bff;
+}
+
+.page-card.category-learning:hover {
+  box-shadow: 0 20px 40px rgba(0, 123, 255, 0.15);
+}
+
+.page-card.category-practice {
+  border-top: 3px solid #28a745;
+}
+
+.page-card.category-practice:hover {
+  box-shadow: 0 20px 40px rgba(40, 167, 69, 0.15);
+}
+
+.page-card.category-management {
+  border-top: 3px solid #6f42c1;
+}
+
+.page-card.category-management:hover {
+  box-shadow: 0 20px 40px rgba(111, 66, 193, 0.15);
 }
 
 .card-header {

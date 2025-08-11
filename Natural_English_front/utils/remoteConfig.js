@@ -37,7 +37,7 @@ class RemoteConfig {
     
     // 返回默认配置
     return {
-      apiBaseUrl: 'http://127.0.0.1:8000',
+      apiBaseUrl: 'http://127.0.0.1:8001',
       features: {
         darkMode: true,
         notifications: true,

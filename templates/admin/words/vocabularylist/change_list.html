@@ -1,11 +1,38 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_urls static %}
 
-{% block object-tools-items %}
-    <li>
-        <a href="{% url 'admin:words_vocabularylist_batch_import' %}" class="addlink">
-            {% trans '批量导入词库列表' %}
-        </a>
-    </li>
+{% block extrahead %}
     {{ block.super }}
+    <style>
+        .batch-import-btn {
+            background: #417690;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-left: 10px;
+            display: inline-block;
+        }
+        .batch-import-btn:hover {
+            background: #205067;
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block object-tools %}
+    <ul class="object-tools">
+        {% block object-tools-items %}
+            <li>
+                <a href="{% url 'admin:words_vocabularylist_add' %}" class="addlink">
+                    {% trans 'Add vocabulary list' %}
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin:words_vocabularylist_batch_import' %}" class="batch-import-btn addlink">
+                    批量导入单词
+                </a>
+            </li>
+        {% endblock %}
+    </ul>
 {% endblock %}

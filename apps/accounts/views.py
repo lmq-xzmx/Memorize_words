@@ -256,3 +256,8 @@ def get_user_info_ajax(request, user_id):
         return JsonResponse({'success': True, 'data': data})
     except CustomUser.DoesNotExist:
         return JsonResponse({'success': False, 'message': '用户不存在'})
+
+
+def dev_login_view(request):
+    """开发期快捷登录页面"""
+    return render(request, 'dev_login.html')

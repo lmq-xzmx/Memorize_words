@@ -1,0 +1,100 @@
+/**
+ * 元素位置重置样式
+ * 清除可能影响元素正常显示的位置样式
+ */
+
+/* 重置特定XPath元素的位置样式 */
+#app div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > div:nth-child(5),
+#app div:nth-child(3) > div:nth-child(2) > div:nth-child(1),
+#app div:nth-child(2) > div > div:nth-child(2) > div:nth-child(1) {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: auto !important;
+  transform: none !important;
+}
+
+/* 重置所有可能被置顶的元素 */
+.pinned,
+.sticky,
+.fixed-top,
+.position-fixed,
+.position-sticky,
+.position-absolute {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* 重置词汇阅读中心相关元素 */
+.vocabulary-center,
+.reading-center,
+.learning-center,
+.vocabulary-reading-center,
+.moveable-element,
+.user-personalized {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+  transform: none !important;
+}
+
+/* 重置可能的内联样式 */
+[style*="position: fixed"],
+[style*="position: sticky"],
+[style*="position: absolute"] {
+  position: static !important;
+}
+
+[style*="top: 0"] {
+  top: auto !important;
+}
+
+/* 确保词汇阅读中心不被置顶 */
+*[data-navigation-url*="learning-modes"],
+*[title*="词汇阅读中心"],
+*:contains("词汇阅读中心") {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* 重置可能的容器元素 */
+.drop-container,
+.app-content-container,
+#app .main-content {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* 强制重置所有可能影响布局的元素 */
+#app * {
+  position: static !important;
+  top: auto !important;
+  z-index: auto !important;
+}
+
+/* 但保留必要的定位元素 */
+.tab-bar-container,
+.bottom-navigation,
+.top-nav-bar,
+.popup-menu,
+.overlay {
+  position: fixed !important;
+}
+
+.popup-container {
+  position: absolute !important;
+}
+
+/* 确保弹出菜单正常工作 */
+.popup-menu {
+  z-index: 10001 !important;
+}
+
+.overlay {
+  z-index: 9998 !important;
+}

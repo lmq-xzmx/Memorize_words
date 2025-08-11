@@ -1,399 +1,549 @@
-# Design Document
+# 设计文档
 
-## Overview
+## 概述
 
-The word-selection-practice2 (简洁模式) is designed as a streamlined, focused vocabulary practice interface that prioritizes clarity, efficiency, and task-oriented learning. Unlike the gamified mode, this design emphasizes clean visual hierarchy, immediate feedback, and minimal distractions to create an optimal learning environment for users who prefer simplicity or have limited time.
+word-selection-practice2（简洁模式）是一个专注于高效学习的单词选择练习系统。设计理念强调简洁性、响应性和任务导向，为用户提供无干扰的学习体验。系统采用Vue.js前端框架，与现有Django后端API集成，确保数据一致性和功能复用。
 
-The system will be built as a Vue.js single-page component that integrates seamlessly with the existing backend API infrastructure, ensuring data consistency and reusability of existing learning models.
+## 架构
 
-## Architecture
-
-### Frontend Architecture
-
-```mermaid
-graph TD
-    A[WordSelectionPractice2.vue] --> B[PracticeHeader Component]
-    A --> C[QuestionDisplay Component]
-    A --> D[OptionsPanel Component]
-    A --> E[ProgressIndicator Component]
-    A --> F[ResultsModal Component]
-    
-    A --> G[PracticeService]
-    G --> H[API Layer]
-    H --> I[Backend APIs]
-    
-    A --> J[AudioService]
-    A --> K[StateManager]
+### 整体架构
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   前端 Vue.js   │    │   Django API    │    │   数据库层      │
+│                 │    │                 │    │                 │
+│ - 练习组件      │◄──►│ - 单词API       │◄──►│ - Word模型      │
+│ - 状态管理      │    │ - 学习记录API   │    │ - LearningSession│
+│ - 音频播放      │    │ - 用户进度API   │    │ - WordLearningRecord│
+│ - 响应式布局    │    │ - 音频服务      │    │                 │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### Backend Integration
-
-The frontend will integrate with existing backend services:
-- **Word API**: `/api/words/` for fetching vocabulary data
-- **Learning Session API**: `/api/teaching/learning-sessions/` for session management
-- **Learning Records API**: `/api/teaching/learning-records/` for progress tracking
-- **Audio API**: Text-to-speech or audio file serving for pronunciation
-
-### Data Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant A as API
-    participant D as Database
-    
-    U->>F: Start Practice
-    F->>A: GET /api/words/practice-set
-    A->>D: Query personalized words
-    D->>A: Return word set
-    A->>F: Word data with options
-    F->>U: Display first question
-    
-    U->>F: Select answer
-    F->>F: Validate & show feedback
-    F->>A: POST learning record
-    A->>D: Save progress
-    
-    U->>F: Complete practice
-    F->>A: POST session summary
-    A->>D: Update learning stats
-    F->>U: Show results
+### 前端架构层次
+```
+WordSelectionPractice2.vue (主容器)
+├── PracticeHeader.vue (标题和进度)
+├── WordDisplay.vue (单词展示区)
+├── OptionsPanel.vue (选项面板)
+├── ProgressBar.vue (进度条)
+├── ResultModal.vue (结果弹窗)
+└── AudioPlayer.vue (音频播放器)
 ```
 
-## Components and Interfaces
+## 组件和接口
 
-### 1. Main Container (WordSelectionPractice2.vue)
+### 核心组件设计
 
-**Purpose**: Root component managing overall state and orchestrating child components
+#### 1. WordSelectionPractice2.vue (主组件)
+**职责：** 整体状态管理、API调用协调、用户交互流程控制
 
-**Props**: None (route-based)
-
-**State**:
+**状态管理：**
 ```javascript
-{
-  currentQuestion: Object,
-  questionIndex: Number,
-  totalQuestions: Number,
-  userAnswers: Array,
-  sessionData: Object,
-  isLoading: Boolean,
-  showResults: Boolean
+data() {
+  return {
+    // 练习状态
+    currentWordIndex: 0,
+    words: [],
+    userAnswers: [],
+    isLoading: false,
+    isCompleted: false,
+    
+    // 当前题目状态
+    currentWord: null,
+    selectedOption: null,
+    showResult: false,
+    isCorrect: false,
+    
+    // 统计信息
+    correctCount: 0,
+    totalTime: 0,
+    startTime: null,
+    
+    // UI状态
+    showResultModal: false,
+    audioLoading: false
+  }
 }
 ```
 
-**Key Methods**:
-- `initializePractice()`: Load word set and start session
-- `handleAnswerSelection(answer)`: Process user answer and update state
-- `nextQuestion()`: Advance to next question
-- `completePractice()`: Finalize session and show results
+**关键方法：**
+- `initializePractice()`: 初始化练习，加载单词数据
+- `loadNextWord()`: 加载下一个单词
+- `submitAnswer(option)`: 提交答案并处理结果
+- `completeSession()`: 完成练习会话
+- `restartPractice()`: 重新开始练习
 
-### 2. PracticeHeader Component
+#### 2. WordDisplay.vue (单词展示组件)
+**职责：** 展示当前单词、音标、音频播放控制
 
-**Purpose**: Display session info and navigation
-
-**Props**:
+**Props：**
 ```javascript
-{
-  currentIndex: Number,
-  totalQuestions: Number,
-  correctCount: Number
+props: {
+  word: Object, // { text, phonetic, audio_url, meaning }
+  showResult: Boolean,
+  isCorrect: Boolean
 }
 ```
 
-**Template Structure**:
-- Session title
-- Question counter (e.g., "5 / 20")
-- Current accuracy percentage
-- Exit button (with confirmation)
+**功能：**
+- 单词文本展示（大字体，居中）
+- 音标显示（IPA格式）
+- 音频播放按钮和状态指示
+- 答题结果的视觉反馈
 
-### 3. QuestionDisplay Component
+#### 3. OptionsPanel.vue (选项面板组件)
+**职责：** 展示选择选项，处理用户选择
 
-**Purpose**: Present the current word and context
-
-**Props**:
+**Props：**
 ```javascript
-{
-  word: Object, // { text, phonetic, definition, audio_url }
-  showAnswer: Boolean,
-  userAnswer: String,
-  correctAnswer: String
-}
-```
-
-**Features**:
-- Large, clear word display
-- Phonetic notation
-- Audio play button with visual feedback
-- Answer feedback (correct/incorrect highlighting)
-
-### 4. OptionsPanel Component
-
-**Purpose**: Display answer choices and handle selection
-
-**Props**:
-```javascript
-{
-  options: Array,
-  selectedAnswer: String,
-  correctAnswer: String,
-  showFeedback: Boolean,
+props: {
+  options: Array, // [{ id, text, is_correct }]
+  selectedOption: Number,
+  showResult: Boolean,
   disabled: Boolean
 }
 ```
 
-**Behavior**:
-- 4 option buttons in clean grid layout
-- Visual feedback for selection
-- Disabled state during feedback display
-- Correct answer highlighting when wrong
+**功能：**
+- 4个选项的网格布局
+- 选中状态的视觉反馈
+- 正确/错误答案的颜色标识
+- 触摸友好的按钮设计
 
-### 5. ProgressIndicator Component
+#### 4. ProgressBar.vue (进度条组件)
+**职责：** 显示学习进度和统计信息
 
-**Purpose**: Show learning progress and status
-
-**Props**:
+**Props：**
 ```javascript
-{
-  currentIndex: Number,
-  totalQuestions: Number,
+props: {
+  current: Number,
+  total: Number,
   correctCount: Number
 }
 ```
 
-**Elements**:
-- Linear progress bar
-- Percentage completion
-- Correct/total ratio
-- Visual milestone markers
+**功能：**
+- 线性进度条（百分比显示）
+- 当前题目数/总题目数
+- 实时正确率显示
+- 简洁的数字统计
 
-### 6. ResultsModal Component
+#### 5. ResultModal.vue (结果弹窗组件)
+**职责：** 显示练习完成结果和操作选项
 
-**Purpose**: Display session summary and next actions
-
-**Props**:
+**Props：**
 ```javascript
-{
-  sessionResults: Object,
-  incorrectAnswers: Array,
-  totalTime: Number
+props: {
+  visible: Boolean,
+  totalWords: Number,
+  correctCount: Number,
+  totalTime: Number,
+  incorrectWords: Array
 }
 ```
 
-**Content**:
-- Overall accuracy score
-- Time taken
-- Incorrect questions review
-- Action buttons (Restart, Review Mistakes, Exit)
+**功能：**
+- 总体成绩展示（正确率、用时）
+- 错误题目回顾列表
+- 重新开始按钮
+- 返回主页按钮
 
-## Data Models
+### API接口设计
 
-### Frontend Data Structures
+#### 1. 获取练习单词
+```
+GET /api/teaching/words/practice/
+Query Parameters:
+- count: 练习题目数量 (默认20)
+- difficulty: 难度级别 (可选)
+- category: 单词分类 (可选)
 
+Response:
+{
+  "words": [
+    {
+      "id": 1,
+      "text": "example",
+      "phonetic": "/ɪɡˈzæmpəl/",
+      "audio_url": "/media/audio/example.mp3",
+      "meaning": "例子",
+      "options": [
+        {"id": 1, "text": "例子", "is_correct": true},
+        {"id": 2, "text": "练习", "is_correct": false},
+        {"id": 3, "text": "测试", "is_correct": false},
+        {"id": 4, "text": "问题", "is_correct": false}
+      ]
+    }
+  ]
+}
+```
+
+#### 2. 提交学习记录
+```
+POST /api/teaching/learning-sessions/
+Request Body:
+{
+  "session_type": "word_selection_simple",
+  "total_words": 20,
+  "correct_count": 16,
+  "total_time": 180,
+  "word_records": [
+    {
+      "word_id": 1,
+      "is_correct": true,
+      "response_time": 3.2,
+      "selected_option": 1
+    }
+  ]
+}
+
+Response:
+{
+  "session_id": 123,
+  "created_at": "2024-01-01T10:00:00Z"
+}
+```
+
+## 数据模型
+
+### 前端数据模型
+
+#### Word对象
 ```javascript
-// Question Object
 {
   id: Number,
-  word: String,
-  phonetic: String,
-  definition: String,
-  options: Array[String],
-  correctAnswer: String,
-  audioUrl: String
-}
-
-// Session State
-{
-  sessionId: String,
-  startTime: Date,
-  endTime: Date,
-  totalQuestions: Number,
-  correctAnswers: Number,
-  userAnswers: Array[{
-    questionId: Number,
-    userAnswer: String,
-    isCorrect: Boolean,
-    timeSpent: Number
-  }]
-}
-
-// Practice Configuration
-{
-  wordCount: Number,
-  difficulty: String,
-  categories: Array[String],
-  userId: Number
+  text: String,        // 单词文本
+  phonetic: String,    // 音标
+  audio_url: String,   // 音频文件URL
+  meaning: String,     // 中文释义
+  options: Array       // 选项数组
 }
 ```
 
-### API Response Formats
-
+#### Option对象
 ```javascript
-// GET /api/words/practice-set
 {
-  session_id: String,
-  questions: Array[{
-    id: Number,
-    word: String,
-    phonetic: String,
-    definition: String,
-    options: Array[String],
-    correct_answer: String,
-    audio_url: String
-  }]
+  id: Number,
+  text: String,        // 选项文本
+  is_correct: Boolean  // 是否为正确答案
 }
+```
 
-// POST /api/teaching/learning-records/
+#### UserAnswer对象
+```javascript
 {
-  session_id: String,
   word_id: Number,
-  user_answer: String,
+  selected_option_id: Number,
   is_correct: Boolean,
-  time_spent: Number,
-  timestamp: String
+  response_time: Number,  // 响应时间（秒）
+  timestamp: Date
 }
 ```
 
-## Error Handling
-
-### Network Error Handling
-
-1. **API Failure Recovery**:
-   - Retry mechanism for failed requests
-   - Offline mode with cached content
-   - User-friendly error messages
-   - Graceful degradation
-
-2. **Audio Loading Errors**:
-   - Fallback to text-only mode
-   - Error indicator on audio button
-   - Alternative pronunciation guide
-
-3. **Session Recovery**:
-   - Local storage backup of progress
-   - Resume capability after interruption
-   - Data validation before submission
-
-### User Input Validation
-
-1. **Answer Selection**:
-   - Prevent double-submission
-   - Validate option existence
-   - Handle rapid clicking
-
-2. **Session Management**:
-   - Timeout handling for inactive sessions
-   - Confirmation for early exit
-   - Progress preservation
-
-## Testing Strategy
-
-### Unit Testing
-
-**Components to Test**:
-- Each Vue component in isolation
-- State management functions
-- API service methods
-- Audio handling utilities
-
-**Test Cases**:
+#### SessionResult对象
 ```javascript
-// Example test structure
-describe('QuestionDisplay Component', () => {
-  test('displays word and phonetic correctly', () => {})
-  test('handles audio play button click', () => {})
-  test('shows correct answer feedback', () => {})
-  test('handles missing audio gracefully', () => {})
-})
+{
+  total_words: Number,
+  correct_count: Number,
+  accuracy_rate: Number,    // 正确率
+  total_time: Number,       // 总用时（秒）
+  average_time: Number,     // 平均每题用时
+  incorrect_words: Array    // 错误的单词列表
+}
 ```
 
-### Integration Testing
+### 后端数据模型复用
 
-**Scenarios**:
-- Complete practice session flow
-- API integration with backend
-- Error handling and recovery
-- Cross-component communication
+系统复用现有的Django模型：
+- `Word`: 单词基础信息
+- `LearningSession`: 学习会话记录
+- `WordLearningRecord`: 单词学习记录
+- `User`: 用户信息
 
-### User Experience Testing
+## 错误处理
 
-**Focus Areas**:
-- Loading performance (< 2 seconds)
-- Response time (< 500ms for feedback)
-- Mobile responsiveness
-- Accessibility compliance
+### 前端错误处理策略
 
-### Performance Testing
+#### 1. 网络错误
+```javascript
+// API调用错误处理
+async function fetchWords() {
+  try {
+    const response = await api.get('/words/practice/');
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      showError('没有找到合适的练习内容');
+    } else if (error.code === 'NETWORK_ERROR') {
+      showError('网络连接失败，请检查网络设置');
+    } else {
+      showError('加载失败，请稍后重试');
+    }
+    throw error;
+  }
+}
+```
 
-**Metrics**:
-- Initial load time
-- Memory usage during session
-- API response times
-- Audio loading performance
+#### 2. 音频播放错误
+```javascript
+// 音频播放错误处理
+async function playAudio(audioUrl) {
+  try {
+    await audio.play();
+  } catch (error) {
+    console.warn('音频播放失败:', error);
+    showToast('音频暂时无法播放');
+  }
+}
+```
 
-## Implementation Considerations
+#### 3. 数据验证错误
+```javascript
+// 数据完整性检查
+function validateWordData(word) {
+  if (!word.text || !word.options || word.options.length !== 4) {
+    throw new Error('单词数据不完整');
+  }
+  
+  const correctOptions = word.options.filter(opt => opt.is_correct);
+  if (correctOptions.length !== 1) {
+    throw new Error('单词选项配置错误');
+  }
+}
+```
 
-### Performance Optimization
+### 用户体验优化
 
-1. **Lazy Loading**:
-   - Load questions in batches
-   - Preload next question audio
-   - Optimize image and asset loading
+#### 1. 加载状态管理
+- 初始加载：显示骨架屏
+- 音频加载：显示加载图标
+- 提交答案：按钮禁用状态
 
-2. **Caching Strategy**:
-   - Cache frequently used words
-   - Store user preferences locally
-   - Implement service worker for offline support
+#### 2. 离线处理
+- 检测网络状态
+- 本地缓存已加载的单词
+- 离线时显示友好提示
 
-3. **Bundle Optimization**:
-   - Code splitting for practice module
-   - Tree shaking for unused dependencies
-   - Minimize CSS and JavaScript
+#### 3. 错误恢复
+- 自动重试机制
+- 手动刷新选项
+- 降级到基础功能
 
-### Accessibility
+## 测试策略
 
-1. **Keyboard Navigation**:
-   - Tab order for all interactive elements
-   - Enter/Space for button activation
-   - Arrow keys for option selection
+### 单元测试
 
-2. **Screen Reader Support**:
-   - ARIA labels for all components
-   - Live regions for dynamic content
-   - Semantic HTML structure
+#### 1. 组件测试
+```javascript
+// WordDisplay.vue 测试
+describe('WordDisplay', () => {
+  test('正确显示单词信息', () => {
+    const word = {
+      text: 'example',
+      phonetic: '/ɪɡˈzæmpəl/',
+      meaning: '例子'
+    };
+    
+    const wrapper = mount(WordDisplay, {
+      props: { word }
+    });
+    
+    expect(wrapper.text()).toContain('example');
+    expect(wrapper.text()).toContain('/ɪɡˈzæmpəl/');
+  });
+  
+  test('音频播放按钮功能', async () => {
+    const wrapper = mount(WordDisplay, {
+      props: { word: mockWord }
+    });
+    
+    await wrapper.find('.audio-button').trigger('click');
+    expect(wrapper.emitted('play-audio')).toBeTruthy();
+  });
+});
+```
 
-3. **Visual Accessibility**:
-   - High contrast color scheme
-   - Scalable font sizes
-   - Clear focus indicators
+#### 2. 状态管理测试
+```javascript
+// 练习流程测试
+describe('Practice Flow', () => {
+  test('答题流程完整性', async () => {
+    const wrapper = mount(WordSelectionPractice2);
+    
+    // 模拟加载单词
+    await wrapper.vm.initializePractice();
+    expect(wrapper.vm.words.length).toBeGreaterThan(0);
+    
+    // 模拟答题
+    await wrapper.vm.submitAnswer(1);
+    expect(wrapper.vm.currentWordIndex).toBe(1);
+    expect(wrapper.vm.userAnswers.length).toBe(1);
+  });
+});
+```
 
-### Mobile Optimization
+### 集成测试
 
-1. **Touch Interface**:
-   - Minimum 44px touch targets
-   - Swipe gestures for navigation
-   - Haptic feedback for interactions
+#### 1. API集成测试
+- 单词数据获取
+- 学习记录提交
+- 错误响应处理
 
-2. **Responsive Design**:
-   - Flexible grid system
-   - Adaptive typography
-   - Orientation change handling
+#### 2. 用户流程测试
+- 完整练习流程
+- 重新开始功能
+- 结果查看功能
 
-3. **Performance**:
-   - Minimize network requests
-   - Optimize for slower connections
-   - Reduce battery usage
+### 性能测试
 
-### Security Considerations
+#### 1. 加载性能
+- 首屏加载时间 < 2秒
+- 题目切换时间 < 300ms
+- 音频播放响应 < 500ms
 
-1. **Data Protection**:
-   - Secure API communication (HTTPS)
-   - Input sanitization
-   - Session token management
+#### 2. 内存使用
+- 长时间使用无内存泄漏
+- 音频资源及时释放
+- 组件销毁清理
 
-2. **Privacy**:
-   - Minimal data collection
-   - Clear data usage policies
-   - User consent management
+### 兼容性测试
 
-This design provides a comprehensive foundation for implementing the word-selection-practice2 feature while maintaining simplicity, performance, and user experience quality.
+#### 1. 浏览器兼容
+- Chrome 80+
+- Firefox 75+
+- Safari 13+
+- Edge 80+
+
+#### 2. 设备兼容
+- 桌面端（1920x1080, 1366x768）
+- 平板端（768x1024, 1024x768）
+- 手机端（375x667, 414x896）
+
+#### 3. 网络环境
+- 高速网络（4G/WiFi）
+- 慢速网络（3G）
+- 间歇性网络中断
+
+## 性能优化
+
+### 前端优化策略
+
+#### 1. 资源优化
+```javascript
+// 图片懒加载
+const imageObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src;
+      imageObserver.unobserve(img);
+    }
+  });
+});
+
+// 音频预加载
+function preloadAudio(audioUrls) {
+  audioUrls.slice(0, 3).forEach(url => {
+    const audio = new Audio();
+    audio.preload = 'metadata';
+    audio.src = url;
+  });
+}
+```
+
+#### 2. 状态优化
+```javascript
+// 使用computed优化计算
+computed: {
+  progressPercentage() {
+    return Math.round((this.currentWordIndex / this.words.length) * 100);
+  },
+  
+  accuracyRate() {
+    return this.userAnswers.length > 0 
+      ? Math.round((this.correctCount / this.userAnswers.length) * 100)
+      : 0;
+  }
+}
+```
+
+#### 3. 渲染优化
+```vue
+<!-- 使用v-show代替v-if减少重渲染 -->
+<div v-show="!isLoading" class="practice-content">
+  <!-- 内容 -->
+</div>
+
+<!-- 使用key优化列表渲染 -->
+<div 
+  v-for="option in currentWord.options" 
+  :key="`${currentWord.id}-${option.id}`"
+  class="option-item"
+>
+  {{ option.text }}
+</div>
+```
+
+### 网络优化
+
+#### 1. 请求优化
+- 单词数据批量获取
+- 音频文件CDN加速
+- 请求去重和缓存
+
+#### 2. 数据压缩
+- API响应gzip压缩
+- 音频文件格式优化
+- 图片资源WebP格式
+
+## 部署和维护
+
+### 构建配置
+```javascript
+// vue.config.js
+module.exports = {
+  publicPath: '/static/teaching/',
+  outputDir: 'dist/word-selection-practice2',
+  assetsDir: 'assets',
+  
+  configureWebpack: {
+    optimization: {
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            name: 'vendor',
+            test: /[\\/]node_modules[\\/]/,
+            chunks: 'all'
+          }
+        }
+      }
+    }
+  }
+};
+```
+
+### 监控和日志
+```javascript
+// 错误监控
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error);
+  // 发送错误报告到监控系统
+});
+
+// 性能监控
+const observer = new PerformanceObserver((list) => {
+  list.getEntries().forEach((entry) => {
+    if (entry.entryType === 'navigation') {
+      console.log('Page load time:', entry.loadEventEnd - entry.fetchStart);
+    }
+  });
+});
+observer.observe({ entryTypes: ['navigation'] });
+```
+
+### 维护策略
+1. **版本管理**: 语义化版本控制
+2. **代码质量**: ESLint + Prettier
+3. **文档更新**: 组件文档和API文档
+4. **性能监控**: 定期性能审计
+5. **用户反馈**: 错误收集和用户体验改进

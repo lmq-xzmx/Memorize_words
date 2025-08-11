@@ -6,7 +6,7 @@
     
     // 配置
     const CONFIG = {
-        API_URL: '/accounts/api/students/for_select/',
+        API_URL: '/api/auth/api/students/for_select/',
         RETRY_DELAY: 1000,
         MAX_RETRIES: 3
     };

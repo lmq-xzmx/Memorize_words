@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     WordViewSet, WordResourceViewSet, VocabularySourceViewSet,
-    VocabularyListViewSet, UserStreakViewSet, StudySessionViewSet,
+    VocabularyListViewSet, StudySessionViewSet,
     word_challenge_view, word_examples_view
 )
 from . import batch_views
@@ -19,7 +19,7 @@ router.register(r'word-resources', WordResourceViewSet, basename='wordresource')
 router.register(r'vocabulary-sources', VocabularySourceViewSet, basename='vocabularysource')
 router.register(r'vocabulary-lists', VocabularyListViewSet, basename='vocabularylist')
 # imported-vocabulary已合并到words中
-router.register(r'user-streaks', UserStreakViewSet, basename='userstreak')
+# user-streaks已移除，因为UserStreak模型不存在
 router.register(r'study-sessions', StudySessionViewSet, basename='studysession')
 
 # URL模式

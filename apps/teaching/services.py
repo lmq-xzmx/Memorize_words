@@ -1,148 +1,125 @@
-"""
-统一学习管理服务层
-整合Teaching与Vocabulary_Manager的重叠功能
-"""
 from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from datetime import date, timedelta
-from typing import Dict, List, Optional, Union
-
 from .models import (
-    LearningGoal as TeachingLearningGoal,
+    LearningGoal,
+    LearningPlan,
+    LearningSession,
+    WordLearningRecord,
+    GuidedPracticeSession,
+    GuidedPracticeQuestion,
+    GuidedPracticeAnswer,
     GoalWord,
-    LearningSession as TeachingLearningSession,
-    WordLearningRecord as TeachingWordLearningRecord,
-    LearningPlan as TeachingLearningPlan
+    DailyStudyRecord
 )
-from apps.vocabulary_manager.models import (
-    LearningGoal as VocabLearningGoal,
-    LearningPlan as VocabLearningPlan,
-    StudySession,
-    WordLearningProgress,
-    DailyStudyRecord,
-    UserStreak
-)
-from apps.words.models import Word, WordSet, VocabularyList
+from apps.words.models import Word, VocabularyList, WordSet
+from typing import Dict, List, Optional
+import datetime
+import random
 
 User = get_user_model()
 
-
-class UnifiedLearningService:
-    """统一学习管理服务"""
+class TeachingLearningService:
+    """教学应用学习服务"""
     
-    def __init__(self, user: User):
+    def __init__(self, user):
         self.user = user
     
-    # 学习目标管理
-    def create_unified_learning_goal(self, 
-                                   name: str,
-                                   description: str = "",
-                                   target_words_count: int = 100,
-                                   start_date: date = None,
-                                   end_date: date = None,
-                                   word_sets: List[int] = None,
-                                   vocabulary_lists: List[int] = None) -> TeachingLearningGoal:
-        """创建统一的学习目标"""
-        if start_date is None:
-            start_date = date.today()
+    def create_learning_goal(self, name: str, description: str = '', 
+                           goal_type: str = 'vocabulary',
+                           target_words_count: int = 100,
+                           end_date=None) -> LearningGoal:
+        """创建学习目标"""
         if end_date is None:
-            end_date = start_date + timedelta(days=30)
+            end_date = timezone.now().date() + datetime.timedelta(days=30)
         
-        with transaction.atomic():
-            # 创建Teaching应用的学习目标
-            goal = TeachingLearningGoal.objects.create(
-                user=self.user,
-                name=name,
-                description=description,
-                target_words_count=target_words_count,
-                start_date=start_date,
-                end_date=end_date,
-                is_active=True
-            )
-            
-            # 关联单词集和词汇表
-            if word_sets:
-                word_set_objects = WordSet.objects.filter(id__in=word_sets)
-                goal.word_sets.set(word_set_objects)
-            
-            if vocabulary_lists:
-                vocab_list_objects = VocabularyList.objects.filter(id__in=vocabulary_lists)
-                goal.vocabulary_lists.set(vocab_list_objects)
-            
-            # 同步单词到目标
-            goal.sync_words_from_sets_and_lists()
-            
-            return goal
-    
-    def get_learning_goals(self, active_only: bool = False) -> List[TeachingLearningGoal]:
-        """获取学习目标列表"""
-        queryset = TeachingLearningGoal.objects.filter(user=self.user)
-        if active_only:
-            queryset = queryset.filter(is_active=True)
-        return list(queryset.order_by('-created_at'))
-    
-    def get_goal_progress(self, goal_id: int) -> Dict:
-        """获取学习目标进度"""
-        try:
-            goal = TeachingLearningGoal.objects.get(id=goal_id, user=self.user)
-            return goal.get_progress_stats()
-        except TeachingLearningGoal.DoesNotExist:
-            return {}
-    
-    # 学习会话管理
-    def start_learning_session(self, goal_id: int) -> TeachingLearningSession:
-        """开始学习会话"""
-        goal = TeachingLearningGoal.objects.get(id=goal_id, user=self.user)
-        
-        # 结束之前未结束的会话
-        active_sessions = TeachingLearningSession.objects.filter(
+        goal = LearningGoal.objects.create(
             user=self.user,
-            end_time__isnull=True
+            name=name,
+            description=description,
+            goal_type=goal_type,
+            target_words_count=target_words_count,
+            end_date=end_date,
+            is_active=True
         )
-        for session in active_sessions:
-            session.end_time = timezone.now()
-            session.save()
         
-        # 创建新会话
-        session = TeachingLearningSession.objects.create(
+        return goal
+    
+    def create_learning_plan(self, goal_id: int, plan_type: str = 'daily',
+                           words_per_day: int = 10,
+                           review_interval: int = 1) -> LearningPlan:
+        """创建学习计划"""
+        goal = LearningGoal.objects.get(id=goal_id, user=self.user)
+        
+        plan = LearningPlan.objects.create(
+            goal=goal,
+            plan_type=plan_type,
+            words_per_day=words_per_day,
+            review_interval=review_interval,
+            is_active=True
+        )
+        
+        return plan
+    
+    def get_today_learning_schedule(self, plan_id: int):
+        """获取今日学习安排"""
+        try:
+            plan = LearningPlan.objects.get(id=plan_id, goal__user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
+        
+        today = datetime.date.today()
+        
+        # 检查今天是否为学习日
+        if not plan.is_study_day_for_plan(today):
+            return {
+                'is_study_day': False,
+                'target_words': 0,
+                'message': f"今天是休息日（{plan.get_plan_type_display_with_description()}）"
+            }
+        
+        # 获取今日学习目标
+        target_words = plan.get_today_words_target()
+        
+        return {
+            'is_study_day': True,
+            'target_words': target_words,
+            'plan_type': plan.plan_type,
+            'plan_description': plan.get_plan_type_display_with_description(),
+            'review_interval': plan.review_interval
+        }
+    
+    def start_learning_session(self, goal_id: int) -> LearningSession:
+        """开始学习会话"""
+        goal = LearningGoal.objects.get(id=goal_id, user=self.user)
+        
+        session = LearningSession.objects.create(
             user=self.user,
             goal=goal
         )
         
         return session
     
-    def end_learning_session(self, session_id: int) -> TeachingLearningSession:
+    def end_learning_session(self, session_id: int) -> LearningSession:
         """结束学习会话"""
-        session = TeachingLearningSession.objects.get(
+        session = LearningSession.objects.get(
             id=session_id, 
             user=self.user
         )
         
-        if not session.end_time:
-            session.end_time = timezone.now()
-            session.save()
-            
-            # 更新用户连续学习记录
-            self._update_user_streak()
+        session.end_time = timezone.now()
+        session.save()
         
         return session
     
-    def record_word_learning(self,
-                           session_id: int,
-                           word_id: int,
-                           user_answer: str,
-                           is_correct: bool,
-                           response_time: float) -> TeachingWordLearningRecord:
+    def record_word_learning(self, session_id: int, word_id: int, 
+                           user_answer: str, is_correct: bool,
+                           response_time: float = 0.0) -> WordLearningRecord:
         """记录单词学习"""
-        session = TeachingLearningSession.objects.get(
-            id=session_id,
-            user=self.user
-        )
+        session = LearningSession.objects.get(id=session_id, user=self.user)
         word = Word.objects.get(id=word_id)
         
-        # 创建学习记录
-        record = TeachingWordLearningRecord.objects.create(
+        record = WordLearningRecord.objects.create(
             session=session,
             goal=session.goal,
             word=word,
@@ -159,225 +136,321 @@ class UnifiedLearningService:
         
         return record
     
-    # 学习计划管理
-    def create_learning_plan(self,
-                           goal_id: int,
-                           plan_type: str = 'daily',
-                           words_per_day: int = 10,
-                           review_interval: int = 1) -> TeachingLearningPlan:
-        """创建学习计划"""
-        goal = TeachingLearningGoal.objects.get(id=goal_id, user=self.user)
-        
-        plan = TeachingLearningPlan.objects.create(
-            goal=goal,
-            plan_type=plan_type,
-            words_per_day=words_per_day,
-            review_interval=review_interval,
-            is_active=True
-        )
-        
-        return plan
-    
-    # 统计和分析
     def get_learning_statistics(self) -> Dict:
-        """获取学习统计数据"""
-        # 学习目标统计
-        goals = TeachingLearningGoal.objects.filter(user=self.user)
-        total_goals = goals.count()
-        active_goals = goals.filter(is_active=True).count()
+        """获取学习统计"""
+        goals = LearningGoal.objects.filter(user=self.user)
+        sessions = LearningSession.objects.filter(user=self.user)
         
-        # 学习会话统计
-        sessions = TeachingLearningSession.objects.filter(user=self.user)
+        stats = {
+            'total_goals': goals.count(),
+            'active_goals': goals.filter(is_active=True).count(),
+            'total_sessions': sessions.count(),
+            'total_study_time': sum(
+                session.duration for session in sessions 
+                if session.end_time
+            ),
+            'average_accuracy': 0
+        }
+        
+        # 计算平均准确率
+        total_answers = sum(session.total_answers for session in sessions)
+        total_correct = sum(session.correct_answers for session in sessions)
+        
+        if total_answers > 0:
+              stats['average_accuracy'] = int(round(
+                  (total_correct / total_answers) * 100
+              ))
+        
+        return stats
+    
+    def get_plan_effectiveness(self, plan_id: int):
+        """获取学习计划效果分析"""
+        try:
+            plan = LearningPlan.objects.get(id=plan_id, goal__user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
+        
+        # 获取学习会话数据
+        sessions = LearningSession.objects.filter(
+            goal=plan.goal,
+            user=self.user
+        ).order_by('-start_time')
+        
+        if not sessions.exists():
+            return {
+                'plan': plan,
+                'total_sessions': 0,
+                'avg_accuracy': 0,
+                'total_words_studied': 0,
+                'avg_session_duration': 0,
+                'effectiveness_score': 0
+            }
+        
+        # 计算统计数据
         total_sessions = sessions.count()
-        completed_sessions = sessions.filter(end_time__isnull=False).count()
+        total_correct = sum(session.correct_answers for session in sessions)
+        total_answers = sum(session.total_answers for session in sessions)
+        total_words_studied = sum(session.words_studied for session in sessions)
         
-        # 学习记录统计
-        records = TeachingWordLearningRecord.objects.filter(session__user=self.user)
-        total_records = records.count()
-        correct_records = records.filter(is_correct=True).count()
-        accuracy_rate = (correct_records / total_records * 100) if total_records > 0 else 0
+        avg_accuracy = (total_correct / total_answers * 100) if total_answers > 0 else 0
         
-        # 总学习时间
-        total_study_minutes = 0
-        for session in completed_sessions:
-            if session.end_time and session.start_time:
-                duration = session.end_time - session.start_time
-                total_study_minutes += duration.total_seconds() / 60
+        # 计算平均会话时长
+        completed_sessions = sessions.filter(end_time__isnull=False)
+        if completed_sessions.exists():
+            total_duration = sum(
+                session.duration for session in completed_sessions
+            )
+            avg_session_duration = total_duration / completed_sessions.count()
+        else:
+            avg_session_duration = 0
+        
+        # 计算效果评分（0-100）
+        effectiveness_score = min(100, (
+            avg_accuracy * 0.4 +  # 准确率权重40%
+            min(100, total_words_studied / plan.words_per_day * 10) * 0.3 +  # 学习量权重30%
+            min(100, total_sessions * 5) * 0.3  # 坚持度权重30%
+        ))
         
         return {
-            'total_goals': total_goals,
-            'active_goals': active_goals,
+            'plan': plan,
             'total_sessions': total_sessions,
-            'completed_sessions': completed_sessions,
-            'total_records': total_records,
-            'correct_records': correct_records,
-            'accuracy_rate': round(accuracy_rate, 2),
-            'total_study_time': round(total_study_minutes, 2),
+            'avg_accuracy': round(avg_accuracy, 2),
+            'total_words_studied': total_words_studied,
+            'avg_session_duration': round(avg_session_duration, 2),
+            'effectiveness_score': round(effectiveness_score, 2),
+            'recent_sessions': sessions[:10]  # 最近10次会话
         }
     
-    def get_kanban_data(self, goal_id: int) -> Dict:
-        """获取九宫格看板数据"""
-        goal = TeachingLearningGoal.objects.get(id=goal_id, user=self.user)
-        return goal.get_progress_stats()
+    def sync_words_to_goal(self, goal: LearningGoal):
+        """同步词汇表和单词集中的单词到目标"""
+        # 获取所有相关单词
+        words = set()
+        
+        # 从单词集获取单词
+        for word_set in goal.word_sets.all():
+            words.update(word_set.words.all())
+        
+        # 从词汇表获取单词
+        for vocab_list in goal.vocabulary_lists.all():
+            words.update(vocab_list.words.all())
+        
+        # 创建目标单词关联
+        for word in words:
+            GoalWord.objects.get_or_create(
+                goal=goal,
+                word=word
+            )
+        
+        # 更新目标单词总数
+        goal.target_words_count = max(goal.target_words_count, len(words))
+        goal.save(update_fields=['target_words_count'])
+
+
+class LearningPlanService:
+    """学习计划服务类（从vocabulary_manager迁移）"""
     
-    # 私有方法
-    def _update_user_streak(self):
-        """更新用户连续学习记录"""
+    def __init__(self, user):
+        self.user = user
+    
+    def create_learning_plan(self, learning_goal_id, plan_type='daily_progress', 
+                           daily_target=10, start_date=None, end_date=None):
+        """创建学习计划"""
         try:
-            streak, created = UserStreak.objects.get_or_create(
+            learning_goal = LearningGoal.objects.get(id=learning_goal_id, user=self.user)
+        except LearningGoal.DoesNotExist:
+            raise ValueError("学习目标不存在")
+        
+        if start_date is None:
+            start_date = datetime.date.today()
+        
+        if end_date is None:
+            # 根据总单词数和每日目标计算结束日期
+            if plan_type == 'weekday':
+                # 工作日模式：只计算工作日
+                days_needed = (learning_goal.total_words // daily_target) * 7 // 5
+            elif plan_type == 'weekend':
+                # 周末模式：只计算周末
+                days_needed = (learning_goal.total_words // daily_target) * 7 // 2
+            else:
+                # 其他模式：按每日计算
+                days_needed = learning_goal.total_words // daily_target
+            
+            end_date = start_date + datetime.timedelta(days=max(days_needed, 1))
+        
+        with transaction.atomic():
+            plan = LearningPlan.objects.create(
                 user=self.user,
+                goal=learning_goal,
+                name=f"{learning_goal.name}学习计划",
+                plan_type=plan_type,
+                start_date=start_date,
+                end_date=end_date,
+                total_words=learning_goal.total_words,
+                daily_target=daily_target,
+                status='active'
+            )
+            
+            # 初始化每日目标
+            plan.update_daily_target()
+            
+        return plan
+    
+    def get_today_study_plan(self, plan_id):
+        """获取今日学习计划"""
+        try:
+            plan = LearningPlan.objects.get(id=plan_id, user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
+        
+        today = datetime.date.today()
+        
+        # 检查今天是否为学习日
+        if not plan.is_study_day(today):
+            return {
+                'is_study_day': False,
+                'target_words': 0,
+                'message': f"今天是休息日（{plan.get_plan_type_display()}）"
+            }
+        
+        # 获取或创建今日学习记录
+        record, created = DailyStudyRecord.objects.get_or_create(
+            user=self.user,
+            learning_plan=plan,
+            study_date=today,
+            defaults={
+                'target_words': plan.get_today_target(),
+                'completed_words': 0
+            }
+        )
+        
+        return {
+            'is_study_day': True,
+            'target_words': record.target_words,
+            'completed_words': record.completed_words,
+            'remaining_words': record.target_words - record.completed_words,
+            'completion_rate': record.completion_rate,
+            'plan_type': plan.plan_type,
+            'plan_type_display': plan.get_plan_type_display()
+        }
+    
+    def update_study_progress(self, plan_id, completed_words, study_duration=None):
+        """更新学习进度"""
+        try:
+            plan = LearningPlan.objects.get(id=plan_id, user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
+        
+        today = datetime.date.today()
+        
+        with transaction.atomic():
+            # 更新今日学习记录
+            record, created = DailyStudyRecord.objects.get_or_create(
+                user=self.user,
+                learning_plan=plan,
+                study_date=today,
                 defaults={
-                    'current_streak': 1,
-                    'longest_streak': 1,
-                    'last_study_date': date.today(),
-                    'total_study_days': 1
+                    'target_words': plan.get_today_target(),
+                    'completed_words': 0
                 }
             )
             
-            if not created:
-                streak.update_streak(date.today())
-        except Exception:
-            # 如果UserStreak模型不存在，忽略错误
-            pass
-
-
-class DataMigrationService:
-    """数据迁移服务"""
+            record.completed_words = completed_words
+            if study_duration:
+                record.study_duration = study_duration
+            record.save()
+            
+            # 更新学习目标的已学单词数
+            plan.goal.learned_words += completed_words
+            plan.goal.save(update_fields=['learned_words'])
+            
+            # 如果是动态调整模式，更新每日目标
+            plan.update_daily_target()
+            
+            # 检查是否完成计划
+            if plan.goal.learned_words >= plan.total_words:
+                plan.status = 'completed'
+                plan.save(update_fields=['status'])
+        
+        return record
     
-    @staticmethod
-    def migrate_vocabulary_manager_to_teaching():
-        """将Vocabulary_Manager数据迁移到Teaching应用"""
-        migrated_count = 0
-        
-        # 迁移学习目标
-        vocab_goals = VocabLearningGoal.objects.all()
-        
-        for vocab_goal in vocab_goals:
-            # 检查是否已经迁移
-            existing_goal = TeachingLearningGoal.objects.filter(
-                user=vocab_goal.user,
-                name=vocab_goal.name
-            ).first()
-            
-            if existing_goal:
-                continue
-            
-            # 创建新的学习目标
-            teaching_goal = TeachingLearningGoal.objects.create(
-                user=vocab_goal.user,
-                name=vocab_goal.name,
-                description=vocab_goal.description,
-                target_words_count=vocab_goal.total_words,
-                start_date=vocab_goal.created_at.date(),
-                end_date=vocab_goal.created_at.date() + timedelta(days=30),
-                is_active=vocab_goal.is_current,
-                created_at=vocab_goal.created_at,
-                updated_at=vocab_goal.updated_at
-            )
-            
-            # 关联单词集或词汇表
-            if vocab_goal.word_set:
-                teaching_goal.word_sets.add(vocab_goal.word_set)
-            if vocab_goal.vocabulary_list:
-                teaching_goal.vocabulary_lists.add(vocab_goal.vocabulary_list)
-            
-            # 同步单词
-            teaching_goal.sync_words_from_sets_and_lists()
-            
-            migrated_count += 1
-        
-        return migrated_count
-    
-    @staticmethod
-    def merge_duplicate_learning_data():
-        """合并重复的学习数据"""
-        # 查找重复的学习目标
-        duplicates = []
-        
-        goals = TeachingLearningGoal.objects.values('user', 'name').annotate(
-            count=models.Count('id')
-        ).filter(count__gt=1)
-        
-        for goal_info in goals:
-            user_goals = TeachingLearningGoal.objects.filter(
-                user_id=goal_info['user'],
-                name=goal_info['name']
-            ).order_by('created_at')
-            
-            # 保留最早创建的目标，合并其他目标的数据
-            primary_goal = user_goals.first()
-            duplicate_goals = user_goals[1:]
-            
-            for dup_goal in duplicate_goals:
-                # 迁移目标单词
-                GoalWord.objects.filter(goal=dup_goal).update(goal=primary_goal)
-                
-                # 迁移学习会话
-                TeachingLearningSession.objects.filter(goal=dup_goal).update(goal=primary_goal)
-                
-                # 迁移学习记录
-                TeachingWordLearningRecord.objects.filter(goal=dup_goal).update(goal=primary_goal)
-                
-                # 删除重复目标
-                dup_goal.delete()
-                duplicates.append(dup_goal.name)
-        
-        return duplicates
-
-
-class LearningProgressService:
-    """学习进度服务"""
-    
-    def __init__(self, user: User):
-        self.user = user
-    
-    def update_word_progress(self, goal_id: int, word_id: int, action: str) -> Dict:
-        """更新单词学习进度"""
-        goal = TeachingLearningGoal.objects.get(id=goal_id, user=self.user)
-        word = Word.objects.get(id=word_id)
-        
-        # 获取或创建单词学习进度
+    def get_plan_statistics(self, plan_id):
+        """获取学习计划统计信息"""
         try:
-            progress = WordLearningProgress.objects.get(
-                user=self.user,
-                learning_goal_id=goal_id,
-                word=word
-            )
-        except WordLearningProgress.DoesNotExist:
-            # 如果WordLearningProgress不存在，通过学习记录来模拟进度
-            records = TeachingWordLearningRecord.objects.filter(
-                goal=goal,
-                word=word,
-                session__user=self.user
-            )
-            
-            review_count = records.filter(is_correct=True).count()
-            last_review = records.order_by('-created_at').first()
-            
-            return {
-                'review_count': review_count,
-                'is_mastered': review_count >= 6,
-                'is_forgotten': False,
-                'status': f'review_{min(review_count, 6)}' if review_count > 0 else 'not_started',
-                'last_review_date': last_review.created_at if last_review else None
-            }
+            plan = LearningPlan.objects.get(id=plan_id, user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
         
-        # 根据操作更新进度
-        if action == 'review':
-            progress.add_review()
-        elif action == 'master':
-            progress.is_mastered = True
-            progress.mastered_date = timezone.now()
-            progress.save()
-        elif action == 'forget':
-            progress.mark_as_forgotten()
-        elif action == 'reset':
-            progress.reset_progress()
+        # 获取学习记录
+        records = DailyStudyRecord.objects.filter(
+            learning_plan=plan
+        ).order_by('study_date')
+        
+        total_study_days = records.count()
+        total_completed_words = sum(record.completed_words for record in records)
+        total_target_words = sum(record.target_words for record in records)
+        
+        # 计算平均完成率
+        avg_completion_rate = 0
+        if total_target_words > 0:
+            avg_completion_rate = (total_completed_words / total_target_words) * 100
+        
+        # 计算学习进度
+        progress_percentage = plan.goal.progress_percentage
         
         return {
-            'review_count': progress.review_count,
-            'is_mastered': progress.is_mastered,
-            'is_forgotten': progress.is_forgotten,
-            'status': progress.status,
-            'last_review_date': progress.last_review_date
+            'plan': plan,
+            'total_study_days': total_study_days,
+            'total_completed_words': total_completed_words,
+            'total_target_words': total_target_words,
+            'avg_completion_rate': round(avg_completion_rate, 2),
+            'progress_percentage': progress_percentage,
+            'remaining_words': plan.total_words - plan.goal.learned_words,
+            'remaining_days': (plan.end_date - datetime.date.today()).days,
+            'records': records
         }
+    
+    def adjust_plan_schedule(self, plan_id, new_end_date=None, new_daily_target=None):
+        """调整学习计划安排"""
+        try:
+            plan = LearningPlan.objects.get(id=plan_id, user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
+        
+        with transaction.atomic():
+            if new_end_date:
+                plan.end_date = new_end_date
+            
+            if new_daily_target:
+                plan.daily_target = new_daily_target
+            
+            plan.save()
+            
+            # 重新计算每日目标
+            plan.update_daily_target()
+        
+        return plan
+    
+    def pause_plan(self, plan_id):
+        """暂停学习计划"""
+        try:
+            plan = LearningPlan.objects.get(id=plan_id, user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
+        
+        plan.status = 'paused'
+        plan.save(update_fields=['status'])
+        return plan
+    
+    def resume_plan(self, plan_id):
+        """恢复学习计划"""
+        try:
+            plan = LearningPlan.objects.get(id=plan_id, user=self.user)
+        except LearningPlan.DoesNotExist:
+            raise ValueError("学习计划不存在")
+        
+        plan.status = 'active'
+        plan.save(update_fields=['status'])
+        
+        # 重新计算每日目标
+        plan.update_daily_target()
+        return plan

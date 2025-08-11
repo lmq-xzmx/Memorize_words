@@ -14,5 +14,5 @@ router.register(r'subscriptions', views.UserSubscriptionViewSet, basename='subsc
 app_name = 'resource_authorization'
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
 ]

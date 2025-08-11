@@ -8,6 +8,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import login, logout
 from django.db.models import Q, Count, QuerySet
 from django.utils import timezone
@@ -28,6 +29,7 @@ from .serializers import (
 )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class CustomAuthToken(ObtainAuthToken):
     """自定义认证Token视图"""
     serializer_class = LoginSerializer
@@ -63,7 +65,7 @@ class CustomAuthToken(ObtainAuthToken):
             ip = x_forwarded_for.split(',')[0]
         else:
             ip = request.META.get('REMOTE_ADDR')
-        return ip
+        return ip or ''
 
 
 class RegisterViewSet(viewsets.GenericViewSet):
@@ -169,7 +171,7 @@ class UserViewSet(viewsets.ModelViewSet):
     ordering_fields = ['date_joined', 'last_login', 'username']
     ordering = ['-date_joined']
     
-    def get_serializer_class(self) -> Type[BaseSerializer]:
+    def get_serializer_class(self):
         """根据动作选择序列化器"""
         if self.action == 'list':
             return UserListSerializer
@@ -203,8 +205,8 @@ class UserViewSet(viewsets.ModelViewSet):
         
         # 检查权限
         user_role = getattr(request.user, 'role', None)
-        if not (getattr(request.user, 'is_superuser', False) or 
-                user_role == UserRole.ADMIN):
+        is_superuser = getattr(request.user, 'is_superuser', False)
+        if not (is_superuser or user_role == UserRole.ADMIN):
             return Response(
                 {'error': '权限不足'}, 
                 status=status.HTTP_403_FORBIDDEN
@@ -214,10 +216,11 @@ class UserViewSet(viewsets.ModelViewSet):
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
     
-    def get_queryset(self) -> QuerySet[CustomUser]:
+    def get_queryset(self):
         """根据用户角色过滤查询集"""
         user = self.request.user
-        if hasattr(user, 'is_superuser') and user.is_superuser:
+        is_superuser = getattr(user, 'is_superuser', False)
+        if is_superuser:
             return CustomUser.objects.all()
         user_role = getattr(user, 'role', None)
         if user_role == UserRole.ADMIN:
@@ -339,10 +342,11 @@ class LearningProfileViewSet(viewsets.ModelViewSet):
     serializer_class = LearningProfileSerializer
     permission_classes = [IsAuthenticated]
     
-    def get_queryset(self) -> QuerySet[LearningProfile]:
+    def get_queryset(self):
         """获取当前用户的学习档案"""
         user = self.request.user
-        if hasattr(user, 'is_superuser') and user.is_superuser:
+        is_superuser = getattr(user, 'is_superuser', False)
+        if is_superuser:
             return LearningProfile.objects.all()
         user_role = getattr(user, 'role', None)
         if user_role == UserRole.ADMIN:
@@ -393,10 +397,11 @@ class UserLoginLogViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['login_time']
     ordering = ['-login_time']
     
-    def get_queryset(self) -> QuerySet[UserLoginLog]:
+    def get_queryset(self):
         """根据用户角色过滤查询集"""
         user = self.request.user
-        if hasattr(user, 'is_superuser') and user.is_superuser:
+        is_superuser = getattr(user, 'is_superuser', False)
+        if is_superuser:
             return UserLoginLog.objects.all()
         user_role = getattr(user, 'role', None)
         if user_role == UserRole.ADMIN:
@@ -419,7 +424,7 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = []  # 允许所有已认证用户访问
     authentication_classes = []  # 使用Django session认证
     
-    def get_queryset(self) -> QuerySet[CustomUser]:
+    def get_queryset(self):
         """获取所有学生用户"""
         return CustomUser.objects.filter(role=UserRole.STUDENT, is_active=True).order_by('real_name', 'username')
     
@@ -433,7 +438,7 @@ class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
             for student in students:
                 # 确保所有字段都有默认值
                 student_data = {
-                    'id': student.id,
+                    'id': getattr(student, 'id', None),
                     'username': student.username or '',
                     'real_name': student.real_name or student.username or '',
                     'display_name': f"{student.real_name or student.username} ({student.username})",
@@ -464,10 +469,11 @@ class RoleExtensionViewSet(viewsets.ModelViewSet):
     ordering_fields = ['sort_order', 'created_at']
     ordering = ['sort_order', 'created_at']
     
-    def get_queryset(self) -> QuerySet[RoleExtension]:
+    def get_queryset(self):
         """根据用户角色过滤查询集"""
         user = self.request.user
-        if hasattr(user, 'is_superuser') and user.is_superuser:
+        is_superuser = getattr(user, 'is_superuser', False)
+        if is_superuser:
             return RoleExtension.objects.all()
         user_role = getattr(user, 'role', None)
         if user_role == UserRole.ADMIN:
@@ -476,7 +482,7 @@ class RoleExtensionViewSet(viewsets.ModelViewSet):
             # 普通用户只能查看激活的扩展字段
             return RoleExtension.objects.filter(is_active=True)
     
-    def get_serializer_class(self) -> Type[BaseSerializer]:
+    def get_serializer_class(self):
         """根据操作选择序列化器"""
         if self.action == 'list':
             return RoleExtensionListSerializer
@@ -548,10 +554,11 @@ class UserExtensionDataViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['extension__role', 'extension__field_type']
     
-    def get_queryset(self) -> QuerySet[UserExtensionData]:
+    def get_queryset(self):
         """根据用户角色过滤查询集"""
         user = self.request.user
-        if hasattr(user, 'is_superuser') and user.is_superuser:
+        is_superuser = getattr(user, 'is_superuser', False)
+        if is_superuser:
             return UserExtensionData.objects.all()
         user_role = getattr(user, 'role', None)
         if user_role == UserRole.ADMIN:
@@ -573,7 +580,8 @@ class UserExtensionDataViewSet(viewsets.ModelViewSet):
     def my_data(self, request):
         """获取我的扩展数据"""
         user = request.user
-        if hasattr(user, 'id'):
+        user_id = getattr(user, 'id', None)
+        if user_id is not None:
             data = UserExtensionData.objects.filter(user=user)
         else:
             data = UserExtensionData.objects.none()

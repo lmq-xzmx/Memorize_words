@@ -1,8 +1,12 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from apps.words.models import Word
-from apps.vocabulary_manager.models import UserStreak, StudySession
+# UserStreak已移除，因为该模型不存在
 from apps.teaching.models import LearningGoal, LearningSession, WordLearningRecord
+from .models import (
+    UserEngagementMetrics, UserRetentionData, ABTestExperiment, ABTestParticipant,
+    UserBehaviorPattern, GameElementEffectiveness
+)
 from django.db.models import Count, Avg, Sum
 from django.utils import timezone
 from datetime import timedelta, date
@@ -197,3 +201,118 @@ class UserComparisonSerializer(serializers.Serializer):
     accuracy_rate = serializers.FloatField(help_text='正确率')
     streak_days = serializers.IntegerField(help_text='连续学习天数')
     above_average = serializers.BooleanField(help_text='是否高于平均水平')
+
+
+class UserEngagementMetricsSerializer(serializers.ModelSerializer):
+    """用户粘性指标序列化器"""
+    class Meta:
+        model = UserEngagementMetrics
+        fields = '__all__'
+        read_only_fields = ('created_at', 'last_updated')
+
+
+class UserRetentionDataSerializer(serializers.ModelSerializer):
+    """用户留存数据序列化器"""
+    class Meta:
+        model = UserRetentionData
+        fields = '__all__'
+        read_only_fields = ('created_at',)
+
+
+class ABTestExperimentSerializer(serializers.ModelSerializer):
+    """A/B测试实验序列化器"""
+    participants_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = ABTestExperiment
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+    
+    def get_participants_count(self, obj):
+        return obj.participants.count()
+
+
+class ABTestParticipantSerializer(serializers.ModelSerializer):
+    """A/B测试参与者序列化器"""
+    experiment_name = serializers.CharField(source='experiment.name', read_only=True)
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = ABTestParticipant
+        fields = '__all__'
+        read_only_fields = ('joined_at',)
+
+
+class UserBehaviorPatternSerializer(serializers.ModelSerializer):
+    """用户行为模式序列化器"""
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    
+    class Meta:
+        model = UserBehaviorPattern
+        fields = '__all__'
+        read_only_fields = ('last_updated',)
+
+
+class GameElementEffectivenessSerializer(serializers.ModelSerializer):
+    """游戏化元素效果序列化器"""
+    measurement_duration = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = GameElementEffectiveness
+        fields = '__all__'
+        read_only_fields = ('created_at', 'updated_at')
+    
+    def get_measurement_duration(self, obj):
+        if obj.measurement_period_start and obj.measurement_period_end:
+            duration = obj.measurement_period_end - obj.measurement_period_start
+            return duration.days
+        return 0
+
+
+class EngagementAnalysisSerializer(serializers.Serializer):
+    """用户粘性分析序列化器"""
+    user_id = serializers.IntegerField()
+    daily_active_days = serializers.IntegerField()
+    weekly_active_days = serializers.IntegerField()
+    monthly_active_days = serializers.IntegerField()
+    total_study_time = serializers.FloatField()
+    avg_session_length = serializers.FloatField()
+    retention_rate = serializers.FloatField()
+    engagement_score = serializers.FloatField()
+    last_updated = serializers.DateTimeField()
+
+
+class BehaviorAnalysisSerializer(serializers.Serializer):
+    """用户行为分析序列化器"""
+    user_id = serializers.IntegerField()
+    preferred_study_time = serializers.CharField()
+    avg_session_length = serializers.IntegerField()
+    preferred_difficulty = serializers.CharField()
+    engagement_type = serializers.CharField()
+    motivation_factors = serializers.ListField()
+    social_activity_level = serializers.CharField()
+    competitive_tendency = serializers.FloatField()
+    learning_style = serializers.CharField()
+    retention_rate = serializers.FloatField()
+    churn_risk_score = serializers.FloatField()
+    engagement_score = serializers.FloatField()
+    last_updated = serializers.DateTimeField()
+
+
+class ABTestResultSerializer(serializers.Serializer):
+    """A/B测试结果序列化器"""
+    experiment = serializers.DictField()
+    results = serializers.DictField()
+
+
+class GameElementAnalysisSerializer(serializers.Serializer):
+    """游戏化元素分析序列化器"""
+    element_name = serializers.CharField()
+    element_type = serializers.CharField()
+    engagement_impact = serializers.FloatField()
+    retention_impact = serializers.FloatField()
+    learning_efficiency_impact = serializers.FloatField()
+    total_interactions = serializers.IntegerField()
+    unique_users = serializers.IntegerField()
+    avg_interaction_frequency = serializers.FloatField()
+    measurement_period = serializers.DictField()

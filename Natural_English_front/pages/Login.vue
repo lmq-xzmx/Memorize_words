@@ -90,8 +90,13 @@ export default {
         }
         localStorage.setItem('user', JSON.stringify(userInfo))
         
-        // 跳转到仪表板
-        this.$router.push('/dashboard')
+        // 触发权限变更事件，通知其他组件用户状态已更新
+        if (window.permissionWatcher) {
+          window.permissionWatcher.notifyChange(userInfo)
+        }
+        
+        // 跳转到首页
+        this.$router.push('/index')
       } catch (error) {
         console.error('登录失败:', error)
         this.error = error.non_field_errors?.[0] || '登录失败，请检查用户名和密码'

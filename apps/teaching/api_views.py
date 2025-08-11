@@ -1,12 +1,14 @@
 from rest_framework import viewsets, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
-from django.db.models import Q, Count, Avg, Sum
+from rest_framework.renderers import JSONRenderer
+from django.db.models import Q, Count, Avg, Sum, QuerySet
 from django.utils import timezone
 from datetime import timedelta
+from typing import Type, Union, Any, Optional
 
 from .models import (
     LearningGoal, GoalWord, LearningSession, WordLearningRecord,
@@ -27,16 +29,30 @@ from .serializers import (
 class LearningGoalViewSet(viewsets.ModelViewSet):
     """学习目标视图集"""
     serializer_class = LearningGoalSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['is_active']
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['name', 'description']
     ordering_fields = ['created_at', 'start_date', 'end_date']
     ordering = ['-created_at']
     
-    def get_queryset(self):
-        """获取当前用户的学习目标"""
-        return LearningGoal.objects.filter(user=self.request.user)
+    # 禁用可浏览的API渲染器以避免模板错误
+    renderer_classes = [JSONRenderer]
+    
+    def get_permissions(self):
+        """根据操作类型设置权限"""
+        if self.action == 'list':
+            # 允许匿名用户查看学习目标列表
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):  # type: ignore
+        """获取学习目标"""
+        if self.request.user.is_authenticated:
+            return LearningGoal.objects.filter(user=self.request.user)
+        else:
+            # 匿名用户只能看到活跃的公共学习目标
+            return LearningGoal.objects.filter(is_active=True)
     
     def perform_create(self, serializer):
         """创建学习目标时设置用户"""
@@ -112,6 +128,108 @@ class LearningGoalViewSet(viewsets.ModelViewSet):
             'removed_count': removed_count,
             'total_words': GoalWord.objects.filter(goal=goal).count()
         })
+    
+    @action(detail=False, methods=['get'])
+    def current(self, request):
+        """获取当前活跃的学习目标"""
+        current_goal = LearningGoal.objects.filter(
+            user=request.user,
+            is_active=True
+        ).first()
+        
+        if not current_goal:
+            return Response(
+                {'message': '暂无活跃的学习目标'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = self.get_serializer(current_goal)
+        goal_data = serializer.data
+        
+        # 添加进度信息
+        progress_stats = current_goal.get_progress_stats()
+        goal_data.update(progress_stats)
+        
+        return Response(goal_data)
+    
+    @action(detail=True, methods=['get'])
+    def words(self, request, pk=None):
+        """分页获取学习目标的单词列表"""
+        goal = self.get_object()
+        
+        # 获取查询参数
+        page_size = int(request.GET.get('page_size', 20))
+        page = int(request.GET.get('page', 1))
+        filter_type = request.GET.get('filter', 'all')
+        
+        # 构建查询集
+        queryset = goal.goal_words.select_related('word')
+        
+        # 应用筛选
+        if filter_type == 'recent':
+            queryset = queryset.order_by('-added_at')
+        elif filter_type == 'alphabetical':
+            queryset = queryset.order_by('word__word')
+        else:
+            queryset = queryset.order_by('-added_at')
+        
+        # 分页处理
+        from django.core.paginator import Paginator
+        paginator = Paginator(queryset, page_size)
+        
+        try:
+            page_obj = paginator.page(page)
+        except:
+            page_obj = paginator.page(1)
+        
+        # 序列化数据
+        results = []
+        for goal_word in page_obj:
+            results.append({
+                'id': goal_word.id,
+                'word': {
+                    'id': goal_word.word.id,
+                    'word': goal_word.word.word,
+                    'definition': getattr(goal_word.word, 'definition', ''),
+                    'pronunciation': getattr(goal_word.word, 'pronunciation', ''),
+                },
+                'added_at': goal_word.added_at.isoformat(),
+            })
+        
+        return Response({
+            'results': results,
+            'count': paginator.count,
+            'num_pages': paginator.num_pages,
+            'current_page': page,
+            'has_next': page_obj.has_next(),
+            'has_previous': page_obj.has_previous(),
+        })
+    
+    @action(detail=True, methods=['post'])
+    def remove_word(self, request, pk=None):
+        """从学习目标中移除单个单词"""
+        goal = self.get_object()
+        word_id = request.data.get('word_id')
+        
+        if not word_id:
+            return Response(
+                {'detail': '请提供单词ID'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            goal_word = GoalWord.objects.get(goal=goal, word_id=word_id)
+            goal_word.delete()
+            
+            return Response({
+                'detail': '单词删除成功',
+                'remaining_count': goal.goal_words.count()
+            })
+        except GoalWord.DoesNotExist:
+            return Response(
+                {'detail': '单词不存在于此学习目标中'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class GoalWordViewSet(viewsets.ModelViewSet):
@@ -123,7 +241,7 @@ class GoalWordViewSet(viewsets.ModelViewSet):
     ordering_fields = ['added_at']
     ordering = ['-added_at']
     
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         """获取当前用户的目标单词"""
         return GoalWord.objects.filter(goal__user=self.request.user)
 
@@ -136,11 +254,11 @@ class LearningSessionViewSet(viewsets.ModelViewSet):
     ordering_fields = ['start_time', 'end_time']
     ordering = ['-start_time']
     
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         """获取当前用户的学习会话"""
         return LearningSession.objects.filter(user=self.request.user)
     
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore
         """根据动作选择序列化器"""
         if self.action == 'create':
             return LearningSessionCreateSerializer
@@ -187,11 +305,11 @@ class WordLearningRecordViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'response_time']
     ordering = ['-created_at']
     
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         """获取当前用户的学习记录"""
         return WordLearningRecord.objects.filter(session__user=self.request.user)
     
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore
         """根据动作选择序列化器"""
         if self.action == 'create':
             return WordLearningRecordCreateSerializer
@@ -247,7 +365,7 @@ class LearningPlanViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     ordering = ['-created_at']
     
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         """获取当前用户的学习计划"""
         return LearningPlan.objects.filter(goal__user=self.request.user)
 
@@ -374,19 +492,19 @@ class GuidedPracticeSessionViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'completed_at']
     ordering = ['-created_at']
     
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         """获取当前用户的指导练习会话"""
-        return GuidedPracticeSession.objects.filter(teacher=self.request.user)
+        return GuidedPracticeSession.objects.filter(user=self.request.user)
     
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore
         """根据动作选择序列化器"""
         if self.action == 'retrieve':
             return GuidedPracticeSessionDetailSerializer
         return GuidedPracticeSessionSerializer
     
     def perform_create(self, serializer):
-        """创建指导练习会话时设置教师"""
-        serializer.save(teacher=self.request.user)
+        """创建指导练习会话时设置用户"""
+        serializer.save(user=self.request.user)
     
     @action(detail=True, methods=['post'])
     def complete(self, request, pk=None):
@@ -454,9 +572,9 @@ class GuidedPracticeQuestionViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'order']
     ordering = ['order', 'created_at']
     
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         """获取当前用户的指导练习问题"""
-        return GuidedPracticeQuestion.objects.filter(session__teacher=self.request.user)
+        return GuidedPracticeQuestion.objects.filter(session__user=self.request.user)
     
     @action(detail=True, methods=['get'])
     def answers(self, request, pk=None):
@@ -482,23 +600,23 @@ class GuidedPracticeAnswerViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at']
     ordering = ['-created_at']
     
-    def get_queryset(self):
+    def get_queryset(self):  # type: ignore
         """获取相关的指导练习答案"""
         user = self.request.user
-        # 教师可以看到自己会话中的所有答案，学生只能看到自己的答案
+        # 用户可以看到自己会话中的所有答案
         return GuidedPracticeAnswer.objects.filter(
-            Q(question__session__teacher=user) | Q(student=user)
+            Q(question__session__user=user)
         )
     
-    def get_serializer_class(self):
+    def get_serializer_class(self):  # type: ignore
         """根据动作选择序列化器"""
         if self.action == 'create':
             return GuidedPracticeAnswerCreateSerializer
         return GuidedPracticeAnswerSerializer
     
     def perform_create(self, serializer):
-        """创建答案时设置学生"""
-        serializer.save(student=self.request.user)
+        """创建答案时设置用户"""
+        serializer.save(user=self.request.user)
     
     @action(detail=False, methods=['get'])
     def my_answers(self, request):

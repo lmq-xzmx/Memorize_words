@@ -11,7 +11,7 @@ from .models import (
     UserSubscription
 )
 from apps.teaching.models import LearningGoal, LearningSession
-from apps.vocabulary_manager.models import LearningGoal as VocabLearningGoal
+from apps.teaching.models import LearningGoal as VocabLearningGoal
 from apps.words.models import Word, WordSet
 
 User = get_user_model()

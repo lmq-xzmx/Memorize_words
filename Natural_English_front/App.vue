@@ -9,48 +9,32 @@
     </div>
     
     <!-- 底部菜单栏，只在特定页面显示 -->
-    <TabBar 
+    <BottomNavigation 
       v-if="showTabBar" 
-      :current="$route.path"
-      @tab-change="handleTabChange"
+      :current-path="$route.path"
     />
   </div>
 </template>
 
 <script>
-import TabBar from './components/TabBar.vue'
+import BottomNavigation from './components/BottomNavigation.vue'
 import TopNavBar from './components/TopNavBar.vue'
+import elementPositionReset from './mixins/elementPositionReset.js'
 
 export default {
   name: 'App',
+  mixins: [elementPositionReset],
   components: {
-    TabBar,
+    BottomNavigation,
     TopNavBar
   },
   computed: {
     showTabBar() {
-      // 定义需要显示底部菜单栏的页面
-      const tabBarPages = [
-        '/dashboard',
-        '/word-reading', 
-        '/word-challenge',
-        '/word-selection',
-        '/word-selection-practice',
-        '/word-examples',
-        '/word-learning/spelling',
-        '/word-learning/flashcard',
-        '/word-learning',
-        '/word-detail',
-        '/word-root-analysis',
-        '/pattern-memory',
-        '/story-reading',
-        '/word-review',
-        '/profile',
-        '/community',
-        '/fashion',
-        '/discover'
-      ]
-      return tabBarPages.some(page => this.$route.path.startsWith(page))
+      // 定义不需要显示底部菜单栏的页面（登录页和注册页）
+      const excludePages = ['/login', '/register']
+      
+      // 如果当前页面是排除页面，则不显示底部导航
+      return !excludePages.some(page => this.$route.path.startsWith(page))
     },
     showTopNav() {
       // 与showTabBar保持一致
@@ -58,9 +42,6 @@ export default {
     }
   },
   methods: {
-    handleTabChange(item) {
-      console.log('切换到:', item.text, item.path)
-    },
     handleOpenSettings() {
       // 处理设置按钮点击
       console.log('打开设置')
@@ -71,6 +52,8 @@ export default {
 </script>
 
 <style>
+@import './assets/css/position-reset.css';
+
 #app {
   min-height: 100vh;
   position: relative;

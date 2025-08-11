@@ -1,681 +1,268 @@
 <template>
-  <div class="progress-visualization">
-    <!-- 用户等级和经验 -->
-    <div class="level-section">
-      <div class="level-badge">
-        <div class="level-number">{{ level }}</div>
-        <div class="level-label">等级</div>
+  <div class="combo-indicator" v-if="combo > 1">
+    <div class="combo-content" :class="{ 'combo-pulse': isPulsing }">
+      <div class="combo-icon">🔥</div>
+      <div class="combo-text">
+        <span class="combo-number">{{ combo }}</span>
+        <span class="combo-label">连击</span>
       </div>
-      
-      <div class="exp-container">
-        <div class="exp-info">
-          <span class="exp-current">{{ currentExp }}</span>
-          <span class="exp-separator">/</span>
-          <span class="exp-required">{{ requiredExp }}</span>
-          <span class="exp-label">经验值</span>
-        </div>
-        
-        <div class="exp-bar">
-          <div 
-            class="exp-fill" 
-            :style="{ width: expPercentage + '%' }"
-            :class="{ 'exp-gaining': isGainingExp }"
-          ></div>
-          <div class="exp-percentage">{{ Math.round(expPercentage) }}%</div>
-        </div>
-        
-        <div v-if="expToNext > 0" class="exp-to-next">
-          还需 {{ expToNext }} 经验升级
-        </div>
+      <div class="combo-multiplier" v-if="multiplier > 1">
+        x{{ multiplier }}
       </div>
     </div>
     
-    <!-- 学习统计 -->
-    <div class="stats-section">
-      <div class="stat-card">
-        <div class="stat-icon">📚</div>
-        <div class="stat-value">{{ totalWordsLearned }}</div>
-        <div class="stat-label">已学单词</div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">🎯</div>
-        <div class="stat-value">{{ accuracyRate }}%</div>
-        <div class="stat-label">正确率</div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">🔥</div>
-        <div class="stat-value">{{ currentStreak }}</div>
-        <div class="stat-label">连续天数</div>
-      </div>
-      
-      <div class="stat-card">
-        <div class="stat-icon">⭐</div>
-        <div class="stat-value">{{ totalAchievements }}</div>
-        <div class="stat-label">成就数量</div>
-      </div>
-    </div>
-    
-    <!-- 今日进度 -->
-    <div class="daily-progress">
-      <h4>今日学习进度</h4>
-      <div class="daily-goals">
-        <div class="goal-item">
-          <div class="goal-header">
-            <span class="goal-title">单词练习</span>
-            <span class="goal-progress">{{ dailyWordsCompleted }}/{{ dailyWordsGoal }}</span>
-          </div>
-          <div class="goal-bar">
-            <div 
-              class="goal-fill" 
-              :style="{ width: dailyWordsPercentage + '%' }"
-            ></div>
-          </div>
-        </div>
-        
-        <div class="goal-item">
-          <div class="goal-header">
-            <span class="goal-title">学习时长</span>
-            <span class="goal-progress">{{ formatTime(dailyTimeSpent) }}/{{ formatTime(dailyTimeGoal) }}</span>
-          </div>
-          <div class="goal-bar">
-            <div 
-              class="goal-fill" 
-              :style="{ width: dailyTimePercentage + '%' }"
-            ></div>
-          </div>
-        </div>
-        
-        <div class="goal-item">
-          <div class="goal-header">
-            <span class="goal-title">正确答题</span>
-            <span class="goal-progress">{{ dailyCorrectAnswers }}/{{ dailyCorrectGoal }}</span>
-          </div>
-          <div class="goal-bar">
-            <div 
-              class="goal-fill" 
-              :style="{ width: dailyCorrectPercentage + '%' }"
-            ></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 周学习热力图 -->
-    <div class="heatmap-section">
-      <h4>本周学习活动</h4>
-      <div class="heatmap">
-        <div 
-          v-for="(day, index) in weeklyActivity" 
-          :key="index"
-          class="heatmap-day"
-          :class="getHeatmapClass(day.intensity)"
-          :title="`${day.date}: ${day.wordsLearned} 个单词`"
-        >
-          <div class="day-label">{{ day.dayName }}</div>
-          <div class="day-count">{{ day.wordsLearned }}</div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- 最近成就 -->
-    <div v-if="recentAchievements.length > 0" class="achievements-section">
-      <h4>最近获得的成就</h4>
-      <div class="achievements-list">
-        <div 
-          v-for="achievement in recentAchievements" 
-          :key="achievement.id"
-          class="achievement-item"
-          :class="achievement.rarity"
-        >
-          <div class="achievement-icon">{{ achievement.icon }}</div>
-          <div class="achievement-info">
-            <div class="achievement-name">{{ achievement.name }}</div>
-            <div class="achievement-desc">{{ achievement.description }}</div>
-            <div class="achievement-date">{{ formatDate(achievement.unlockedAt) }}</div>
-          </div>
-        </div>
-      </div>
+    <!-- 连击等级指示器 -->>
+    <div class="combo-level" :class="comboLevelClass">
+      <div class="combo-level-text">{{ comboLevelText }}</div>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'ProgressVisualization',
+  name: 'ComboIndicator',
   props: {
-    gameState: {
-      type: Object,
-      required: true
-    },
-    sessionData: {
-      type: Object,
-      default: () => ({})
+    combo: {
+      type: Number,
+      default: 0
     }
   },
   data() {
     return {
-      isGainingExp: false,
-      weeklyActivity: []
+      isPulsing: false,
+      lastCombo: 0
     }
   },
   computed: {
-    level() {
-      return this.gameState.level || 1
+    multiplier() {
+      if (this.combo >= 20) return 3
+      if (this.combo >= 10) return 2.5
+      if (this.combo >= 5) return 2
+      return 1
     },
-    currentExp() {
-      return this.gameState.experience || 0
+    comboLevelClass() {
+      if (this.combo >= 20) return 'legendary'
+      if (this.combo >= 15) return 'epic'
+      if (this.combo >= 10) return 'rare'
+      if (this.combo >= 5) return 'uncommon'
+      return 'common'
     },
-    requiredExp() {
-      return this.calculateRequiredExp(this.level)
-    },
-    expPercentage() {
-      const levelStartExp = this.calculateRequiredExp(this.level - 1)
-      const currentLevelExp = this.currentExp - levelStartExp
-      const requiredLevelExp = this.requiredExp - levelStartExp
-      return Math.min(100, (currentLevelExp / requiredLevelExp) * 100)
-    },
-    expToNext() {
-      return Math.max(0, this.requiredExp - this.currentExp)
-    },
-    totalWordsLearned() {
-      return this.gameState.totalWordsLearned || 0
-    },
-    accuracyRate() {
-      const total = this.gameState.totalAnswers || 0
-      const correct = this.gameState.correctAnswers || 0
-      return total > 0 ? Math.round((correct / total) * 100) : 0
-    },
-    currentStreak() {
-      return this.gameState.currentStreak || 0
-    },
-    totalAchievements() {
-      return Object.keys(this.gameState.achievements || {}).filter(
-        key => this.gameState.achievements[key].unlocked
-      ).length
-    },
-    dailyWordsCompleted() {
-      return this.gameState.dailyProgress?.wordsCompleted || 0
-    },
-    dailyWordsGoal() {
-      return this.gameState.dailyProgress?.wordsGoal || 20
-    },
-    dailyWordsPercentage() {
-      return Math.min(100, (this.dailyWordsCompleted / this.dailyWordsGoal) * 100)
-    },
-    dailyTimeSpent() {
-      return this.gameState.dailyProgress?.timeSpent || 0
-    },
-    dailyTimeGoal() {
-      return this.gameState.dailyProgress?.timeGoal || 1800 // 30分钟
-    },
-    dailyTimePercentage() {
-      return Math.min(100, (this.dailyTimeSpent / this.dailyTimeGoal) * 100)
-    },
-    dailyCorrectAnswers() {
-      return this.gameState.dailyProgress?.correctAnswers || 0
-    },
-    dailyCorrectGoal() {
-      return this.gameState.dailyProgress?.correctGoal || 15
-    },
-    dailyCorrectPercentage() {
-      return Math.min(100, (this.dailyCorrectAnswers / this.dailyCorrectGoal) * 100)
-    },
-    recentAchievements() {
-      const achievements = this.gameState.achievements || {}
-      return Object.values(achievements)
-        .filter(achievement => achievement.unlocked)
-        .sort((a, b) => new Date(b.unlockedAt) - new Date(a.unlockedAt))
-        .slice(0, 3)
+    comboLevelText() {
+      if (this.combo >= 20) return '传奇连击！'
+      if (this.combo >= 15) return '史诗连击！'
+      if (this.combo >= 10) return '稀有连击！'
+      if (this.combo >= 5) return '优秀连击！'
+      return '连击开始！'
     }
   },
   watch: {
-    'gameState.experience': {
-      handler(newExp, oldExp) {
-        if (newExp > oldExp) {
-          this.animateExpGain()
-        }
+    combo(newVal, oldVal) {
+      if (newVal > oldVal && newVal > 1) {
+        this.triggerPulse()
+        this.playComboSound()
       }
+      this.lastCombo = oldVal
     }
   },
-  mounted() {
-    this.generateWeeklyActivity()
-  },
   methods: {
-    calculateRequiredExp(level) {
-      // 经验值计算公式：每级所需经验递增
-      return Math.floor(100 * Math.pow(1.5, level - 1))
-    },
-    
-    animateExpGain() {
-      this.isGainingExp = true
+    triggerPulse() {
+      this.isPulsing = true
       setTimeout(() => {
-        this.isGainingExp = false
-      }, 1000)
+        this.isPulsing = false
+      }, 600)
     },
-    
-    formatTime(seconds) {
-      const minutes = Math.floor(seconds / 60)
-      const remainingSeconds = seconds % 60
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-    },
-    
-    formatDate(dateString) {
-      const date = new Date(dateString)
-      const now = new Date()
-      const diffTime = now - date
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-      
-      if (diffDays === 0) return '今天'
-      if (diffDays === 1) return '昨天'
-      if (diffDays < 7) return `${diffDays}天前`
-      return date.toLocaleDateString('zh-CN')
-    },
-    
-    generateWeeklyActivity() {
-      const today = new Date()
-      const weekDays = ['日', '一', '二', '三', '四', '五', '六']
-      
-      this.weeklyActivity = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(today)
-        date.setDate(today.getDate() - (6 - i))
-        
-        // 模拟学习数据（实际应用中从后端获取）
-        const wordsLearned = Math.floor(Math.random() * 30)
-        const intensity = this.calculateIntensity(wordsLearned)
-        
-        return {
-          date: date.toLocaleDateString('zh-CN'),
-          dayName: weekDays[date.getDay()],
-          wordsLearned,
-          intensity
-        }
-      })
-    },
-    
-    calculateIntensity(wordsLearned) {
-      if (wordsLearned === 0) return 0
-      if (wordsLearned < 5) return 1
-      if (wordsLearned < 15) return 2
-      if (wordsLearned < 25) return 3
-      return 4
-    },
-    
-    getHeatmapClass(intensity) {
-      return `intensity-${intensity}`
+    playComboSound() {
+      // 简单的音效提示（可以替换为真实音频）
+      if (this.combo % 5 === 0) {
+        // 每5连击播放特殊音效
+        console.log('🎵 特殊连击音效')
+      } else {
+        console.log('🎵 连击音效')
+      }
     }
   }
 }
 </script>
 
 <style scoped>
-.progress-visualization {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  space-y: 30px;
+.combo-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  animation: comboAppear 0.3s ease-out;
 }
 
-.level-section {
+.combo-content {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
+  background: linear-gradient(135deg, #FF6B6B, #FF8E53);
   color: white;
-  margin-bottom: 30px;
+  padding: 12px 16px;
+  border-radius: 25px;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+  transition: all 0.3s ease;
+  min-width: 120px;
 }
 
-.level-badge {
+.combo-content.combo-pulse {
+  animation: comboPulse 0.6s ease-out;
+}
+
+.combo-icon {
+  font-size: 24px;
+  margin-right: 8px;
+  animation: iconSpin 0.6s ease-out;
+}
+
+.combo-text {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  backdrop-filter: blur(10px);
-}
-
-.level-number {
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.level-label {
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.exp-container {
   flex: 1;
 }
 
-.exp-info {
-  display: flex;
-  align-items: baseline;
-  gap: 5px;
-  margin-bottom: 8px;
-}
-
-.exp-current {
-  font-size: 24px;
+.combo-number {
+  font-size: 20px;
   font-weight: bold;
+  line-height: 1;
 }
 
-.exp-separator {
-  font-size: 18px;
-  opacity: 0.7;
-}
-
-.exp-required {
-  font-size: 18px;
-  opacity: 0.9;
-}
-
-.exp-label {
-  font-size: 14px;
-  opacity: 0.8;
-  margin-left: 10px;
-}
-
-.exp-bar {
-  position: relative;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 5px;
-}
-
-.exp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
-  border-radius: 6px;
-  transition: width 0.5s ease;
-  position: relative;
-}
-
-.exp-fill.exp-gaining {
-  animation: expPulse 1s ease-in-out;
-}
-
-.exp-percentage {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 10px;
-  font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.exp-to-next {
+.combo-label {
   font-size: 12px;
-  opacity: 0.8;
+  opacity: 0.9;
+  line-height: 1;
 }
 
-.stats-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 15px;
-  margin-bottom: 30px;
+.combo-multiplier {
+  font-size: 14px;
+  font-weight: bold;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
 }
 
-.stat-card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
+.combo-level {
   text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-}
-
-.stat-icon {
-  font-size: 32px;
-  margin-bottom: 10px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: #666;
-}
-
-.daily-progress {
-  background: white;
-  padding: 20px;
+  margin-top: 8px;
+  padding: 4px 8px;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
-}
-
-.daily-progress h4 {
-  margin: 0 0 20px 0;
-  color: #333;
-}
-
-.daily-goals {
-  space-y: 15px;
-}
-
-.goal-item {
-  margin-bottom: 15px;
-}
-
-.goal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.goal-title {
-  font-weight: 500;
-  color: #333;
-}
-
-.goal-progress {
-  font-size: 14px;
-  color: #666;
-}
-
-.goal-bar {
-  height: 8px;
-  background: #f0f0f0;
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.goal-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #007aff, #00c6ff);
-  border-radius: 4px;
-  transition: width 0.5s ease;
-}
-
-.heatmap-section {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  margin-bottom: 30px;
-}
-
-.heatmap-section h4 {
-  margin: 0 0 20px 0;
-  color: #333;
-}
-
-.heatmap {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
-}
-
-.heatmap-day {
-  aspect-ratio: 1;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   font-size: 12px;
-  transition: transform 0.2s ease;
-}
-
-.heatmap-day:hover {
-  transform: scale(1.1);
-}
-
-.day-label {
-  font-weight: 500;
-  margin-bottom: 2px;
-}
-
-.day-count {
-  font-size: 10px;
-  opacity: 0.8;
-}
-
-.intensity-0 {
-  background: #f0f0f0;
-  color: #999;
-}
-
-.intensity-1 {
-  background: #c6e48b;
-  color: #333;
-}
-
-.intensity-2 {
-  background: #7bc96f;
-  color: white;
-}
-
-.intensity-3 {
-  background: #239a3b;
-  color: white;
-}
-
-.intensity-4 {
-  background: #196127;
-  color: white;
-}
-
-.achievements-section {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.achievements-section h4 {
-  margin: 0 0 20px 0;
-  color: #333;
-}
-
-.achievements-list {
-  space-y: 15px;
-}
-
-.achievement-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  transition: transform 0.2s ease;
-}
-
-.achievement-item:hover {
-  transform: translateX(5px);
-}
-
-.achievement-item.common {
-  background: #f8f9fa;
-  border-left: 4px solid #6c757d;
-}
-
-.achievement-item.rare {
-  background: #e3f2fd;
-  border-left: 4px solid #2196f3;
-}
-
-.achievement-item.epic {
-  background: #f3e5f5;
-  border-left: 4px solid #9c27b0;
-}
-
-.achievement-item.legendary {
-  background: #fff3e0;
-  border-left: 4px solid #ff9800;
-}
-
-.achievement-icon {
-  font-size: 32px;
-  flex-shrink: 0;
-}
-
-.achievement-info {
-  flex: 1;
-}
-
-.achievement-name {
   font-weight: bold;
-  color: #333;
-  margin-bottom: 4px;
+  animation: levelGlow 0.5s ease-out;
 }
 
-.achievement-desc {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
+.combo-level-text {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
-.achievement-date {
-  font-size: 12px;
-  color: #999;
+/* 连击等级样式 */
+.combo-level.common {
+  background: linear-gradient(135deg, #74b9ff, #0984e3);
+  color: white;
+}
+
+.combo-level.uncommon {
+  background: linear-gradient(135deg, #00b894, #00a085);
+  color: white;
+}
+
+.combo-level.rare {
+  background: linear-gradient(135deg, #fdcb6e, #e17055);
+  color: white;
+}
+
+.combo-level.epic {
+  background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+  color: white;
+}
+
+.combo-level.legendary {
+  background: linear-gradient(135deg, #fd79a8, #e84393);
+  color: white;
+  animation: legendaryGlow 1s ease-in-out infinite alternate;
 }
 
 /* 动画效果 */
-@keyframes expPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+@keyframes comboAppear {
+  0% {
+    opacity: 0;
+    transform: translateX(100px) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes comboPulse {
+  0% {
+    transform: scale(1);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(255, 107, 107, 0.6);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes iconSpin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+@keyframes levelGlow {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes legendaryGlow {
+  0% {
+    box-shadow: 0 0 10px rgba(253, 121, 168, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(253, 121, 168, 0.8), 0 0 30px rgba(232, 67, 147, 0.3);
   }
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .level-section {
-    flex-direction: column;
-    text-align: center;
+  .combo-indicator {
+    top: 10px;
+    right: 10px;
   }
   
-  .stats-section {
-    grid-template-columns: repeat(2, 1fr);
+  .combo-content {
+    padding: 8px 12px;
+    min-width: 100px;
   }
   
-  .achievement-item {
-    flex-direction: column;
-    text-align: center;
+  .combo-icon {
+    font-size: 20px;
+  }
+  
+  .combo-number {
+    font-size: 18px;
+  }
+  
+  .combo-label {
+    font-size: 10px;
   }
 }
 </style>

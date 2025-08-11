@@ -123,10 +123,10 @@ class ResourceCategoryAdmin(admin.ModelAdmin):
         })
     )
     
+    @admin.display(description='资源数量')
     def resource_count(self, obj):
         """显示资源数量"""
         return obj.get_resource_count()
-    resource_count.short_description = '资源数量'
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
@@ -215,14 +215,15 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
         })
     )
     
+    @admin.display(description='激活状态')
     def is_active_display(self, obj):
         """显示激活状态"""
         if obj.is_active():
             return format_html('<span style="color: green;">✓ 激活</span>')
         else:
             return format_html('<span style="color: red;">✗ 未激活</span>')
-    is_active_display.short_description = '激活状态'
     
+    @admin.display(description='剩余天数')
     def remaining_days_display(self, obj):
         """显示剩余天数"""
         days = obj.get_remaining_days()
@@ -234,7 +235,6 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
             return format_html('<span style="color: orange;">{} 天</span>', days)
         else:
             return format_html('<span style="color: red;">{} 天</span>', days)
-    remaining_days_display.short_description = '剩余天数'
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('user')
@@ -267,12 +267,12 @@ class SubscriptionFeatureAdmin(admin.ModelAdmin):
         })
     )
     
+    @admin.display(description='适用订阅类型')
     def subscription_types_display(self, obj):
         """显示适用订阅类型"""
         if obj.subscription_types:
             return ', '.join(obj.subscription_types)
         return '无'
-    subscription_types_display.short_description = '适用订阅类型'
 
 
 # 自定义管理站点标题

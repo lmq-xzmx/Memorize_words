@@ -154,9 +154,11 @@
 
 <script>
 import { resourceAuthAPI } from '../utils/api.js'
+import permissionMixin from '../mixins/permissionMixin.js'
 
 export default {
   name: 'SubscriptionManagement',
+  mixins: [permissionMixin],
   data() {
     return {
       loading: false,
@@ -167,10 +169,30 @@ export default {
     }
   },
   async mounted() {
+    // 检查用户认证状态和权限
+    if (!this.$isAuthenticated()) {
+      this.$message?.error('请先登录后再访问订阅管理')
+      this.$router.push('/login')
+      return
+    }
+    
+    if (!this.$hasPermission('manage_subscriptions')) {
+      this.$message?.error('您没有权限访问订阅管理功能')
+      this.$router.push('/dashboard')
+      return
+    }
+    
     await this.loadData()
   },
   methods: {
     async loadData() {
+      // 再次检查认证状态
+      if (!this.$isAuthenticated()) {
+        this.$message?.error('认证已失效，请重新登录')
+        this.$router.push('/login')
+        return
+      }
+      
       this.loading = true
       try {
         // 并行加载数据
@@ -185,6 +207,14 @@ export default {
         this.subscriptionHistory = historyData.data || []
       } catch (error) {
         console.error('加载订阅数据失败:', error)
+        
+        // 检查是否是认证错误
+        if (error.message && error.message.includes('未认证')) {
+          this.$message?.error('登录状态已失效，请重新登录')
+          this.$router.push('/login')
+          return
+        }
+        
         this.$message?.error('加载数据失败，请稍后重试')
       } finally {
         this.loading = false

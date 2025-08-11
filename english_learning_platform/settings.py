@@ -40,15 +40,16 @@ LOCAL_APPS = [
     'apps.accounts',
     'apps.permissions',
     'apps.organization',
-    'apps.courses',
     'apps.analytics',
     'apps.teaching',
     'apps.words',
-    'apps.vocabulary_manager',
+    # 'apps.vocabulary_manager',  # 已迁移到teaching应用统一管理
     'apps.nlp_engine',  # 新的NLP引擎
     'apps.article_factory',
     'apps.reports',
     'apps.resource_authorization',  # 资源授权系统
+    # 'gamification',  # 游戏化系统 - 临时禁用
+    # 'personalization',  # 个性化推荐系统 - 临时禁用
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -281,20 +282,40 @@ REST_FRAMEWORK = {
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://localhost:3002",
+    "http://127.0.0.1:3002",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost:8001",
     "http://127.0.0.1:8001",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 # CORS配置
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://localhost:3000",
+    "http://localhost:3002",
+    "http://127.0.0.1:3002",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost:8001",
     "http://127.0.0.1:8001",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

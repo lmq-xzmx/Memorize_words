@@ -161,6 +161,124 @@ class DynamicRegisterSerializer(serializers.ModelSerializer):
             
             # 添加字段到序列化器
             self.fields[f'ext_{extension.field_name}'] = field
+    
+    def validate_username(self, value):
+        """验证用户名"""
+        if CustomUser.objects.filter(username=value).exists():
+            raise serializers.ValidationError('该用户名已存在')
+        return value
+    
+    def validate_nickname(self, value):
+        """验证网名"""
+        if value and value.strip():
+            if CustomUser.objects.filter(nickname=value).exists():
+                raise serializers.ValidationError('该网名已被使用')
+            return value.strip()
+        return None
+    
+    def validate_phone(self, value):
+        """验证手机号"""
+        if not value or not value.strip():
+            raise serializers.ValidationError('手机号为必填项')
+        return value
+    
+    def validate_email(self, value):
+        """验证邮箱唯一性"""
+        # 如果邮箱为空，直接返回None
+        if not value or value.strip() == '':
+            return None
+            
+        # 检查邮箱是否已存在
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError('该邮箱已被注册')
+        return value
+    
+    def validate(self, attrs):
+        """验证数据"""
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({
+                'confirm_password': '两次输入的密码不一致'
+            })
+        return attrs
+    
+    def create(self, validated_data):
+        """创建用户并保存扩展数据"""
+        # 移除确认密码字段
+        validated_data.pop('confirm_password', None)
+        
+        # 移除扩展数据字段
+        extension_data = validated_data.pop('extension_data', {})
+        
+        # 处理动态增项字段
+        dynamic_extension_data = {}
+        fields_to_remove = []
+        
+        # 创建validated_data的副本来遍历，避免在遍历时修改字典
+        for field_name in list(validated_data.keys()):
+            if field_name.startswith('ext_'):
+                # 提取真实的字段名
+                real_field_name = field_name[4:]  # 移除 'ext_' 前缀
+                dynamic_extension_data[real_field_name] = validated_data[field_name]
+                fields_to_remove.append(field_name)
+        
+        # 移除动态字段，避免传递给用户创建
+        for field_name in fields_to_remove:
+            validated_data.pop(field_name, None)
+        
+        # 合并扩展数据
+        if dynamic_extension_data:
+            extension_data.update(dynamic_extension_data)
+        
+        # 提取密码
+        password = validated_data.pop('password')
+        role = validated_data.get('role', 'student')
+        
+        # 处理空邮箱
+        if 'email' in validated_data and not validated_data['email']:
+            validated_data['email'] = None
+        
+        # 处理空网名
+        if 'nickname' in validated_data and not validated_data['nickname']:
+            validated_data['nickname'] = None
+            
+        # 如果申请管理员角色，设置为待审批状态
+        if role == 'admin':
+            validated_data['admin_approval_status'] = 'pending'
+            validated_data['is_active'] = False  # 待审批期间账号不可用
+        
+        # 创建用户，只传递CustomUser模型支持的字段
+        user = CustomUser.objects.create_user(
+            password=password,
+            **validated_data
+        )
+        
+        # 保存扩展数据
+        if extension_data:
+            extensions = RoleExtension.objects.filter(
+                role=user.role,
+                is_active=True,
+                show_in_frontend_register=True
+            )
+            
+            for extension in extensions:
+                if isinstance(extension_data, dict) and extension.field_name in extension_data:
+                    UserExtensionData.objects.create(
+                        user=user,
+                        role_extension=extension,
+                        field_value=str(extension_data[extension.field_name])
+                    )
+        
+        # 为申请管理员角色的用户创建审批记录
+        if role == 'admin':
+            from .models import RoleApproval
+            RoleApproval.objects.create(
+                user=user,
+                requested_role='admin',
+                current_role='student',  # 默认当前角色为学生
+                reason='申请管理员角色'
+            )
+            
+        return user
 
 
 class RegisterWithExtensionSerializer(DynamicRegisterSerializer):
@@ -230,78 +348,6 @@ class RegisterWithExtensionSerializer(DynamicRegisterSerializer):
                 'confirm_password': '两次输入的密码不一致'
             })
         return attrs
-    
-    def create(self, validated_data):
-        """创建用户并保存扩展数据"""
-        validated_data.pop('confirm_password')
-        extension_data = validated_data.pop('extension_data', {})
-        
-        # 处理动态增项字段
-        dynamic_extension_data = {}
-        fields_to_remove = []
-        for field_name, field_value in validated_data.items():
-            if field_name.startswith('ext_'):
-                # 提取真实的字段名
-                real_field_name = field_name[4:]  # 移除 'ext_' 前缀
-                dynamic_extension_data[real_field_name] = field_value
-                fields_to_remove.append(field_name)
-        
-        # 移除动态字段，避免传递给用户创建
-        for field_name in fields_to_remove:
-            validated_data.pop(field_name)
-        
-        # 合并扩展数据
-        if dynamic_extension_data:
-            extension_data.update(dynamic_extension_data)
-        
-        password = validated_data.pop('password')
-        role = validated_data.get('role', 'student')
-        
-        # 处理空邮箱
-        if 'email' in validated_data and not validated_data['email']:
-            validated_data['email'] = None
-        
-        # 处理空网名
-        if 'nickname' in validated_data and not validated_data['nickname']:
-            validated_data['nickname'] = None
-            
-        # 如果申请管理员角色，设置为待审批状态
-        if role == 'admin':
-            validated_data['admin_approval_status'] = 'pending'
-            validated_data['is_active'] = False  # 待审批期间账号不可用
-            
-        user = CustomUser.objects.create_user(
-            password=password,
-            **validated_data
-        )
-        
-        # 保存扩展数据
-        if extension_data:
-            extensions = RoleExtension.objects.filter(
-                role=user.role,
-                is_active=True,
-                show_in_frontend_register=True
-            )
-            
-            for extension in extensions:
-                if isinstance(extension_data, dict) and extension.field_name in extension_data:
-                    UserExtensionData.objects.create(
-                        user=user,
-                        role_extension=extension,
-                        field_value=str(extension_data[extension.field_name])
-                    )
-        
-        # 为申请管理员角色的用户创建审批记录
-        if role == 'admin':
-            from .models import RoleApproval
-            RoleApproval.objects.create(
-                user=user,
-                requested_role='admin',
-                current_role='student',  # 默认当前角色为学生
-                reason='申请管理员角色'
-            )
-            
-        return user
     
     def update(self, instance, validated_data):
         """更新用户"""

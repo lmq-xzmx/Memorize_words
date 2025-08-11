@@ -12,6 +12,10 @@ from io import StringIO
 
 from apps.words.models import Word
 from apps.teaching.models import LearningGoal, LearningSession, WordLearningRecord, GoalWord
+from .models import (
+    UserEngagementMetrics, UserRetentionData, ABTestExperiment, ABTestParticipant,
+    UserBehaviorPattern, GameElementEffectiveness
+)
 from .serializers import (
     AnalyticsOverviewSerializer, DailyActivitySerializer, WeeklyProgressSerializer,
     MonthlyStatisticsSerializer, WordMasteryDistributionSerializer,
@@ -480,3 +484,248 @@ class AnalyticsViewSet(viewsets.GenericViewSet):
         }
         
         return Response(comprehensive_data)
+
+    @action(detail=False, methods=['get'])
+    def user_engagement_metrics(self, request):
+        """获取用户粘性指标"""
+        user = request.user
+        
+        # 获取或创建用户粘性指标
+        metrics, created = UserEngagementMetrics.objects.get_or_create(
+            user=user,
+            defaults={
+                'daily_active_days': 0,
+                'weekly_active_days': 0,
+                'monthly_active_days': 0,
+                'total_study_time': 0,
+                'avg_session_length': 0,
+                'retention_rate': 0.0,
+                'engagement_score': 0.0
+            }
+        )
+        
+        # 计算实时指标
+        today = timezone.now().date()
+        week_start = today - timedelta(days=today.weekday())
+        month_start = today.replace(day=1)
+        
+        # 日活跃天数（最近30天）
+        daily_sessions = LearningSession.objects.filter(
+            user=user,
+            start_time__date__gte=today - timedelta(days=30)
+        ).values('start_time__date').distinct().count()
+        
+        # 周活跃天数（最近4周）
+        weekly_sessions = LearningSession.objects.filter(
+            user=user,
+            start_time__date__gte=week_start - timedelta(weeks=4)
+        ).values('start_time__date').distinct().count()
+        
+        # 月活跃天数（最近3个月）
+        monthly_sessions = LearningSession.objects.filter(
+            user=user,
+            start_time__date__gte=month_start - timedelta(days=90)
+        ).values('start_time__date').distinct().count()
+        
+        # 更新指标
+        metrics.daily_active_days = daily_sessions
+        metrics.weekly_active_days = weekly_sessions
+        metrics.monthly_active_days = monthly_sessions
+        metrics.last_updated = timezone.now()
+        metrics.save()
+        
+        return Response({
+            'user_id': user.id,
+            'daily_active_days': metrics.daily_active_days,
+            'weekly_active_days': metrics.weekly_active_days,
+            'monthly_active_days': metrics.monthly_active_days,
+            'total_study_time': metrics.total_study_time,
+            'avg_session_length': metrics.avg_session_length,
+            'retention_rate': metrics.retention_rate,
+            'engagement_score': metrics.engagement_score,
+            'last_updated': metrics.last_updated
+        })
+    
+    @action(detail=False, methods=['get'])
+    def behavior_analysis(self, request):
+        """获取用户行为分析"""
+        user = request.user
+        
+        # 获取用户行为模式
+        try:
+            pattern = UserBehaviorPattern.objects.get(user=user)
+        except UserBehaviorPattern.DoesNotExist:
+            # 分析用户行为并创建模式
+            sessions = LearningSession.objects.filter(user=user)
+            
+            if sessions.exists():
+                # 计算平均会话时长
+                total_time = 0
+                session_count = 0
+                for session in sessions.filter(end_time__isnull=False):
+                    if session.end_time and session.start_time:
+                        duration = session.end_time - session.start_time
+                        total_time += duration.total_seconds() / 60
+                        session_count += 1
+                
+                avg_session = total_time / session_count if session_count > 0 else 0
+                
+                # 分析学习时间偏好
+                morning_sessions = sessions.filter(start_time__hour__lt=12).count()
+                afternoon_sessions = sessions.filter(start_time__hour__range=[12, 18]).count()
+                evening_sessions = sessions.filter(start_time__hour__gt=18).count()
+                
+                if morning_sessions >= afternoon_sessions and morning_sessions >= evening_sessions:
+                    preferred_time = '上午'
+                elif afternoon_sessions >= evening_sessions:
+                    preferred_time = '下午'
+                else:
+                    preferred_time = '晚上'
+                
+                # 计算正确率
+                records = WordLearningRecord.objects.filter(session__user=user)
+                if records.exists():
+                    correct_rate = records.filter(is_correct=True).count() / records.count()
+                else:
+                    correct_rate = 0
+                
+                pattern = UserBehaviorPattern.objects.create(
+                    user=user,
+                    preferred_study_time=preferred_time,
+                    avg_session_length=int(avg_session),
+                    preferred_difficulty='中等',
+                    engagement_type='学习型',
+                    motivation_factors=['成就感', '进步'],
+                    social_activity_level='中等',
+                    competitive_tendency=0.5,
+                    learning_style='视觉型',
+                    retention_rate=correct_rate,
+                    churn_risk_score=0.3,
+                    engagement_score=0.7
+                )
+            else:
+                return Response({'message': '暂无足够数据进行行为分析'})
+        
+        return Response({
+            'user_id': user.id,
+            'preferred_study_time': pattern.preferred_study_time,
+            'avg_session_length': pattern.avg_session_length,
+            'preferred_difficulty': pattern.preferred_difficulty,
+            'engagement_type': pattern.engagement_type,
+            'motivation_factors': pattern.motivation_factors,
+            'social_activity_level': pattern.social_activity_level,
+            'competitive_tendency': pattern.competitive_tendency,
+            'learning_style': pattern.learning_style,
+            'retention_rate': pattern.retention_rate,
+            'churn_risk_score': pattern.churn_risk_score,
+            'engagement_score': pattern.engagement_score,
+            'last_updated': pattern.last_updated
+        })
+    
+    @action(detail=False, methods=['get'])
+    def game_element_effectiveness(self, request):
+        """获取游戏化元素效果分析"""
+        # 获取所有游戏化元素效果数据
+        elements = GameElementEffectiveness.objects.all().order_by('-engagement_impact')
+        
+        result = []
+        for element in elements:
+            result.append({
+                'element_name': element.element_name,
+                'element_type': element.element_type,
+                'engagement_impact': element.engagement_impact,
+                'retention_impact': element.retention_impact,
+                'learning_efficiency_impact': element.learning_efficiency_impact,
+                'total_interactions': element.total_interactions,
+                'unique_users': element.unique_users,
+                'avg_interaction_frequency': element.avg_interaction_frequency,
+                'measurement_period': {
+                    'start': element.measurement_period_start,
+                    'end': element.measurement_period_end
+                }
+            })
+        
+        return Response(result)
+    
+    @action(detail=False, methods=['post'])
+    def create_ab_test(self, request):
+        """创建A/B测试实验"""
+        data = request.data
+        
+        experiment = ABTestExperiment.objects.create(
+            name=data.get('name'),
+            description=data.get('description', ''),
+            hypothesis=data.get('hypothesis', ''),
+            control_group_description=data.get('control_description', ''),
+            experiment_group_description=data.get('experiment_description', ''),
+            target_metric=data.get('target_metric'),
+            start_date=data.get('start_date'),
+            end_date=data.get('end_date'),
+            sample_size=data.get('sample_size', 100),
+            confidence_level=data.get('confidence_level', 0.95),
+            status='planning'
+        )
+        
+        return Response({
+            'experiment_id': experiment.id,
+            'name': experiment.name,
+            'status': experiment.status,
+            'created_at': experiment.created_at
+        })
+    
+    @action(detail=False, methods=['get'])
+    def ab_test_results(self, request):
+        """获取A/B测试结果"""
+        experiment_id = request.query_params.get('experiment_id')
+        
+        if not experiment_id:
+            return Response({'error': '请提供实验ID'}, status=400)
+        
+        try:
+            experiment = ABTestExperiment.objects.get(id=experiment_id)
+        except ABTestExperiment.DoesNotExist:
+            return Response({'error': '实验不存在'}, status=404)
+        
+        # 获取参与者数据
+        participants = ABTestParticipant.objects.filter(experiment=experiment)
+        control_group = participants.filter(group='control')
+        experiment_group = participants.filter(group='experiment')
+        
+        # 计算转化率
+        control_conversion = control_group.filter(conversion_achieved=True).count()
+        experiment_conversion = experiment_group.filter(conversion_achieved=True).count()
+        
+        control_rate = (control_conversion / control_group.count() * 100) if control_group.count() > 0 else 0
+        experiment_rate = (experiment_conversion / experiment_group.count() * 100) if experiment_group.count() > 0 else 0
+        
+        # 计算指标均值
+        control_metric = control_group.aggregate(avg=Avg('metric_value'))['avg'] or 0
+        experiment_metric = experiment_group.aggregate(avg=Avg('metric_value'))['avg'] or 0
+        
+        return Response({
+            'experiment': {
+                'id': experiment.id,
+                'name': experiment.name,
+                'status': experiment.status,
+                'target_metric': experiment.target_metric
+            },
+            'results': {
+                'control_group': {
+                    'participants': control_group.count(),
+                    'conversions': control_conversion,
+                    'conversion_rate': round(control_rate, 2),
+                    'metric_average': round(control_metric, 2)
+                },
+                'experiment_group': {
+                    'participants': experiment_group.count(),
+                    'conversions': experiment_conversion,
+                    'conversion_rate': round(experiment_rate, 2),
+                    'metric_average': round(experiment_metric, 2)
+                },
+                'improvement': {
+                    'conversion_rate_lift': round(experiment_rate - control_rate, 2),
+                    'metric_lift': round(experiment_metric - control_metric, 2),
+                    'statistical_significance': experiment_rate > control_rate  # 简化的显著性检验
+                }
+            }
+        })
