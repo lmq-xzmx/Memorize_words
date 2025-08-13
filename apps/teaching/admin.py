@@ -21,6 +21,31 @@ class LearningPlanInline(admin.TabularInline):
     model = LearningPlan
     extra = 0
     fields = ['plan_type', 'words_per_day', 'review_interval', 'is_active']
+    
+    def get_formset(self, request, obj=None, **kwargs):
+        """获取表单集时设置初始值"""
+        # 处理测试环境中request为None的情况
+        if request is None:
+            # 创建一个模拟的request对象用于测试
+            from django.http import HttpRequest
+            from django.contrib.auth.models import AnonymousUser
+            request = HttpRequest()
+            request.user = AnonymousUser()
+        
+        formset = super().get_formset(request, obj, **kwargs)
+        
+        class CustomFormSet(formset):
+            def save_new(self, form, commit=True):
+                """保存新对象时自动设置user"""
+                instance = super().save_new(form, commit=False)
+                if obj:  # obj是父对象LearningGoal
+                    instance.user = obj.user
+                    instance.goal = obj
+                if commit:
+                    instance.save()
+                return instance
+        
+        return CustomFormSet
 
 
 @admin.register(LearningGoal)

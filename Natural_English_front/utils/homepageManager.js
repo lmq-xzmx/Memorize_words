@@ -115,9 +115,10 @@ export class HomepageManager {
   /**
    * 检查是否应该重定向到首页
    * @param {Object} route - 当前路由对象
+   * @param {Function} hasPermission - 权限检查函数
    * @returns {Object|null} 重定向信息或null
    */
-  checkHomepageRedirect(route) {
+  checkHomepageRedirect(route, hasPermission = null) {
     try {
       const homepageMode = this.getHomepage()
       
@@ -141,6 +142,33 @@ export class HomepageManager {
       const redirectPaths = ['/', '/index', '/dashboard']
       if (!redirectPaths.includes(route.path)) {
         return null
+      }
+      
+      // 权限检查：如果提供了权限检查函数，验证用户是否有权限访问设置的首页
+      if (hasPermission && typeof hasPermission === 'function') {
+        const modePermissions = {
+          'word-reading': 'practice_reading',
+          'word-learning': 'view_word_learning',
+          'word-detail': 'view_word_detail',
+          'word-root-analysis': 'analyze_word_roots',
+          'story-reading': 'practice_story_reading',
+          'spelling': 'practice_spelling',
+          'flashcard': 'use_flashcard',
+          'pattern-memory': 'use_pattern_memory',
+          'word-challenge': 'participate_challenge',
+          'word-review': 'review_words',
+          'word-selection': 'practice_word_selection',
+          'teacher-student-interaction': 'practice_word_selection',
+          'competition': 'participate_challenge',
+          'quick-brush': 'review_words'
+        }
+        
+        const requiredPermission = modePermissions[homepageMode]
+        if (requiredPermission && !hasPermission(requiredPermission)) {
+          console.warn(`用户无权限访问设置的首页: ${this.getModeName(homepageMode)}，将清除首页设置`)
+          this.clearHomepage()
+          return null
+        }
       }
       
       return {

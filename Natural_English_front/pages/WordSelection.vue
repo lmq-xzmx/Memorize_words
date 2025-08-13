@@ -265,7 +265,7 @@
 </template>
 
 <script>
-import { teachingAPI, userAPI } from '../utils/api.js'
+import { learningAPI, userAPI } from '../utils/api.js'
 
 export default {
   name: 'EnhancedWordPractice',
@@ -389,7 +389,7 @@ export default {
       try {
         this.loading = true
         this.networkError = false
-        const response = await teachingAPI.getCurrentLearningGoal()
+        const response = await learningAPI.getCurrentLearningGoal()
         this.currentLearningGoal = response
         console.log('当前学习目标:', this.currentLearningGoal)
         
@@ -415,7 +415,7 @@ export default {
       try {
         this.loading = true
         this.networkError = false
-        const response = await teachingAPI.getLearningGoals({ is_active: true })
+        const response = await learningAPI.getLearningGoals({ is_active: true })
         this.learningGoals = response.results || response
         console.log('所有学习目标:', this.learningGoals)
         this.retryCount = 0
@@ -439,7 +439,7 @@ export default {
         this.networkError = false
         
         // 获取学习目标的详细信息，包括关联的单词
-        const goalResponse = await teachingAPI.getLearningGoals({ id: this.selectedGoalId })
+        const goalResponse = await learningAPI.getLearningGoals({ id: this.selectedGoalId })
         const goalData = goalResponse.results ? goalResponse.results[0] : goalResponse
         
         if (goalData && goalData.words) {
@@ -447,7 +447,7 @@ export default {
           console.log('学习目标单词:', this.availableWords)
         } else {
           // 如果目标详情中没有单词，尝试通过练习单词API获取
-          const wordsResponse = await teachingAPI.getPracticeWords({ 
+          const wordsResponse = await learningAPI.getPracticeWords({ 
             goal_id: this.selectedGoalId,
             count: 1000 // 获取所有单词
           })
@@ -503,7 +503,7 @@ export default {
         this.sessionExpired = false
         
         // 创建学习会话
-        const sessionResponse = await teachingAPI.createLearningSession({
+        const sessionResponse = await learningAPI.createLearningSession({
           goal: this.selectedGoalId
         })
         this.learningSession = sessionResponse
@@ -540,7 +540,7 @@ export default {
           smart_recommendation: this.useSmartRecommendation
         }
         
-        const response = await teachingAPI.getPracticeWords(params)
+        const response = await learningAPI.getPracticeWords(params)
         this.practiceWords = response.results || response
         
         if (this.practiceWords.length === 0) {
@@ -583,7 +583,7 @@ export default {
       }
       
       try {
-        await teachingAPI.createWordLearningRecord(recordData)
+        await learningAPI.createWordLearningRecord(recordData)
         this.lastSyncTime = Date.now()
       } catch (error) {
         console.error('保存学习记录失败:', error)
@@ -618,7 +618,7 @@ export default {
         
         // 结束学习会话
         if (this.learningSession) {
-          await teachingAPI.endLearningSession(this.learningSession.id)
+          await learningAPI.endLearningSession(this.learningSession.id)
         }
         
         this.practiceStarted = false
@@ -758,7 +758,7 @@ export default {
       
       try {
         for (const record of this.pendingRecords) {
-          await teachingAPI.createWordLearningRecord(record)
+          await learningAPI.createWordLearningRecord(record)
         }
         this.pendingRecords = []
         this.offlineMode = false

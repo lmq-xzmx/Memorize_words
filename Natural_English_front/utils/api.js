@@ -133,8 +133,13 @@ export const wordAPI = {
 // 学习相关API
 export const learningAPI = {
   // 获取学习目标
-  getLearningGoals() {
-    return api.get('/teaching/learning-goals/')
+  getLearningGoals(params = {}) {
+    return api.get('/teaching/learning-goals/', { params })
+  },
+  
+  // 获取当前学习目标
+  getCurrentLearningGoal() {
+    return api.get('/teaching/current-learning-goal/')
   },
   
   // 创建学习目标
@@ -150,6 +155,26 @@ export const learningAPI = {
   // 删除学习目标
   deleteLearningGoal(id) {
     return api.delete(`/teaching/learning-goals/${id}/`)
+  },
+  
+  // 获取练习单词
+  getPracticeWords(params = {}) {
+    return api.get('/teaching/practice-words/', { params })
+  },
+  
+  // 创建学习会话
+  createLearningSession(data) {
+    return api.post('/teaching/learning-sessions/', data)
+  },
+  
+  // 结束学习会话
+  endLearningSession(sessionId) {
+    return api.put(`/teaching/learning-sessions/${sessionId}/end/`)
+  },
+  
+  // 创建单词学习记录
+  createWordLearningRecord(data) {
+    return api.post('/teaching/word-learning-records/', data)
   },
   
   // 获取学习进度

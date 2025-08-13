@@ -13,7 +13,7 @@
 
 <script>
 import { homepageManager } from '../utils/homepageManager.js'
-import { isAuthenticated, getCurrentUser } from '../utils/permission.js'
+import { isAuthenticated, getCurrentUser, hasPermission } from '../utils/permission.js'
 import LearningModeSelector from './LearningModeSelector.vue'
 
 export default {
@@ -42,17 +42,16 @@ export default {
         const user = getCurrentUser()
         console.log('当前用户:', user)
         
-        // 检查是否有设置的首页
-        const homepageMode = homepageManager.getHomepage()
+        // 检查是否有设置的首页（带权限验证）
+        const redirectInfo = homepageManager.checkHomepageRedirect(
+          this.$route, 
+          (permission) => hasPermission(user.role, permission)
+        )
         
-        if (homepageMode) {
-          const targetRoute = homepageManager.getModeRoute(homepageMode)
-          
-          if (targetRoute) {
-            console.log(`重定向到设置的首页: ${homepageManager.getModeName(homepageMode)} (${targetRoute})`)
-            this.$router.push(targetRoute)
-            return
-          }
+        if (redirectInfo) {
+          console.log(`重定向到设置的首页: ${redirectInfo.name} (${redirectInfo.route})`)
+          this.$router.push(redirectInfo.route)
+          return
         }
         
         // 如果没有设置首页或路由无效，显示学习模式选择器

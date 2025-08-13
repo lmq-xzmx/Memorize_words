@@ -40,6 +40,27 @@
             </div>
         </div>
         
+        <div class="form-row">
+            <div>
+                <label for="id_enable_versioning">启用版本管理:</label>
+                <input type="checkbox" name="enable_versioning" id="id_enable_versioning">
+                <p class="help">启用后，相同单词的不同内容将创建为版本，而不是覆盖原有内容</p>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label for="id_conflict_resolution">冲突解决策略:</label>
+                <select name="conflict_resolution" id="id_conflict_resolution">
+                    <option value="create_version">创建版本（需启用版本管理）</option>
+                    <option value="update">更新现有单词</option>
+                    <option value="skip">跳过冲突单词</option>
+                    <option value="create_new">创建新记录</option>
+                </select>
+                <p class="help">当导入的单词与现有单词冲突时的处理方式</p>
+            </div>
+        </div>
+        
         <div class="submit-row">
             <input type="submit" value="开始导入" class="default">
             <a href="{% url 'admin:words_vocabularylist_changelist' %}" class="button cancel-link">取消</a>
@@ -72,7 +93,16 @@ run,译林版,三年级,三下,Unit 3,/rʌn/,跑,v.,动作类单词</pre>
         <h4>注意事项：</h4>
         <ul>
             <li>文件编码请使用UTF-8（支持BOM）</li>
-            <li>如果单词已存在于选定的词库列表中，将更新其信息</li>
+            <li>系统会自动检测重复单词，完全相同的单词将被跳过</li>
+            <li>启用版本管理时，相同单词的不同内容会创建为新版本</li>
+            <li>冲突解决策略决定了如何处理已存在的单词：
+                <ul>
+                    <li><strong>创建版本</strong>：为不同内容创建版本（需启用版本管理）</li>
+                    <li><strong>更新现有单词</strong>：用新数据覆盖现有单词</li>
+                    <li><strong>跳过冲突单词</strong>：保持现有单词不变</li>
+                    <li><strong>创建新记录</strong>：强制创建新记录（可能产生重复）</li>
+                </ul>
+            </li>
             <li>只有非空字段才会更新现有单词的信息</li>
             <li>导入完成后会自动更新词库列表的单词数量</li>
             <li>导入过程中会自动跳过空白行和无效数据</li>

@@ -10,7 +10,7 @@
       <h2 class="category-title">📚 学习模块</h2>
       <div class="mode-grid">
         <!-- 单词阅读 -->
-        <div class="mode-card" @click="navigateToMode('word-reading')">
+        <div v-if="canUseMode('word-reading')" class="mode-card" @click="navigateToMode('word-reading')">
           <div class="mode-header">
             <div class="mode-icon">📖</div>
             <div class="mode-title">单词阅读</div>
@@ -43,7 +43,7 @@
         </div>
 
         <!-- 单词学习 -->
-        <div class="mode-card" @click="navigateToMode('word-learning')">
+        <div v-if="canUseMode('word-learning')" class="mode-card" @click="navigateToMode('word-learning')">
           <div class="mode-header">
             <div class="mode-icon">📚</div>
             <div class="mode-title">单词学习</div>
@@ -76,7 +76,7 @@
         </div>
 
         <!-- 单词详情 -->
-        <div class="mode-card" @click="navigateToMode('word-detail')">
+        <div v-if="canUseMode('word-detail')" class="mode-card" @click="navigateToMode('word-detail')">
           <div class="mode-header">
             <div class="mode-icon">📝</div>
             <div class="mode-title">单词详情</div>
@@ -109,7 +109,7 @@
         </div>
 
         <!-- 词根分解 -->
-        <div class="mode-card" @click="navigateToMode('word-root-analysis')">
+        <div v-if="canUseMode('word-root-analysis')" class="mode-card" @click="navigateToMode('word-root-analysis')">
           <div class="mode-header">
             <div class="mode-icon">🌱</div>
             <div class="mode-title">词根分解</div>
@@ -142,7 +142,7 @@
         </div>
 
         <!-- 故事阅读 -->
-        <div class="mode-card" @click="navigateToMode('story-reading')">
+        <div v-if="canUseMode('story-reading')" class="mode-card" @click="navigateToMode('story-reading')">
           <div class="mode-header">
             <div class="mode-icon">📚</div>
             <div class="mode-title">故事阅读</div>
@@ -182,7 +182,7 @@
       <div class="mode-grid">
 
         <!-- 拼写练习 -->
-        <div class="mode-card" @click="navigateToMode('spelling')">
+        <div v-if="canUseMode('spelling')" class="mode-card" @click="navigateToMode('spelling')">
           <div class="mode-header">
             <div class="mode-icon">✍️</div>
             <div class="mode-title">拼写练习</div>
@@ -215,7 +215,7 @@
         </div>
 
         <!-- 闪卡学习 -->
-        <div class="mode-card" @click="navigateToMode('flashcard')">
+        <div v-if="canUseMode('flashcard')" class="mode-card" @click="navigateToMode('flashcard')">
           <div class="mode-header">
             <div class="mode-icon">🃏</div>
             <div class="mode-title">闪卡学习</div>
@@ -248,7 +248,7 @@
         </div>
 
         <!-- 模式匹配记忆 -->
-        <div class="mode-card" @click="navigateToMode('pattern-memory')">
+        <div v-if="canUseMode('pattern-memory')" class="mode-card" @click="navigateToMode('pattern-memory')">
           <div class="mode-header">
             <div class="mode-icon">🧠</div>
             <div class="mode-title">模式匹配记忆</div>
@@ -281,7 +281,7 @@
         </div>
 
         <!-- 单词挑战 -->
-        <div class="mode-card" @click="navigateToMode('word-challenge')">
+        <div v-if="canUseMode('word-challenge')" class="mode-card" @click="navigateToMode('word-challenge')">
           <div class="mode-header">
             <div class="mode-icon">⚔️</div>
             <div class="mode-title">单词挑战</div>
@@ -314,7 +314,7 @@
         </div>
 
         <!-- 单词复习 -->
-        <div class="mode-card" @click="navigateToMode('word-review')">
+        <div v-if="canUseMode('word-review')" class="mode-card" @click="navigateToMode('word-review')">
           <div class="mode-header">
             <div class="mode-icon">🔄</div>
             <div class="mode-title">单词复习</div>
@@ -347,7 +347,7 @@
         </div>
 
         <!-- 单词选择 -->
-        <div class="mode-card" @click="navigateToMode('word-selection')">
+        <div v-if="canUseMode('word-selection')" class="mode-card" @click="navigateToMode('word-selection')">
           <div class="mode-header">
             <div class="mode-icon">✅</div>
             <div class="mode-title">单词选择</div>
@@ -380,7 +380,7 @@
         </div>
 
         <!-- 师生互动 -->
-        <div class="mode-card" @click="navigateToMode('teacher-student-interaction')">
+        <div v-if="canUseMode('teacher-student-interaction')" class="mode-card" @click="navigateToMode('teacher-student-interaction')">
           <div class="mode-header">
             <div class="mode-icon">👥</div>
             <div class="mode-title">师生互动</div>
@@ -419,7 +419,7 @@
       <h2 class="category-title">🏆 特色模块</h2>
       <div class="mode-grid">
         <!-- 竞技模式 -->
-        <div class="mode-card" @click="navigateToMode('competition')">
+        <div v-if="canUseMode('competition')" class="mode-card" @click="navigateToMode('competition')">
           <div class="mode-header">
             <div class="mode-icon">🏆</div>
             <div class="mode-title">竞技模式</div>
@@ -452,7 +452,7 @@
         </div>
 
         <!-- 快刷模式 -->
-        <div class="mode-card" @click="navigateToMode('quick-brush')">
+        <div v-if="canUseMode('quick-brush')" class="mode-card" @click="navigateToMode('quick-brush')">
           <div class="mode-header">
             <div class="mode-icon">⚡</div>
             <div class="mode-title">快刷模式</div>
@@ -500,20 +500,69 @@
 <script>
 import { UserSettingsManager } from '../utils/userSettings.js'
 import userPersonalizationMixin, { predefinedElementConfigs } from '../mixins/userPersonalization.js'
+import permissionMixin from '../mixins/permissionMixin.js'
 import { homepageManager } from '../utils/homepageManager.js'
 
 export default {
   name: 'LearningModeSelector',
-  mixins: [userPersonalizationMixin],
+  mixins: [userPersonalizationMixin, permissionMixin],
   data() {
     return {
       selectedHomepage: '',
       userId: 'default',
-      userSettings: new UserSettingsManager()
+      userSettings: new UserSettingsManager(),
+      // 学习模式权限映射
+      modePermissions: {
+        'word-reading': 'practice_reading',
+        'word-learning': 'view_word_learning',
+        'word-detail': 'view_word_detail',
+        'word-root-analysis': 'analyze_word_roots',
+        'story-reading': 'practice_story_reading',
+        'spelling': 'practice_spelling',
+        'flashcard': 'use_flashcard',
+        'pattern-memory': 'use_pattern_memory',
+        'word-challenge': 'participate_challenge',
+        'word-review': 'review_words',
+        'word-selection': 'practice_word_selection',
+        'teacher-student-interaction': 'practice_word_selection',
+        'competition': 'participate_challenge',
+        'quick-brush': 'review_words'
+      }
+    }
+  },
+  
+  computed: {
+    /**
+     * 根据用户权限过滤可用的学习模式
+     */
+    availableModes() {
+      const allModes = Object.keys(this.modePermissions)
+      return allModes.filter(mode => {
+        const permission = this.modePermissions[mode]
+        return this.$hasPermission(permission)
+      })
     }
   },
   methods: {
+    /**
+     * 检查用户是否有权限使用指定模式
+     */
+    canUseMode(mode) {
+      const permission = this.modePermissions[mode]
+      return permission ? this.$hasPermission(permission) : false
+    },
+    
+    /**
+     * 导航到指定模式（带权限检查）
+     */
     navigateToMode(mode) {
+      // 权限检查
+      if (!this.canUseMode(mode)) {
+        this.$showError(`您没有权限使用${homepageManager.getModeName(mode)}功能`)
+        return
+      }
+      
+      // 执行导航
       switch(mode) {
         case 'word-reading':
           this.$router.push('/word-reading')
@@ -563,16 +612,22 @@ export default {
     },
     
     setHomepage(mode) {
+      // 检查权限
+      if (!this.canUseMode(mode)) {
+        this.$showError(`您没有权限将${homepageManager.getModeName(mode)}设置为首页`)
+        return
+      }
+      
       const success = homepageManager.setHomepage(mode)
       if (success) {
         this.selectedHomepage = mode
         
         // 显示设置成功提示
         this.$nextTick(() => {
-          alert(`已将"${homepageManager.getModeName(mode)}"设置为首页`)
+          this.$showSuccess(`已将"${homepageManager.getModeName(mode)}"设置为首页`)
         })
       } else {
-        alert('设置首页失败，请重试')
+        this.$showError('设置首页失败，请重试')
       }
     },
     

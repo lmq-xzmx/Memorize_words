@@ -90,7 +90,12 @@ const PAGE_PERMISSIONS = {
   '/analytics': 'view_analytics',
   '/resource-auth': 'manage_resource_auth',
   '/subscription-management': 'manage_subscriptions',
-  '/resource-sharing': 'share_resources'
+  '/resource-sharing': 'share_resources',
+  // 补充缺失的页面权限映射
+  '/learning-modes': 'view_word_learning',
+  '/competition': 'participate_challenge',
+  '/quick-brush': 'review_words',
+  '/discover': 'discover_content'
 }
 
 /**
