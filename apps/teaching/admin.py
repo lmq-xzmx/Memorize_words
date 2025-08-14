@@ -2,8 +2,8 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Count
 from .models import (
-    LearningGoal, GoalWord, LearningSession, 
-    WordLearningRecord, LearningPlan
+    LearningGoal, GoalWord, LearningSession, WordLearningRecord, LearningPlan,
+    DailyStudyRecord, GuidedPracticeSession, GuidedPracticeQuestion, GuidedPracticeAnswer
 )
 
 
@@ -30,7 +30,8 @@ class LearningPlanInline(admin.TabularInline):
             from django.http import HttpRequest
             from django.contrib.auth.models import AnonymousUser
             request = HttpRequest()
-            request.user = AnonymousUser()
+            # 使用setattr避免类型检查错误
+            setattr(request, 'user', AnonymousUser())
         
         formset = super().get_formset(request, obj, **kwargs)
         
@@ -336,10 +337,14 @@ class LearningPlanAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, change, **kwargs)
         
         # 为计划类型字段添加onchange事件
-        if 'plan_type' in form.base_fields:
-            form.base_fields['plan_type'].widget.attrs.update({
-                'onchange': 'updatePlanSettings(this.value);'
-            })
+        try:
+            base_fields = getattr(form, 'base_fields', {})
+            if 'plan_type' in base_fields:
+                base_fields['plan_type'].widget.attrs.update({
+                    'onchange': 'updatePlanSettings(this.value);'
+                })
+        except (AttributeError, TypeError):
+            pass
         
         return form
     
@@ -366,3 +371,193 @@ class LearningPlanAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """优化查询"""
         return super().get_queryset(request).select_related('goal__user')
+
+
+@admin.register(DailyStudyRecord)
+class DailyStudyRecordAdmin(admin.ModelAdmin):
+    """每日学习记录管理"""
+    list_display = [
+        'user', 'learning_plan', 'study_date', 'target_words', 'completed_words',
+        'completion_rate_display', 'study_duration_display', 'created_at'
+    ]
+    list_filter = ['study_date', 'created_at', 'learning_plan']
+    search_fields = ['user__username', 'learning_plan__goal__name']
+    date_hierarchy = 'study_date'
+    readonly_fields = ['created_at', 'completion_rate']
+    ordering = ['-study_date']
+    list_per_page = 50
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user', 'learning_plan', 'study_date')
+        }),
+        ('学习数据', {
+            'fields': ('target_words', 'completed_words', 'completion_rate', 'study_duration')
+        }),
+        ('时间戳', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        })
+    )
+    
+    @admin.display(description='完成率')
+    def completion_rate_display(self, obj):
+        """显示完成率"""
+        rate = obj.completion_rate
+        color = 'green' if rate >= 80 else 'orange' if rate >= 60 else 'red'
+        return format_html(
+            '<span style="color: {};">{:.1f}%</span>',
+            color, rate
+        )
+    
+    @admin.display(description='学习时长')
+    def study_duration_display(self, obj):
+        """显示学习时长"""
+        if obj.study_duration:
+            minutes = obj.study_duration.total_seconds() / 60
+            return f'{int(minutes)} 分钟'
+        return '-'
+    
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).select_related('user', 'learning_plan__goal')
+
+
+@admin.register(GuidedPracticeSession)
+class GuidedPracticeSessionAdmin(admin.ModelAdmin):
+    """引导练习会话管理"""
+    list_display = [
+        'user', 'goal', 'session_type', 'total_questions', 'correct_answers',
+        'accuracy_rate_display', 'is_completed', 'start_time'
+    ]
+    list_filter = ['session_type', 'is_completed', 'start_time']
+    search_fields = ['user__username', 'goal__name']
+    date_hierarchy = 'start_time'
+    readonly_fields = ['start_time', 'end_time']
+    ordering = ['-start_time']
+    list_per_page = 50
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('user', 'goal', 'session_type')
+        }),
+        ('会话数据', {
+            'fields': ('start_time', 'end_time', 'total_questions', 'correct_answers', 'is_completed')
+        }),
+        ('时间戳', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    @admin.display(description='正确率')
+    def accuracy_rate_display(self, obj):
+        """显示正确率"""
+        if obj.total_questions > 0:
+            rate = (obj.correct_answers / obj.total_questions) * 100
+            color = 'green' if rate >= 80 else 'orange' if rate >= 60 else 'red'
+            return format_html(
+                '<span style="color: {};">{:.1f}%</span>',
+                color, rate
+            )
+        return '-'
+    
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).select_related('user', 'goal')
+
+
+@admin.register(GuidedPracticeQuestion)
+class GuidedPracticeQuestionAdmin(admin.ModelAdmin):
+    """引导练习题目管理"""
+    list_display = [
+        'session', 'question_type', 'question_content_short', 'correct_answer',
+        'order', 'created_at'
+    ]
+    list_filter = ['question_type', 'created_at']
+    search_fields = ['question_text', 'correct_answer', 'session__user__username']
+    readonly_fields = ['created_at']
+    ordering = ['session', 'order']
+    list_per_page = 100
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('session', 'question_type', 'order')
+        }),
+        ('题目内容', {
+            'fields': ('question_text', 'correct_answer', 'options')
+        }),
+        ('时间戳', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        })
+    )
+    
+    @admin.display(description='题目内容')
+    def question_content_short(self, obj):
+        """显示题目内容简短版"""
+        content = obj.question_text
+        if len(content) > 50:
+            return content[:50] + '...'
+        return content
+    
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).select_related('session__user', 'session__goal')
+
+
+@admin.register(GuidedPracticeAnswer)
+class GuidedPracticeAnswerAdmin(admin.ModelAdmin):
+    """引导练习答案管理"""
+    list_display = [
+        'question', 'user_answer', 'is_correct_display', 'response_time_display',
+        'created_at'
+    ]
+    list_filter = ['is_correct', 'created_at']
+    search_fields = ['user_answer', 'question__question_text', 'question__session__user__username']
+    readonly_fields = ['created_at']
+    ordering = ['-created_at']
+    list_per_page = 100
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('question', 'user_answer', 'is_correct')
+        }),
+        ('响应数据', {
+            'fields': ('response_time',)
+        }),
+        ('时间戳', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        })
+    )
+    
+    @admin.display(description='正确性')
+    def is_correct_display(self, obj):
+        """显示正确性"""
+        if obj.is_correct:
+            return format_html('<span style="color: green;">✓ 正确</span>')
+        else:
+            return format_html('<span style="color: red;">✗ 错误</span>')
+    
+    @admin.display(description='响应时间')
+    def response_time_display(self, obj):
+        """显示响应时间"""
+        time = obj.response_time
+        if time < 2:
+            color = 'green'
+        elif time < 5:
+            color = 'orange'
+        else:
+            color = 'red'
+        
+        return format_html(
+            '<span style="color: {};">{}秒</span>',
+            color, round(time, 1)
+        )
+    
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).select_related(
+            'question__session__user', 'question__session__goal'
+        )

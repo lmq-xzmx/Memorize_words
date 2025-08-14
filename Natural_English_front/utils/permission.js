@@ -3,6 +3,8 @@
  * 基于角色的访问控制(RBAC)实现
  */
 
+import { syncAuthState, manualSyncAuth } from './authSync.js'
+
 // 角色权限映射表
 const ROLE_PERMISSIONS = {
   'admin': ['*'], // 管理员拥有所有权限
@@ -85,6 +87,7 @@ const PAGE_PERMISSIONS = {
   '/pattern-memory': 'use_pattern_memory',
   '/community': 'access_community',
   '/fashion': 'access_fashion_content',
+  '/dev': 'access_dev_tools',
   '/dev-index': 'access_dev_tools',
   '/admin/dev-index': 'access_dev_tools',
   '/analytics': 'view_analytics',
@@ -253,10 +256,22 @@ export function getCurrentUser() {
  * 检查用户是否已认证
  * @returns {boolean} 是否已认证
  */
-export function isAuthenticated() {
+export async function isAuthenticated() {
   const token = localStorage.getItem('token')
   const user = getCurrentUser()
-  return !!(token && user)
+  
+  // 如果前端没有登录信息，尝试同步后端状态
+  if (!token || !user) {
+    console.log('前端无登录信息，尝试同步后端状态...')
+    const syncResult = await syncAuthState()
+    if (syncResult.success && syncResult.authenticated) {
+      console.log('同步成功，用户已登录')
+      return true
+    }
+    return false
+  }
+  
+  return true
 }
 
 /**
@@ -305,11 +320,14 @@ export function requirePermission(permission) {
  * @param {Object} from - 来源路由
  * @param {Function} next - 路由继续函数
  */
-export function checkRoutePermission(to, from, next) {
+export async function checkRoutePermission(to, from, next) {
   // 检查认证状态
-  if (to.meta.requiresAuth && !isAuthenticated()) {
-    next('/login')
-    return
+  if (to.meta.requiresAuth) {
+    const authenticated = await isAuthenticated()
+    if (!authenticated) {
+      next('/login')
+      return
+    }
   }
   
   // 检查页面权限

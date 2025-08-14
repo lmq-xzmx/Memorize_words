@@ -1,4 +1,63 @@
 {% extends "admin/words/base_change_list.html" %}
 {% load i18n admin_urls static %}
 
-{% block batch-import-text %}批量导入单词{% endblock %}
+{% block batch-import-text %}批量导入词汇{% endblock %}
+
+{% block extra-tools %}
+    <li>
+        <a href="{% url 'admin:words_vocabularylist_batch_import' %}" class="batch-import-btn addlink">
+            📥 批量导入
+        </a>
+    </li>
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .object-tools {
+            float: right;
+            margin-bottom: 5px;
+        }
+        
+        .object-tools li {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        .batch-import-btn {
+            background: #28a745 !important;
+            border: 1px solid #28a745 !important;
+            color: white !important;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        
+        .batch-import-btn:hover {
+            background: #218838 !important;
+            border-color: #218838 !important;
+            color: white !important;
+        }
+        
+        .batch-import-btn:before {
+            content: "📥 ";
+            margin-right: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 为批量导入按钮添加提示
+            var batchImportBtn = document.querySelector('.batch-import-btn');
+            if (batchImportBtn) {
+                batchImportBtn.title = '点击进行批量导入词汇列表操作';
+            }
+        });
+    </script>
+{% endblock %}

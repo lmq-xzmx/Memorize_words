@@ -42,6 +42,13 @@ export default {
         const user = getCurrentUser()
         console.log('当前用户:', user)
         
+        // 检查用户信息是否完整
+        if (!user || !user.role) {
+          console.log('用户信息不完整，显示学习模式选择器')
+          this.isLoading = false
+          return
+        }
+        
         // 检查是否有设置的首页（带权限验证）
         const redirectInfo = homepageManager.checkHomepageRedirect(
           this.$route, 

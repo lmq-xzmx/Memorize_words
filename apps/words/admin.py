@@ -2,11 +2,15 @@ from django.contrib import admin
 from django.contrib.admin import helpers
 from django.utils.html import format_html
 from django.db.models import Count
-from .models import Word, VocabularyList, VocabularySource, WordSet, WordResource
+from django.db import transaction
+from typing import Any, Optional
+from .models import Word, VocabularyList, VocabularySource, WordSet, WordResource, WordGrader, WordGradeLevel
 
+
+from .base_admin import BaseBatchImportAdmin
 
 @admin.register(Word)
-class WordAdmin(admin.ModelAdmin):
+class WordAdmin(BaseBatchImportAdmin):
     """单词管理"""
     list_display = [
         'word', 'phonetic', 'part_of_speech', 'vocabulary_list',
@@ -53,7 +57,7 @@ class WordAdmin(admin.ModelAdmin):
             if create_new_wordset and new_wordset_name:
                 # 创建新的单词集（成品状态）
                 try:
-                    with transaction.atomic():
+                    with transaction.atomic():  # type: ignore  # type: ignore
                         # 获取选中单词的详细信息用于描述
                         word_list = list(queryset.values_list('word', flat=True)[:10])  # 取前10个单词作为示例
                         word_preview = ', '.join(word_list)
@@ -61,7 +65,7 @@ class WordAdmin(admin.ModelAdmin):
                             word_preview += f' 等{queryset.count()}个单词'
                         
                         # 创建完整的单词集
-                        word_set = WordSet.objects.create(
+                        word_set = WordSet.objects.create(  # type: ignore
                             name=new_wordset_name,
                             description=f'包含 {queryset.count()} 个精选单词：{word_preview}。适合学习和练习使用。',
                             created_by=request.user,
@@ -91,7 +95,7 @@ class WordAdmin(admin.ModelAdmin):
             elif word_set_id:
                 # 添加到现有单词集
                 try:
-                    word_set = WordSet.objects.get(id=word_set_id)
+                    word_set = WordSet.objects.get(id=word_set_id)  # type: ignore
                     existing_count = word_set.words.count()
                     word_set.words.add(*queryset)
                     new_count = word_set.words.count()
@@ -103,7 +107,7 @@ class WordAdmin(admin.ModelAdmin):
                         messages.info(request, '所选单词已存在于该单词集中')
                     
                     return redirect('admin:words_word_changelist')
-                except WordSet.DoesNotExist:
+                except WordSet.DoesNotExist:  # type: ignore
                     messages.error(request, '选择的单词集不存在')
                     return redirect('admin:words_word_changelist')
                 except Exception as e:
@@ -113,7 +117,7 @@ class WordAdmin(admin.ModelAdmin):
                 messages.error(request, '请选择一个单词集或创建新的单词集')
         
         # GET请求显示选择页面
-        word_sets = WordSet.objects.filter(created_by=request.user).order_by('-created_at')
+        word_sets = WordSet.objects.filter(created_by=request.user).order_by('-created_at')  # type: ignore
         
         context = {
             'title': '添加单词到单词集',
@@ -130,127 +134,177 @@ class WordAdmin(admin.ModelAdmin):
         from django.urls import path
         urls = super().get_urls()
         custom_urls = [
-            path('batch_import/', self.admin_site.admin_view(self.batch_import_view), name='%s_%s_batch_import' % (self.model._meta.app_label, self.model._meta.model_name)),
+            path('batch_import/', self.admin_site.admin_view(self.batch_import_view), name=f'{self.model._meta.app_label}_{self.model._meta.model_name}_batch_import'),
         ]
         return custom_urls + urls
     
-    def batch_import_view(self, request):
-        """批量导入单词并创建新词库列表"""
-        from django.shortcuts import render, redirect
+    def changelist_view(self, request, extra_context=None):
+        """重写changelist视图以添加批量导入按钮"""
+        extra_context = extra_context or {}
+        extra_context['show_batch_import'] = True
+        extra_context['batch_import_url'] = 'admin:words_word_batch_import'
+        return super().changelist_view(request, extra_context=extra_context)
+    
+    def batch_import_view(self, request, *args, **kwargs):
+        """批量导入单词视图"""
+        return self.process_batch_import(request)
+
+    def perform_import(self, request, reader):
+        """执行单词导入"""
         from django.contrib import messages
-        from django.db import transaction
-        from django.core.exceptions import ValidationError
-        import csv
-        import io
-        
-        # 检查权限
-        if not self.has_change_permission(request):
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
-        
-        if request.method == 'POST':
-            csv_file = request.FILES.get('csv_file')
-            vocabulary_list_name = request.POST.get('vocabulary_list_name', '').strip()
-            vocabulary_source_name = request.POST.get('vocabulary_source_name', '').strip()
-            
-            if not csv_file:
-                messages.error(request, '请选择CSV文件')
-                return redirect('.')
-            
-            if not csv_file.name.endswith('.csv'):
-                messages.error(request, '请上传CSV格式文件')
-                return redirect('.')
-            
-            if not vocabulary_list_name:
-                messages.error(request, '请输入词库列表名称')
-                return redirect('.')
-            
+        from .models import VocabularyList, Word
+        created_count = 0
+        error_count = 0
+        for row_num, row in enumerate(reader, 1):
             try:
-                with transaction.atomic():
-                    # 创建或获取词库来源
-                    vocabulary_source = None
-                    if vocabulary_source_name:
-                        vocabulary_source, created = VocabularySource.objects.get_or_create(
-                            name=vocabulary_source_name,
-                            defaults={'description': f'通过批量导入创建的词库来源：{vocabulary_source_name}'}
-                        )
-                    
-                    # 创建新的词库列表
-                    vocabulary_list = VocabularyList.objects.create(
-                        name=vocabulary_list_name,
-                        source=vocabulary_source,
-                        description=f'通过批量导入创建的词库：{vocabulary_list_name}',
-                        is_active=True
-                    )
-                    
-                    # 读取CSV文件
-                    file_data = csv_file.read().decode('utf-8-sig')  # 支持BOM
-                    csv_reader = csv.DictReader(io.StringIO(file_data))
-                    
-                    created_count = 0
-                    error_count = 0
-                    
-                    for row_num, row in enumerate(csv_reader, start=2):
-                        try:
-                            word_text = row.get('word', '').strip()
-                            if not word_text:
-                                messages.warning(request, f'第{row_num}行：单词不能为空，跳过')
-                                error_count += 1
-                                continue
-                            
-                            # 创建单词
-                            word_data = {
-                                'word': word_text,
-                                'phonetic': row.get('phonetic', '').strip(),
-                                'definition': row.get('definition', '').strip(),
-                                'part_of_speech': row.get('part_of_speech', '').strip(),
-                                'example': row.get('example', '').strip(),
-                                'note': row.get('note', '').strip(),
-                                'textbook_version': row.get('textbook_version', '').strip(),
-                                'grade': row.get('grade', '').strip(),
-                                'book_volume': row.get('book_volume', '').strip(),
-                                'unit': row.get('unit', '').strip(),
-                                'vocabulary_list': vocabulary_list,
-                            }
-                            
-                            Word.objects.create(**word_data)
-                            created_count += 1
-                            
-                        except Exception as e:
-                            messages.warning(request, f'第{row_num}行处理失败：{str(e)}')
-                            error_count += 1
-                    
-                    # 更新词库列表的单词数量
-                    vocabulary_list.update_word_count()
-                    
-                    # 显示结果
-                    if created_count > 0:
-                        messages.success(request, f'成功创建词库列表 "{vocabulary_list_name}" 并导入 {created_count} 个单词')
-                    if error_count > 0:
-                        messages.warning(request, f'处理失败 {error_count} 行')
-                    
-                    return redirect('admin:words_vocabularylist_changelist')
-                    
+                vocabulary_list_name = row.get('vocabulary_list_name', '').strip()
+                if not vocabulary_list_name:
+                    messages.warning(request, f'第{row_num}行缺少词库列表名称，已跳过。')
+                    error_count += 1
+                    continue
+
+                vocabulary_list, _ = VocabularyList.objects.get_or_create(name=vocabulary_list_name)  # type: ignore
+                
+                word_data = {
+                    'word': row.get('word', '').strip(),
+                    'phonetic': row.get('phonetic', '').strip(),
+                    'definition': row.get('definition', '').strip(),
+                    'part_of_speech': row.get('part_of_speech', '').strip(),
+                    'example': row.get('example', '').strip(),
+                    'note': row.get('note', '').strip(),
+                    'vocabulary_list': vocabulary_list,
+                }
+                
+                if not word_data['word']:
+                    messages.warning(request, f'第{row_num}行缺少单词，已跳过。')
+                    error_count += 1
+                    continue
+
+                Word.objects.create(**word_data)  # type: ignore
+                created_count += 1
+
             except Exception as e:
-                messages.error(request, f'文件处理失败：{str(e)}')
-                return redirect('.')
+                messages.warning(request, f'第{row_num}行处理失败：{str(e)}')
+                error_count += 1
         
-        # GET请求显示导入页面
-        context = {
-            'title': '批量导入单词',
-            'opts': self.model._meta,
-        }
-        return render(request, 'admin/words/word/batch_import.html', context)
+        if created_count > 0:
+            messages.success(request, f'成功导入 {created_count} 个单词。')
+        if error_count > 0:
+            messages.warning(request, f'有 {error_count} 行数据导入失败。')
     
 
     
     def get_queryset(self, request):
         """优化查询"""
-        return super().get_queryset(request).select_related('vocabulary_list')
+        return super().get_queryset(request)
+
+
+@admin.register(WordGrader)
+class WordGraderAdmin(admin.ModelAdmin):
+    """单词分级器管理"""
+    list_display = [
+        'name', 'grade_count', 'total_levels_display', 'created_by', 
+        'is_active', 'created_at'
+    ]
+    list_filter = ['is_active', 'created_at', 'created_by']
+    search_fields = ['name', 'description']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+    list_per_page = 25
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('name', 'description', 'created_by')
+        }),
+        ('分级设置', {
+            'fields': ('grade_count', 'is_active')
+        }),
+        ('时间戳', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    @admin.display(description='实际等级数')
+    def total_levels_display(self, obj):
+        """显示实际等级数量"""
+        count = obj.get_total_levels()
+        return format_html(
+            '<span style="color: {};">{}/{}</span>',
+            'green' if count == obj.grade_count else 'orange',
+            count,
+            obj.grade_count
+        )
+    
+    def save_model(self, request, obj, form, change):
+        """保存模型"""
+        if not change:  # 创建新对象
+            if not obj.created_by:
+                obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+    
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).select_related('created_by').prefetch_related('grade_levels')
+
+
+@admin.register(WordGradeLevel)
+class WordGradeLevelAdmin(admin.ModelAdmin):
+    """单词分级等级管理"""
+    list_display = [
+        'grader', 'level', 'name', 'word_count_display', 
+        'difficulty_range_display', 'created_at'
+    ]
+    list_filter = ['grader', 'level', 'created_at']
+    search_fields = ['name', 'description', 'grader__name']
+    readonly_fields = ['created_at']
+    ordering = ['grader', 'level']
+    list_per_page = 25
+    
+    fieldsets = (
+        ('基本信息', {
+            'fields': ('grader', 'level', 'name', 'description')
+        }),
+        ('单词设置', {
+            'fields': ('word_set',)
+        }),
+        ('难度范围', {
+            'fields': ('min_difficulty', 'max_difficulty')
+        }),
+        ('时间戳', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        })
+    )
+    
+    @admin.display(description='单词数量')
+    def word_count_display(self, obj):
+        """显示单词数量"""
+        if obj.word_set:
+            count = obj.word_set.words.count()
+            return format_html(
+                '<span style="color: {};">{} 个单词</span>',
+                'green' if count > 0 else 'gray',
+                count
+            )
+        return format_html('<span style="color: gray;">未绑定单词集</span>')
+    
+    @admin.display(description='难度范围')
+    def difficulty_range_display(self, obj):
+        """显示难度范围"""
+        return format_html(
+            '<span class="badge">{} - {}</span>',
+            obj.min_difficulty,
+            obj.max_difficulty
+        )
+    
+    def get_queryset(self, request):
+        """优化查询"""
+        return super().get_queryset(request).select_related('grader', 'word_set').prefetch_related('word_set__words')
 
 
 @admin.register(VocabularyList)
-class VocabularyListAdmin(admin.ModelAdmin):
+class VocabularyListAdmin(BaseBatchImportAdmin):
     """词汇表管理"""
     list_display = [
         'name', 'source', 'word_count_display', 'is_active', 'created_at'
@@ -289,11 +343,18 @@ class VocabularyListAdmin(admin.ModelAdmin):
         from django.urls import path
         urls = super().get_urls()
         custom_urls = [
-            path('batch_import/', self.admin_site.admin_view(self.batch_import_view), name='%s_%s_batch_import' % (self.model._meta.app_label, self.model._meta.model_name)),
+            path('batch_import/', self.admin_site.admin_view(self.batch_import_view), name=f'{self.model._meta.app_label}_{self.model._meta.model_name}_batch_import'),
         ]
         return custom_urls + urls
     
-    def batch_import_view(self, request):
+    def changelist_view(self, request, extra_context=None):
+        """重写changelist视图以添加批量导入按钮"""
+        extra_context = extra_context or {}
+        extra_context['show_batch_import'] = True
+        extra_context['batch_import_url'] = 'admin:words_vocabularylist_batch_import'
+        return super().changelist_view(request, extra_context=extra_context)
+    
+    def batch_import_view(self, request, *args, **kwargs):
         """批量导入单词到词库列表（支持去重和版本管理）"""
         from django.shortcuts import render, redirect
         from django.contrib import messages
@@ -313,6 +374,7 @@ class VocabularyListAdmin(admin.ModelAdmin):
             vocabulary_list_id = request.POST.get('vocabulary_list')
             enable_versioning = request.POST.get('enable_versioning') == 'on'
             conflict_resolution = request.POST.get('conflict_resolution', 'create_version')
+            batch_size = int(request.POST.get('batch_size', 100))
             
             if not csv_file:
                 messages.error(request, '请选择CSV文件')
@@ -326,9 +388,14 @@ class VocabularyListAdmin(admin.ModelAdmin):
                 messages.error(request, '请选择目标词库列表')
                 return redirect('.')
             
+            # 验证批次大小
+            if batch_size < 10 or batch_size > 1000:
+                messages.error(request, '批次大小必须在10-1000之间')
+                return redirect('.')
+            
             try:
-                vocabulary_list = VocabularyList.objects.get(id=vocabulary_list_id)
-            except VocabularyList.DoesNotExist:
+                vocabulary_list = VocabularyList.objects.get(id=vocabulary_list_id)  # type: ignore
+            except VocabularyList.DoesNotExist:  # type: ignore
                 messages.error(request, '选择的词库列表不存在')
                 return redirect('.')
             
@@ -367,7 +434,7 @@ class VocabularyListAdmin(admin.ModelAdmin):
                             }
                             
                             # 查找已存在的同名单词
-                            existing_words = Word.objects.filter(
+                            existing_words = Word.objects.filter(  # type: ignore
                                 word=word_text,
                                 vocabulary_list=vocabulary_list
                             ).order_by('created_at')
@@ -461,7 +528,7 @@ class VocabularyListAdmin(admin.ModelAdmin):
                 return redirect('.')
         
         # GET请求显示导入页面
-        vocabulary_lists = VocabularyList.objects.filter(is_active=True).order_by('name')
+        vocabulary_lists = VocabularyList.objects.filter(is_active=True).order_by('name')  # type: ignore
         context = {
             'title': '批量导入单词',
             'opts': self.model._meta,
@@ -558,7 +625,7 @@ class WordSetAdmin(admin.ModelAdmin):
 
 
 @admin.register(WordResource)
-class WordResourceAdmin(admin.ModelAdmin):
+class WordResourceAdmin(BaseBatchImportAdmin):
     """单词配套资源管理"""
     list_display = [
         'name', 'resource_type', 'file_size_display', 'created_at'
@@ -599,97 +666,60 @@ class WordResourceAdmin(admin.ModelAdmin):
         from django.urls import path
         urls = super().get_urls()
         custom_urls = [
-            path('batch_import/', self.admin_site.admin_view(self.batch_import_view), name='%s_%s_batch_import' % (self.model._meta.app_label, self.model._meta.model_name)),
+            path('batch_import/', self.admin_site.admin_view(self.batch_import_view), name=f'{self.model._meta.app_label}_{self.model._meta.model_name}_batch_import'),
         ]
         return custom_urls + urls
     
-    def batch_import_view(self, request):
-        """批量导入单词配套资源"""
-        from django.shortcuts import render, redirect
+    def batch_import_view(self, request, *args, **kwargs):
+        """批量导入单词配套资源视图"""
+        return self.process_batch_import(request)
+
+    def perform_import(self, request, reader):
+        """执行单词配套资源导入"""
         from django.contrib import messages
-        from django.db import transaction
-        from django.core.exceptions import ValidationError
-        import csv
-        import io
-        import os
+        from .models import WordResource
         
-        # 检查权限
-        if not self.has_change_permission(request):
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+        created_count = 0
+        error_count = 0
         
-        if request.method == 'POST':
-            csv_file = request.FILES.get('csv_file')
-            
-            if not csv_file:
-                messages.error(request, '请选择CSV文件')
-                return redirect('.')
-            
-            if not csv_file.name.endswith('.csv'):
-                messages.error(request, '请上传CSV格式文件')
-                return redirect('.')
-            
+        for row_num, row in enumerate(reader, 1):
             try:
-                with transaction.atomic():
-                    # 读取CSV文件
-                    file_data = csv_file.read().decode('utf-8-sig')  # 支持BOM
-                    csv_reader = csv.DictReader(io.StringIO(file_data))
-                    
-                    created_count = 0
-                    error_count = 0
-                    
-                    for row_num, row in enumerate(csv_reader, start=2):
-                        try:
-                            name = row.get('name', '').strip()
-                            url = row.get('url', '').strip()
-                            resource_type = row.get('resource_type', '').strip()
-                            
-                            if not name:
-                                messages.warning(request, f'第{row_num}行：资源名称不能为空，跳过')
-                                error_count += 1
-                                continue
-                            
-                            if not resource_type:
-                                messages.warning(request, f'第{row_num}行：资源类型不能为空，跳过')
-                                error_count += 1
-                                continue
-                            
-                            # 创建资源
-                            resource_data = {
-                                'name': name,
-                                'description': row.get('description', '').strip(),
-                                'resource_type': resource_type,
-                            }
-                            
-                            # 如果是URL类型，添加URL字段
-                            if resource_type == 'url' and url:
-                                resource_data['url'] = url
-                            
-                            WordResource.objects.create(**resource_data)
-                            created_count += 1
-                            
-                        except Exception as e:
-                            messages.warning(request, f'第{row_num}行处理失败：{str(e)}')
-                            error_count += 1
-                    
-                    # 显示结果
-                    if created_count > 0:
-                        messages.success(request, f'成功导入 {created_count} 个资源')
-                    if error_count > 0:
-                        messages.warning(request, f'处理失败 {error_count} 行')
-                    
-                    return redirect('admin:words_wordresource_changelist')
-                    
+                name = row.get('name', '').strip()
+                url = row.get('url', '').strip()
+                resource_type = row.get('resource_type', '').strip()
+                
+                if not name:
+                    messages.warning(request, f'第{row_num}行：资源名称不能为空，已跳过。')
+                    error_count += 1
+                    continue
+                
+                if not resource_type:
+                    messages.warning(request, f'第{row_num}行：资源类型不能为空，已跳过。')
+                    error_count += 1
+                    continue
+                
+                # 创建资源
+                resource_data = {
+                    'name': name,
+                    'description': row.get('description', '').strip(),
+                    'resource_type': resource_type,
+                }
+                
+                # 如果是URL类型，添加URL字段
+                if resource_type == 'url' and url:
+                    resource_data['url'] = url
+                
+                WordResource.objects.create(**resource_data)  # type: ignore
+                created_count += 1
+                
             except Exception as e:
-                messages.error(request, f'文件处理失败：{str(e)}')
-                return redirect('.')
+                messages.warning(request, f'第{row_num}行处理失败：{str(e)}')
+                error_count += 1
         
-        # GET请求显示导入页面
-        context = {
-            'title': '批量导入单词配套资源',
-            'opts': self.model._meta,
-        }
-        return render(request, 'admin/words/wordresource/batch_import.html', context)
+        if created_count > 0:
+            messages.success(request, f'成功导入 {created_count} 个资源。')
+        if error_count > 0:
+            messages.warning(request, f'有 {error_count} 行数据导入失败。')
     
     def get_queryset(self, request):
         """优化查询"""

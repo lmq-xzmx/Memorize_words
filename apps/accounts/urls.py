@@ -10,6 +10,9 @@ from .template_api_views import (
     RoleTemplateViewSet, EnhancedUserExtensionDataViewSet
 )
 from .bulk_api_views import BulkOperationsViewSet
+from .auth_views import (
+    AuthVerifyView, CurrentUserView, AuthSyncView
+)
 
 app_name = 'accounts'
 
@@ -32,6 +35,11 @@ urlpatterns = [
     path('api/auth/roles/', RegisterViewSet.as_view({'get': 'roles'}), name='api_roles'),
     path('api/auth/role-extensions/', RegisterViewSet.as_view({'get': 'role_extensions'}), name='api_role_extensions'),
     path('api/auth/register-with-extensions/', RegisterViewSet.as_view({'post': 'register_with_extensions'}), name='api_register_with_extensions'),
+    
+    # 登录状态同步API
+    path('api/auth/verify/', AuthVerifyView.as_view(), name='api_auth_verify'),
+    path('api/users/current/', CurrentUserView.as_view(), name='api_current_user'),
+    path('api/auth/sync/', AuthSyncView.as_view(), name='api_auth_sync'),
     
     # 传统Web视图（保留用于管理后台）
     path('login/', views.CustomLoginView.as_view(), name='login'),

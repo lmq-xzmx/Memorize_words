@@ -24,13 +24,18 @@ export default defineConfig({
   
   // 开发服务器配置
   server: {
-    port: 3000,
+    port: 3002,
     host: true,
     open: false,
     cors: true,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8001',
+        target: 'http://127.0.0.1:8002',
+        changeOrigin: true,
+        secure: false
+      },
+      '/accounts': {
+        target: 'http://127.0.0.1:8002',
         changeOrigin: true,
         secure: false
       }

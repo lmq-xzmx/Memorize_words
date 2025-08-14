@@ -1,0 +1,338 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        {% trans 'Natural English Learning System' %}
+    </a>
+</h1>
+{% endblock %}
+
+{% block nav-global %}
+<div id="container">
+    <nav class="nav-global">
+        <ul>
+            <li><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></li>
+            <li><a href="{% url 'admin:words_word_changelist' %}">{% trans 'Words' %}</a></li>
+            <li><a href="{% url 'admin:words_vocabularylist_changelist' %}">{% trans 'Vocabulary Lists' %}</a></li>
+            <li><a href="{% url 'admin:words_vocabularysource_changelist' %}">{% trans 'Sources' %}</a></li>
+            {% if user.is_superuser %}
+            <li><a href="{% url 'admin:auth_user_changelist' %}">{% trans 'Users' %}</a></li>
+            {% endif %}
+            <li class="batch-tools">
+                <div class="dropdown">
+                    <a href="#" class="dropdown-toggle">{% trans 'Batch Tools' %} ▼</a>
+                    <ul class="dropdown-menu">
+                        <li><a href="{% url 'admin:words_vocabularylist_batch_import' %}">{% trans 'Import Words' %}</a></li>
+                        <li><a href="{% url 'admin:words_word_changelist' %}?action=export_csv">{% trans 'Export Words' %}</a></li>
+                        <li><a href="{% url 'admin:words_vocabularylist_changelist' %}?action=export_lists">{% trans 'Export Lists' %}</a></li>
+                    </ul>
+                </div>
+            </li>
+        </ul>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-start">
+    <div class="content-wrapper">
+        {% block breadcrumbs %}
+        <div class="breadcrumbs">
+            <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+            {% if title %}
+                {% block breadcrumbs_last %}
+                    &rsaquo; {{ title }}
+                {% endblock %}
+            {% endif %}
+        </div>
+        {% endblock %}
+        
+        {% block messages %}
+            {% if messages %}
+                <div class="messagelist">
+                    {% for message in messages %}
+                        <div class="{{ message.tags }}">
+                            {{ message|capfirst }}
+                            <button type="button" class="close" onclick="this.parentElement.style.display='none'">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endblock messages %}
+        
+        {% block pretitle %}{% endblock %}
+        {% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+        {% block content_subtitle %}{% endblock %}
+        
+        <div class="main-content">
+            {% block content_main %}{% endblock %}
+        </div>
+        
+        {% block sidebar %}
+            {% if has_sidebar %}
+                <div class="sidebar">
+                    {% block sidebar_content %}{% endblock %}
+                </div>
+            {% endif %}
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+/* Enhanced Navigation Styles */
+#container {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0;
+}
+
+.nav-global {
+    background: linear-gradient(135deg, #007cba 0%, #0056b3 100%);
+    padding: 0;
+    margin: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-global ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.nav-global li {
+    position: relative;
+}
+
+.nav-global li a {
+    display: block;
+    padding: 15px 20px;
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border-right: 1px solid rgba(255,255,255,0.1);
+}
+
+.nav-global li a:hover {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+}
+
+.nav-global li.batch-tools {
+    margin-left: auto;
+}
+
+/* Dropdown Styles */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-toggle {
+    cursor: pointer;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    min-width: 200px;
+    z-index: 1000;
+    display: none;
+}
+
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu li {
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.dropdown-menu li:last-child {
+    border-bottom: none;
+}
+
+.dropdown-menu a {
+    color: #333;
+    padding: 12px 16px;
+    border: none;
+    font-weight: normal;
+}
+
+.dropdown-menu a:hover {
+    background: #f8f9fa;
+    color: #007cba;
+}
+
+/* Content Area Styles */
+#content-start {
+    background: #fff;
+    min-height: calc(100vh - 120px);
+}
+
+.content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.breadcrumbs {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    margin: -20px -20px 20px -20px;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 12px;
+}
+
+.breadcrumbs a {
+    color: #007cba;
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+/* Message Styles */
+.messagelist {
+    margin: 0 0 20px 0;
+}
+
+.messagelist div {
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    position: relative;
+    border-left: 4px solid;
+}
+
+.messagelist .success {
+    background: #d4edda;
+    border-left-color: #28a745;
+    color: #155724;
+}
+
+.messagelist .error {
+    background: #f8d7da;
+    border-left-color: #dc3545;
+    color: #721c24;
+}
+
+.messagelist .warning {
+    background: #fff3cd;
+    border-left-color: #ffc107;
+    color: #856404;
+}
+
+.messagelist .info {
+    background: #d1ecf1;
+    border-left-color: #17a2b8;
+    color: #0c5460;
+}
+
+.messagelist .close {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.messagelist .close:hover {
+    opacity: 1;
+}
+
+/* Main Content */
+.main-content {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .nav-global ul {
+        flex-direction: column;
+    }
+    
+    .nav-global li {
+        width: 100%;
+    }
+    
+    .nav-global li a {
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .dropdown-menu {
+        position: static;
+        box-shadow: none;
+        border: none;
+        background: rgba(255,255,255,0.1);
+    }
+    
+    .content-wrapper {
+        padding: 10px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 增强下拉菜单交互
+    const dropdowns = document.querySelectorAll('.dropdown');
+    dropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('.dropdown-toggle');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        
+        if (toggle && menu) {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            });
+            
+            // 点击外部关闭菜单
+            document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target)) {
+                    menu.style.display = 'none';
+                }
+            });
+        }
+    });
+    
+    // 自动隐藏消息
+    const messages = document.querySelectorAll('.messagelist div');
+    messages.forEach(message => {
+        setTimeout(() => {
+            if (message.parentElement) {
+                message.style.opacity = '0';
+                message.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    if (message.parentElement) {
+                        message.remove();
+                    }
+                }, 500);
+            }
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

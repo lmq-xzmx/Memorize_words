@@ -34,7 +34,7 @@ class CustomLoginView(LoginView):
         elif self.request.user.role == UserRole.TEACHER:
             return reverse('teaching:dashboard')
         elif self.request.user.role == UserRole.STUDENT:
-            return reverse('courses:student_dashboard')
+            return reverse('teaching:dashboard')
         elif self.request.user.role == UserRole.PARENT:
             return reverse('analytics:parent_dashboard')
         else:
@@ -91,8 +91,8 @@ class ProfileView(LoginRequiredMixin, TemplateView):
         # 如果是学生，获取学习档案
         if self.request.user.role == UserRole.STUDENT:
             try:
-                context['learning_profile'] = LearningProfile.objects.get(user=self.request.user)
-            except LearningProfile.DoesNotExist:
+                context['learning_profile'] = LearningProfile.objects.get(user=self.request.user)  # type: ignore
+            except LearningProfile.DoesNotExist:  # type: ignore
                 context['learning_profile'] = None
         
         return context
@@ -105,7 +105,10 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     template_name = 'accounts/profile_edit.html'
     success_url = reverse_lazy('accounts:profile')
     
-    def get_object(self):
+    def get_object(self, queryset=None):
+        """获取当前用户的学习档案"""
+        if queryset is None:
+            queryset = self.get_queryset()
         return self.request.user
     
     def form_valid(self, form):
@@ -158,7 +161,7 @@ class UserListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
-                Q(username__icontains=search) |
+                Q(username__icontains=search) |  # type: ignore
                 Q(real_name__icontains=search) |
                 Q(email__icontains=search) |
                 Q(phone__icontains=search)
@@ -254,7 +257,7 @@ def get_user_info_ajax(request, user_id):
             'is_active': user.is_active_account,
         }
         return JsonResponse({'success': True, 'data': data})
-    except CustomUser.DoesNotExist:
+    except CustomUser.DoesNotExist:  # type: ignore
         return JsonResponse({'success': False, 'message': '用户不存在'})
 
 

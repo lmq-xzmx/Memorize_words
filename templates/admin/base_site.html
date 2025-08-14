@@ -7,22 +7,4 @@
 {% endblock %}
 
 {% block nav-global %}
-<div id="header" style="background: #417690; padding: 10px; margin-bottom: 20px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <a href="{% url 'admin:index' %}" style="color: white; text-decoration: none; font-weight: bold;">
-                {{ site_header|default:_('Django administration') }}
-            </a>
-        </div>
-        <div>
-            <a href="/dev_login.html" target="_blank" style="background: #28a745; color: white; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 14px; margin-right: 10px;">
-                🚀 开发期快捷登录
-            </a>
-            {% if user.is_authenticated %}
-                <span style="color: white; margin-right: 10px;">欢迎, {{ user.username }}</span>
-                <a href="{% url 'admin:logout' %}" style="color: white; text-decoration: none;">退出</a>
-            {% endif %}
-        </div>
-    </div>
-</div>
 {% endblock %}

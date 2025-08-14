@@ -166,7 +166,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['role', 'is_active', 'grade']
+    filterset_fields = ['role', 'is_active', 'grade_level']
     search_fields = ['username', 'real_name', 'email', 'phone']
     ordering_fields = ['date_joined', 'last_login', 'username']
     ordering = ['-date_joined']
@@ -305,7 +305,7 @@ class UserViewSet(viewsets.ModelViewSet):
         # 年级过滤
         grade = request.query_params.get('grade')
         if grade:
-            queryset = queryset.filter(grade=grade)
+            queryset = queryset.filter(grade_level=grade)
         
         # 分页
         page = self.paginate_queryset(queryset)
@@ -317,7 +317,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     'id': student.pk,
                     'username': student.username,
                     'real_name': student.real_name or student.username,
-                    'grade': getattr(student, 'grade', '') or '',
+                    'grade': getattr(student, 'grade_level', '') or '',
                     'display_name': f"{student.real_name or student.username} ({student.username})"
                 })
             

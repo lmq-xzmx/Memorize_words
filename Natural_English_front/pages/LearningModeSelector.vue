@@ -677,8 +677,12 @@ export default {
     // 检查是否禁用重定向
     const noRedirect = this.$route.query['no-redirect'] === 'true'
     
-    // 如果没有禁用重定向，则检查并执行首页重定向
-    if (!noRedirect) {
+    // 只有在根路径（/）或首页相关路径时才执行重定向
+    // 避免在学习模式页面中触发不必要的重定向
+    const shouldCheckRedirect = ['/', '/index', '/dashboard', '/home'].includes(this.$route.path)
+    
+    // 如果没有禁用重定向且在合适的路径下，则检查并执行首页重定向
+    if (!noRedirect && shouldCheckRedirect) {
       const redirected = homepageManager.performHomepageRedirect(this.$router, this.$route)
       if (redirected) {
         return

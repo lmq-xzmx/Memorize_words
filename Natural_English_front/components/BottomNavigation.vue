@@ -170,6 +170,20 @@
 <script>
 import permissionMixin from '../mixins/permissionMixin.js'
 import { getCurrentUser, isAuthenticated, permissionWatcher } from '../utils/permission.js'
+import { manualSyncAuth } from '../utils/authSync.js'
+import permissionSyncManager, { 
+  syncUserPermissions, 
+  startAutoSync, 
+  addPermissionListener,
+  removePermissionListener 
+} from '../utils/permissionSync.js'
+// 引入动态权限系统
+import {
+  getAccessibleMenus as getDynamicMenus,
+  hasPermission as hasDynamicPermission,
+  fetchUserMenuPermissions,
+  checkMenuPermission
+} from '../utils/dynamicPermission.js'
 
 export default {
   name: 'BottomNavigation',
@@ -327,10 +341,60 @@ export default {
   },
   methods: {
     // 更新用户状态
-    updateUserState() {
-      this.userAuthState = isAuthenticated()
-      this.userInfo = getCurrentUser()
-      console.log('用户状态更新:', { auth: this.userAuthState, user: this.userInfo })
+    async updateUserState() {
+      try {
+        this.userInfo = getCurrentUser()
+        this.userAuthState = isAuthenticated()
+        
+        if (this.userInfo) {
+          this.userId = this.userInfo.id || this.userInfo.user_id
+          
+          // 获取用户的动态菜单权限
+          await this.loadDynamicMenuPermissions()
+        } else {
+          this.userId = null
+          this.enabledMenuItems = []
+        }
+        
+        console.log('用户状态更新:', {
+          userInfo: this.userInfo,
+          userAuthState: this.userAuthState,
+          userId: this.userId
+        })
+      } catch (error) {
+        console.error('更新用户状态失败:', error)
+        this.userInfo = null
+        this.userAuthState = false
+        this.userId = null
+        this.enabledMenuItems = []
+      }
+    },
+    
+    // 加载动态菜单权限
+    async loadDynamicMenuPermissions() {
+      try {
+        console.log('开始加载动态菜单权限...')
+        const permissionData = await fetchUserMenuPermissions()
+        
+        if (permissionData && permissionData.success) {
+          console.log('动态菜单权限加载成功:', permissionData)
+          
+          // 可以在这里根据权限数据更新UI状态
+          // 例如：显示/隐藏某些菜单项
+          this.updateMenuVisibility(permissionData)
+        } else {
+          console.warn('动态菜单权限加载失败:', permissionData)
+        }
+      } catch (error) {
+        console.error('加载动态菜单权限失败:', error)
+      }
+    },
+    
+    // 根据权限数据更新菜单可见性
+    updateMenuVisibility(permissionData) {
+      // 这里可以根据后端返回的权限数据来控制菜单的显示
+      // 例如：根据权限隐藏某些底部导航项
+      console.log('更新菜单可见性:', permissionData)
     },
     
     // 处理权限变更
@@ -353,9 +417,37 @@ export default {
     },
     
     // 处理工具点击
-    handleToolsClick() {
-      // 直接调用toggleMenu，权限检查在toggleMenu中处理
-      this.toggleMenu('tools')
+    async handleToolsClick() {
+      // 使用动态权限系统检查工具菜单权限
+      await this.checkToolsPermissionDynamic()
+    },
+    
+    // 动态检查工具权限
+    async checkToolsPermissionDynamic() {
+      try {
+        // 检查前端登录状态
+        if (!this.isUserLoggedIn) {
+          this.$showError('请先登录后再使用工具功能')
+          this.$router.push('/login')
+          return
+        }
+        
+        // 使用动态权限检查工具菜单权限
+        const hasToolsPermission = await hasDynamicPermission('access_dev_tools')
+        
+        if (!hasToolsPermission) {
+          const roleDisplay = this.userInfo?.role ? this.getRoleDisplayName(this.userInfo.role) : '当前角色'
+          this.$showError(`${roleDisplay}暂无权限使用开发工具功能`)
+          return
+        }
+        
+        // 权限检查通过，打开工具菜单
+        this.toggleMenu('tools')
+        
+      } catch (error) {
+        console.error('检查工具权限失败:', error)
+        this.$showError('权限检查失败，请稍后重试')
+      }
     },
     
     // 计算菜单位置
@@ -411,21 +503,6 @@ export default {
     toggleMenu(menuType) {
       console.log('toggleMenu called with:', menuType, 'current activeMenu:', this.activeMenu)
       
-      // 如果点击的是工具菜单，需要检查权限
-      if (menuType === 'tools') {
-        if (!this.isUserLoggedIn) {
-          this.$showError('请先登录后再使用工具功能')
-          this.$router.push('/login')
-          return
-        }
-        
-        if (!this.canUseTools) {
-          const roleDisplay = this.userInfo?.role ? this.getRoleDisplayName(this.userInfo.role) : '当前角色'
-          this.$showError(`${roleDisplay}暂无权限使用开发工具功能`)
-          return
-        }
-      }
-      
       // 如果当前菜单已经是要切换的菜单，则关闭
       if (this.activeMenu === menuType) {
         this.activeMenu = null
@@ -466,12 +543,15 @@ export default {
     },
     
     // 导航到指定页面
-    navigateTo(path) {
-      // 检查用户是否已登录（对于需要认证的页面）
-      if (!this.isUserLoggedIn && this.requiresAuth(path)) {
-        this.$showError('请先登录后再访问此功能')
-        this.$router.push('/login')
-        return
+    async navigateTo(path) {
+      // 检查是否需要认证
+      if (this.requiresAuth(path)) {
+        // 只检查前端登录状态，避免过度同步
+        if (!this.isUserLoggedIn) {
+          this.$showError('请先登录后再访问此功能')
+          this.$router.push('/login')
+          return
+        }
       }
       
       // 使用权限检查的导航方法
@@ -530,17 +610,21 @@ export default {
     },
     
     // 选择工具
-    selectTool(item) {
+    async selectTool(item) {
+      // 同步登录状态
+      const syncResult = await manualSyncAuth()
+      this.updateUserState()
+      
       // 检查用户认证状态
-      if (!isAuthenticated()) {
-        this.$message?.error('请先登录后再使用该工具')
+      if (!this.isUserLoggedIn) {
+        this.$showError('请先登录后再使用该工具')
         this.$router.push('/login')
         return
       }
       
       // 检查工具访问权限
       if (!this.$canAccessPage(item.path)) {
-        this.$message?.error('您没有权限使用该工具')
+        this.$showError('您没有权限使用该工具')
         return
       }
       

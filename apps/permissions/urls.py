@@ -5,6 +5,10 @@ from .api_views import (
     MenuModuleConfigViewSet, RoleMenuPermissionViewSet, GroupViewSet,
     PermissionViewSet, RoleGroupMappingViewSet, PermissionSyncLogViewSet
 )
+from .api.menu_api import (
+    get_user_menu_permissions, check_menu_permission, 
+    get_role_display_name, get_menu_hierarchy
+)
 
 # API路由配置
 router = DefaultRouter()
@@ -20,6 +24,12 @@ app_name = 'permissions'
 urlpatterns = [
     # API路由
     path('api/', include(router.urls)),
+    
+    # 菜单权限API
+    path('api/user-menu-permissions/', get_user_menu_permissions, name='user_menu_permissions'),
+    path('api/check-menu-permission/', check_menu_permission, name='check_menu_permission'),
+    path('api/role-display-name/', get_role_display_name, name='role_display_name'),
+    path('api/menu-hierarchy/', get_menu_hierarchy, name='menu_hierarchy'),
     
     # 权限管理主页
     path('', views.PermissionIndexView.as_view(), name='index'),

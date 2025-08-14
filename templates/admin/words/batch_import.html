@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<form action="" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+        <label for="csv_file">{% trans '请选择一个CSV文件进行导入：' %}</label>
+        <input type="file" name="csv_file" id="csv_file" accept=".csv" required>
+    </div>
+    <div style="margin-top: 20px;">
+        <input type="submit" value="{% trans '上传并导入' %}">
+    </div>
+</form>
+{% endblock %}

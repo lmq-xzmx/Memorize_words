@@ -1,112 +1,238 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_urls static admin_modify %}
 
-{% block title %}批量导入单词{% endblock %}
+{% block title %}{% trans 'Batch Import' %} | {{ title }}{% endblock %}
 
-{% block breadcrumbs %}
-<div class="breadcrumbs">
-    <a href="{% url 'admin:index' %}">首页</a>
-    &rsaquo; <a href="{% url 'admin:app_list' app_label='words' %}">单词管理</a>
-    &rsaquo; <a href="{% url 'admin:words_vocabularylist_changelist' %}">词库列表</a>
-    &rsaquo; 批量导入
-</div>
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/forms.css' %}">
+<style>
+.batch-import-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.import-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.import-section h3 {
+    margin-top: 0;
+    color: #495057;
+    border-bottom: 2px solid #007cba;
+    padding-bottom: 10px;
+}
+
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-row input, .form-row select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.help-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.csv-template {
+    background: #e9ecef;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    overflow-x: auto;
+}
+
+.submit-row {
+    text-align: right;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+}
+
+.btn-primary {
+    background: #007cba;
+    color: white;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+    display: none;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #007cba, #0056b3);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<h1>批量导入单词</h1>
-
-<div class="module aligned">
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
+<div id="content-start">
+    <div class="batch-import-container">
+        <h1>{% trans 'Batch Import Words to Vocabulary List' %}</h1>
         
-        <div class="form-row">
-            <div>
-                <label for="id_vocabulary_list" class="required">目标词库列表:</label>
-                <select name="vocabulary_list" id="id_vocabulary_list" required>
-                    <option value="">请选择词库列表</option>
-                    {% for vocab_list in vocabulary_lists %}
-                        <option value="{{ vocab_list.id }}">{{ vocab_list.name }}</option>
-                    {% endfor %}
-                </select>
-                <p class="help">选择要导入单词的目标词库列表</p>
+        <form method="post" enctype="multipart/form-data" id="batch-import-form">
+            {% csrf_token %}
+            
+            <!-- 基本设置 -->
+            <div class="import-section">
+                <h3>{% trans 'Basic Settings' %}</h3>
+                
+                <div class="form-row">
+                    <label for="id_vocabulary_list">{% trans 'Target Vocabulary List' %}:</label>
+                    <select name="vocabulary_list" id="id_vocabulary_list" required>
+                        <option value="">{% trans 'Select vocabulary list' %}</option>
+                        {% for vocab_list in vocabulary_lists %}
+                        <option value="{{ vocab_list.id }}">{{ vocab_list.name }} ({{ vocab_list.words.count }} words)</option>
+                        {% endfor %}
+                    </select>
+                    <div class="help-text">{% trans 'Choose the vocabulary list to import words into' %}</div>
+                </div>
+                
+                <div class="form-row">
+                    <label for="id_csv_file">{% trans 'CSV File' %}:</label>
+                    <input type="file" name="csv_file" id="id_csv_file" accept=".csv" required>
+                    <div class="help-text">{% trans 'Select a CSV file containing words to import' %}</div>
+                </div>
             </div>
-        </div>
-        
-        <div class="form-row">
-            <div>
-                <label for="id_csv_file" class="required">CSV文件:</label>
-                <input type="file" name="csv_file" id="id_csv_file" accept=".csv" required>
-                <p class="help">请选择要导入的CSV文件</p>
+            
+            <!-- 高级选项 -->
+            <div class="import-section">
+                <h3>{% trans 'Advanced Options' %}</h3>
+                
+                <div class="form-row">
+                    <label>
+                        <input type="checkbox" name="enable_versioning" value="on" checked>
+                        {% trans 'Enable Version Management' %}
+                    </label>
+                    <div class="help-text">{% trans 'Create versions for duplicate words instead of overwriting' %}</div>
+                </div>
+                
+                <div class="form-row">
+                    <label for="id_conflict_resolution">{% trans 'Conflict Resolution' %}:</label>
+                    <select name="conflict_resolution" id="id_conflict_resolution">
+                        <option value="create_version">{% trans 'Create Version' %}</option>
+                        <option value="update">{% trans 'Update Existing' %}</option>
+                        <option value="skip">{% trans 'Skip Duplicates' %}</option>
+                    </select>
+                    <div class="help-text">{% trans 'How to handle duplicate words' %}</div>
+                </div>
+                
+                <div class="form-row">
+                    <label for="id_batch_size">{% trans 'Batch Size' %}:</label>
+                    <input type="number" name="batch_size" id="id_batch_size" value="100" min="10" max="1000">
+                    <div class="help-text">{% trans 'Number of words to process at once (10-1000)' %}</div>
+                </div>
             </div>
-        </div>
-        
-        <div class="form-row">
-            <div>
-                <label for="id_enable_versioning">启用版本管理:</label>
-                <input type="checkbox" name="enable_versioning" id="id_enable_versioning">
-                <p class="help">启用后，相同单词的不同内容将创建为版本，而不是覆盖原有内容</p>
+            
+            <!-- CSV格式说明 -->
+            <div class="import-section">
+                <h3>{% trans 'CSV Format Requirements' %}</h3>
+                <p>{% trans 'Your CSV file should contain the following columns:' %}</p>
+                <div class="csv-template">
+word,phonetic,definition,part_of_speech,example,note,textbook_version,grade,book_volume,unit
+hello,/həˈloʊ/,"used as a greeting",interjection,"Hello, how are you?","Common greeting","人教版","1","上册","Unit 1"
+world,/wɜːrld/,"the earth and all its countries",noun,"Welcome to the world","Basic vocabulary","人教版","1","上册","Unit 1"
+                </div>
+                <p><strong>{% trans 'Required columns:' %}</strong> word</p>
+                <p><strong>{% trans 'Optional columns:' %}</strong> phonetic, definition, part_of_speech, example, note, textbook_version, grade, book_volume, unit</p>
             </div>
-        </div>
-        
-        <div class="form-row">
-            <div>
-                <label for="id_conflict_resolution">冲突解决策略:</label>
-                <select name="conflict_resolution" id="id_conflict_resolution">
-                    <option value="create_version">创建版本（需启用版本管理）</option>
-                    <option value="update">更新现有单词</option>
-                    <option value="skip">跳过冲突单词</option>
-                    <option value="create_new">创建新记录</option>
-                </select>
-                <p class="help">当导入的单词与现有单词冲突时的处理方式</p>
+            
+            <!-- 进度条 -->
+            <div class="progress-bar" id="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
             </div>
-        </div>
-        
-        <div class="submit-row">
-            <input type="submit" value="开始导入" class="default">
-            <a href="{% url 'admin:words_vocabularylist_changelist' %}" class="button cancel-link">取消</a>
-        </div>
-    </form>
-</div>
-
-<div class="module">
-    <h2>CSV文件格式说明</h2>
-    <p>CSV文件应包含以下列（第一行为标题行）：</p>
-    <ul>
-        <li><strong>word</strong> - 单词（必填）</li>
-        <li><strong>phonetic</strong> - 音标（可选）</li>
-        <li><strong>definition</strong> - 释义（可选）</li>
-        <li><strong>part_of_speech</strong> - 词性（可选）</li>
-        <li><strong>note</strong> - 笔记（可选）</li>
-        <li><strong>textbook_version</strong> - 教材版本（可选）</li>
-        <li><strong>grade</strong> - 年级（可选）</li>
-        <li><strong>book_volume</strong> - 册别（可选，如：三上、三下）</li>
-        <li><strong>unit</strong> - 单元（可选，如：Unit 1、Unit 2）</li>
-    </ul>
-    
-    <h3>示例CSV内容：</h3>
-    <pre>word,textbook_version,grade,book_volume,unit,phonetic,definition,part_of_speech,note
-apple,译林版,三年级,三上,Unit 1,/ˈæpl/,苹果,n.,水果类单词
-book,译林版,三年级,三上,Unit 2,/bʊk/,书,n.,学习用品
-run,译林版,三年级,三下,Unit 3,/rʌn/,跑,v.,动作类单词</pre>
-    
-    <div class="help">
-        <h4>注意事项：</h4>
-        <ul>
-            <li>文件编码请使用UTF-8（支持BOM）</li>
-            <li>系统会自动检测重复单词，完全相同的单词将被跳过</li>
-            <li>启用版本管理时，相同单词的不同内容会创建为新版本</li>
-            <li>冲突解决策略决定了如何处理已存在的单词：
-                <ul>
-                    <li><strong>创建版本</strong>：为不同内容创建版本（需启用版本管理）</li>
-                    <li><strong>更新现有单词</strong>：用新数据覆盖现有单词</li>
-                    <li><strong>跳过冲突单词</strong>：保持现有单词不变</li>
-                    <li><strong>创建新记录</strong>：强制创建新记录（可能产生重复）</li>
-                </ul>
-            </li>
-            <li>只有非空字段才会更新现有单词的信息</li>
-            <li>导入完成后会自动更新词库列表的单词数量</li>
-            <li>导入过程中会自动跳过空白行和无效数据</li>
-        </ul>
+            
+            <!-- 提交按钮 -->
+            <div class="submit-row">
+                <button type="button" class="btn btn-secondary" onclick="history.back()">{% trans 'Cancel' %}</button>
+                <button type="submit" class="btn btn-primary" id="submit-btn">{% trans 'Start Import' %}</button>
+            </div>
+        </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('batch-import-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const progressFill = document.getElementById('progress-fill');
+    
+    form.addEventListener('submit', function(e) {
+        // 显示进度条
+        progressBar.style.display = 'block';
+        submitBtn.disabled = true;
+        submitBtn.textContent = '{% trans "Processing..." %}';
+        
+        // 模拟进度更新
+        let progress = 0;
+        const interval = setInterval(function() {
+            progress += Math.random() * 10;
+            if (progress > 90) progress = 90;
+            progressFill.style.width = progress + '%';
+        }, 200);
+        
+        // 表单提交后清理
+        setTimeout(function() {
+            clearInterval(interval);
+            progressFill.style.width = '100%';
+        }, 3000);
+    });
+    
+    // 文件选择验证
+    const fileInput = document.getElementById('id_csv_file');
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file && !file.name.toLowerCase().endsWith('.csv')) {
+            alert('{% trans "Please select a CSV file" %}');
+            e.target.value = '';
+        }
+    });
+});
+</script>
 {% endblock %}

@@ -14,7 +14,7 @@
             
             {% block batch-import-link %}
                 <li>
-                    <a href="{% url 'admin:'|add:opts.app_label|add:'_'|add:opts.model_name|add:'_batch_import' %}" class="addlink">
+                    <a href="{% url 'admin:words_'|add:opts.model_name|add:'_batch_import' %}" class="addlink">
                         {% block batch-import-text %}批量导入{% endblock %}
                     </a>
                 </li>

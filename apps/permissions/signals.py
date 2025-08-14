@@ -22,7 +22,7 @@ def sync_role_menu_permission(sender, instance, created, **kwargs):
             result=f'菜单权限 {instance.menu_module.name} 已同步',
             success=True
         )
-        logger.info(f"角色 {instance.get_role_display()} 的菜单权限 {instance.menu_name} 已同步")
+        logger.info(f"角色 {instance.get_role_display()} 的菜单权限 {instance.menu_module.name} 已同步")
     except Exception as e:
         logger.error(f"同步角色菜单权限失败: {e}")
         PermissionSyncLog.objects.create(

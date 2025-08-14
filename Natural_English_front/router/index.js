@@ -27,6 +27,14 @@ import WordRootAnalysis from '../pages/WordRootAnalysis.vue'
 import WordExamples from '../pages/WordExamples.vue'
 import PositionTestPage from '../pages/PositionTestPage.vue'
 
+// 导入子页面组件
+import WordChallenge from '../pages/word-challenge/index.vue'
+import WordReview from '../pages/word-review/index.vue'
+import WordSelectionPractice from '../pages/word-selection-practice/index.vue'
+import WordSelectionIndex from '../pages/word-selection/index.vue'
+import AuthTest from '../pages/AuthTest.vue'
+import LoginTest from '../pages/login-test.vue'
+
 // 路由配置
 const routes = [
   {
@@ -76,6 +84,12 @@ const routes = [
     name: 'DevIndex',
     component: DevIndex,
     meta: { title: '开发索引' }
+  },
+  {
+    path: '/dev-index',
+    name: 'DevIndexAlias',
+    component: DevIndex,
+    meta: { title: '开发中心' }
   },
   {
     path: '/word-learning',
@@ -178,6 +192,67 @@ const routes = [
     name: 'PositionTestPage',
     component: PositionTestPage,
     meta: { title: '位置测试' }
+  },
+  {
+    path: '/auth-test',
+    name: 'AuthTest',
+    component: AuthTest,
+    meta: { title: '登录状态测试' }
+  },
+  {
+    path: '/login-test',
+    name: 'LoginTest',
+    component: LoginTest,
+    meta: { title: '登录功能测试' }
+  },
+  // 学习模式相关路由
+  {
+    path: '/word-learning/spelling',
+    name: 'WordLearningSpelling',
+    component: WordSpelling,
+    meta: { title: '拼写练习' }
+  },
+  {
+    path: '/word-learning/flashcard',
+    name: 'WordLearningFlashcard',
+    component: WordFlashcard,
+    meta: { title: '闪卡学习' }
+  },
+  {
+    path: '/word-challenge',
+    name: 'WordChallenge',
+    component: WordChallenge,
+    meta: { title: '单词挑战' }
+  },
+  {
+    path: '/word-review',
+    name: 'WordReview',
+    component: WordReview,
+    meta: { title: '单词复习' }
+  },
+  {
+    path: '/word-selection-practice',
+    name: 'WordSelectionPractice',
+    component: WordSelectionPractice,
+    meta: { title: '竞技模式' }
+  },
+  {
+    path: '/word-selection-practice2',
+    name: 'WordSelectionPractice2',
+    component: WordSelection,
+    meta: { title: '师生互动' }
+  },
+  {
+    path: '/competition',
+    name: 'Competition',
+    component: WordSelectionPractice,
+    meta: { title: '竞技模式' }
+  },
+  {
+    path: '/quick-brush',
+    name: 'QuickBrush',
+    component: WordSelectionPractice,
+    meta: { title: '快刷模式' }
   },
   // 404 页面
   {

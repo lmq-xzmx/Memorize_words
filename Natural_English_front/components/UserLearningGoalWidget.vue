@@ -177,8 +177,8 @@ export default {
     },
 
     createLearningGoal() {
-      // 跳转到后端创建学习目标页面
-      window.open('http://127.0.0.1:8001/admin/teaching/learninggoal/add/', '_blank')
+      // 创建学习目标功能已移除
+      this.$message.info('创建学习目标功能暂不可用')
     }
   }
 }
