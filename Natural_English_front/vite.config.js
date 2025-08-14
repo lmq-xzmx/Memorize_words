@@ -30,12 +30,17 @@ export default defineConfig({
     cors: true,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8002',
+        target: 'http://127.0.0.1:8001',
         changeOrigin: true,
         secure: false
       },
       '/accounts': {
-        target: 'http://127.0.0.1:8002',
+        target: 'http://127.0.0.1:8001',
+        changeOrigin: true,
+        secure: false
+      },
+      '/permissions': {
+        target: 'http://127.0.0.1:8001',
         changeOrigin: true,
         secure: false
       }

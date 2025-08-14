@@ -14,7 +14,7 @@ let permissionCache = {
  * 获取API基础URL
  */
 function getApiBaseUrl() {
-  return 'http://localhost:8001'
+  return 'http://127.0.0.1:8001'
 }
 
 /**
@@ -25,7 +25,7 @@ async function apiRequest(url, options = {}) {
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+      ...(token && { 'Authorization': `Token ${token}` })
     }
   }
   
@@ -50,7 +50,14 @@ async function apiRequest(url, options = {}) {
  */
 export async function fetchUserMenuPermissions() {
   try {
-    const data = await apiRequest('/permissions/api/user-menu-permissions/')
+    // 检查用户是否已登录
+    const token = localStorage.getItem('token')
+    if (!token) {
+      console.log('用户未登录，跳过权限API调用')
+      return { success: false, message: '用户未登录' }
+    }
+    
+    const data = await apiRequest('/permissions/optimized/api/user-menu-permissions/')
     
     if (data.success) {
       // 更新缓存
@@ -59,7 +66,7 @@ export async function fetchUserMenuPermissions() {
       permissionCache.userRole = data.user_role
       permissionCache.lastUpdate = Date.now()
       
-      console.log('成功获取用户菜单权限:', data)
+      // console.log('成功获取用户菜单权限:', data)
       return data
     } else {
       console.error('获取菜单权限失败:', data.message)

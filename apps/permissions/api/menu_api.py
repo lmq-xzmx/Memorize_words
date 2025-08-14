@@ -1,5 +1,6 @@
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
@@ -12,6 +13,7 @@ User = get_user_model()
 
 
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication, SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def get_user_menu_permissions(request):
     """
@@ -25,6 +27,8 @@ def get_user_menu_permissions(request):
         if user.is_superuser:
             menus = MenuModuleConfig.objects.filter(is_active=True).order_by('sort_order')
             menu_list = []
+            all_permissions = {}
+            
             for menu in menus:
                 menu_list.append({
                     'key': menu.key,
@@ -35,10 +39,13 @@ def get_user_menu_permissions(request):
                     'sort_order': menu.sort_order,
                     'can_access': True
                 })
+                # 超级管理员拥有所有权限
+                all_permissions[menu.key] = True
             
             return Response({
                 'success': True,
                 'menus': menu_list,
+                'all_permissions': all_permissions,
                 'user_role': 'admin',
                 'is_superuser': True
             })
@@ -105,6 +112,7 @@ def get_user_menu_permissions(request):
 
 
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication, SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def check_menu_permission(request):
     """
@@ -177,6 +185,7 @@ def check_menu_permission(request):
 
 
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication, SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def get_role_display_name(request):
     """
@@ -204,6 +213,7 @@ def get_role_display_name(request):
 
 
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication, SessionAuthentication])
 @permission_classes([IsAuthenticated])
 def get_menu_hierarchy(request):
     """

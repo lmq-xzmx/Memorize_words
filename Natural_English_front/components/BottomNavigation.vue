@@ -346,21 +346,22 @@ export default {
         this.userInfo = getCurrentUser()
         this.userAuthState = isAuthenticated()
         
-        if (this.userInfo) {
+        if (this.userInfo && this.userAuthState) {
           this.userId = this.userInfo.id || this.userInfo.user_id
           
-          // 获取用户的动态菜单权限
+          // 只有在用户已登录时才获取动态菜单权限
           await this.loadDynamicMenuPermissions()
         } else {
           this.userId = null
           this.enabledMenuItems = []
+          console.log('用户未登录，跳过权限加载')
         }
         
-        console.log('用户状态更新:', {
-          userInfo: this.userInfo,
-          userAuthState: this.userAuthState,
-          userId: this.userId
-        })
+        // console.log('用户状态更新:', {
+        //   userInfo: this.userInfo,
+        //   userAuthState: this.userAuthState,
+        //   userId: this.userId
+        // })
       } catch (error) {
         console.error('更新用户状态失败:', error)
         this.userInfo = null
@@ -373,17 +374,17 @@ export default {
     // 加载动态菜单权限
     async loadDynamicMenuPermissions() {
       try {
-        console.log('开始加载动态菜单权限...')
+        // console.log('开始加载动态菜单权限...')
         const permissionData = await fetchUserMenuPermissions()
         
         if (permissionData && permissionData.success) {
-          console.log('动态菜单权限加载成功:', permissionData)
+          // console.log('动态菜单权限加载成功:', permissionData)
           
           // 可以在这里根据权限数据更新UI状态
           // 例如：显示/隐藏某些菜单项
           this.updateMenuVisibility(permissionData)
         } else {
-          console.warn('动态菜单权限加载失败:', permissionData)
+          // console.warn('动态菜单权限加载失败:', permissionData)
         }
       } catch (error) {
         console.error('加载动态菜单权限失败:', error)
@@ -394,19 +395,19 @@ export default {
     updateMenuVisibility(permissionData) {
       // 这里可以根据后端返回的权限数据来控制菜单的显示
       // 例如：根据权限隐藏某些底部导航项
-      console.log('更新菜单可见性:', permissionData)
+      // console.log('更新菜单可见性:', permissionData)
     },
     
     // 处理权限变更
     handlePermissionChange(user) {
-      console.log('权限变更事件:', user)
+      // console.log('权限变更事件:', user)
       this.updateUserState()
     },
     
     // 处理localStorage变化
     handleStorageChange(event) {
       if (event.key === 'user' || event.key === 'token') {
-        console.log('localStorage变化:', event.key)
+        // console.log('localStorage变化:', event.key)
         this.updateUserState()
       }
     },

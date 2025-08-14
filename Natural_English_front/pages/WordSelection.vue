@@ -292,6 +292,7 @@ export default {
       // 练习数据
       practiceWords: [],
       previewWords: [],
+      availableWords: [], // 可用单词列表
       currentIndex: 0,
       showMeaning: false,
       

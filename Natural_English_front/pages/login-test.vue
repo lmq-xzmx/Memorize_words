@@ -124,7 +124,7 @@ export default {
           method: 'GET',
           credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Authorization': `Token ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         })
@@ -149,7 +149,7 @@ export default {
           method: 'GET',
           credentials: 'include',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Authorization': `Token ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         })

@@ -3,7 +3,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib.auth.models import AnonymousUser
 from guardian.shortcuts import get_objects_for_user
-from .models import RoleManagement
+from django.apps import apps
 from .utils import RolePermissionChecker
 import logging
 
@@ -44,6 +44,10 @@ class EnhancedRBACMiddleware:
     def __call__(self, request):
         # 检查是否需要权限验证
         if self.should_exempt(request):
+            return self.get_response(request)
+        
+        # 对于API请求，让DRF处理认证和权限
+        if request.path.startswith('/api/') or request.path.startswith('/permissions/api/') or request.path.startswith('/permissions/optimized/api/'):
             return self.get_response(request)
         
         # 检查用户是否已登录
@@ -90,6 +94,7 @@ class EnhancedRBACMiddleware:
         
         # 获取用户角色管理对象
         try:
+            RoleManagement = apps.get_model('permissions', 'RoleManagement')
             role_mgmt = RoleManagement.objects.get(role=user.role)
             if not role_mgmt.is_active:
                 return False
@@ -99,7 +104,10 @@ class EnhancedRBACMiddleware:
             admin_permissions = [p for p in all_permissions if 'admin' in p.codename.lower()]
             
             return len(admin_permissions) > 0
-        except RoleManagement.DoesNotExist:
+        except Exception as e:
+            if 'DoesNotExist' in str(type(e)):
+                return user.is_staff
+            logger.error(f"检查管理员权限时出错: {e}")
             return user.is_staff
     
     def check_api_access(self, request):
@@ -108,9 +116,13 @@ class EnhancedRBACMiddleware:
         
         # API访问需要有效的角色
         try:
+            RoleManagement = apps.get_model('permissions', 'RoleManagement')
             role_mgmt = RoleManagement.objects.get(role=user.role)
             return role_mgmt.is_active
-        except RoleManagement.DoesNotExist:
+        except Exception as e:
+            if 'DoesNotExist' in str(type(e)):
+                return False
+            logger.error(f"检查API权限时出错: {e}")
             return False
     
     def check_teaching_access(self, request):
@@ -122,9 +134,13 @@ class EnhancedRBACMiddleware:
         
         if user.role in allowed_roles:
             try:
+                RoleManagement = apps.get_model('permissions', 'RoleManagement')
                 role_mgmt = RoleManagement.objects.get(role=user.role)
                 return role_mgmt.is_active
-            except RoleManagement.DoesNotExist:
+            except Exception as e:
+                if 'DoesNotExist' in str(type(e)):
+                    return False
+                logger.error(f"检查教学权限时出错: {e}")
                 return False
         
         return False
@@ -135,10 +151,14 @@ class EnhancedRBACMiddleware:
         
         # 检查用户角色是否激活
         try:
+            RoleManagement = apps.get_model('permissions', 'RoleManagement')
             role_mgmt = RoleManagement.objects.get(role=user.role)
             return role_mgmt.is_active
-        except RoleManagement.DoesNotExist:
-            return True  # 如果没有角色管理配置，默认允许访问
+        except Exception as e:
+            if 'DoesNotExist' in str(type(e)):
+                return True  # 如果没有角色管理配置，默认允许访问
+            logger.error(f"检查默认权限时出错: {e}")
+            return True
 
 
 class ObjectPermissionMiddleware:

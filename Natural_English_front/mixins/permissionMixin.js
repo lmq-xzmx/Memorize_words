@@ -12,13 +12,15 @@ import {
   getAccessibleMenus,
   permissionWatcher
 } from '../utils/permission.js'
+import { createPermissionChecker, hasPermission as optimizedHasPermission } from '../utils/permissionUtils.js'
 
 export default {
   data() {
     return {
       currentUser: null,
       userRole: null,
-      isUserAuthenticated: false
+      isUserAuthenticated: false,
+      permissionChecker: null
     }
   },
   
@@ -38,6 +40,13 @@ export default {
     },
     
     /**
+     * 优化后的权限检查器实例
+     */
+    optimizedPermissionChecker() {
+      return this.currentUser ? createPermissionChecker(this.currentUser) : null
+    },
+    
+    /**
      * 检查是否为管理员
      */
     isAdmin() {
@@ -48,8 +57,29 @@ export default {
      * 检查是否为教师角色（包括各级教师）
      */
     isTeacher() {
-      return ['teacher', 'dean', 'academic_director', 'research_leader'].includes(this.userRole)
+      return ['teacher', 'teaching_director', 'academic_director', 'research_group_leader'].includes(this.userRole)
     },
+    
+    /**
+     * 检查是否为教导主任
+     */
+    isTeachingDirector() {
+      return this.userRole === 'teaching_director'
+    },
+    
+    /**
+     * 检查是否为教务主任
+     */
+    isAcademicDirector() {
+      return this.userRole === 'academic_director'
+    },
+    
+    /**
+      * 检查是否为教研组长
+      */
+     isResearchGroupLeader() {
+       return this.userRole === 'research_group_leader'
+     },
     
     /**
      * 检查是否为学生
@@ -68,12 +98,56 @@ export default {
   
   methods: {
     /**
-     * 检查用户是否拥有指定权限
-     * @param {string} permission - 权限名称
-     * @returns {boolean} 是否拥有权限
+     * 权限检查方法
+     * @param {string} permission 权限标识
+     * @returns {boolean}
      */
     $hasPermission(permission) {
       return hasPermission(this.userRole, permission)
+    },
+    
+    /**
+     * 优化后的权限检查方法
+     * @param {string} resource 资源类型
+     * @param {string} action 操作类型
+     * @param {object} context 上下文信息
+     * @returns {boolean}
+     */
+    $hasOptimizedPermission(resource, action, context = {}) {
+      return this.optimizedPermissionChecker ? 
+        optimizedHasPermission(this.currentUser, resource, action, context) : false
+    },
+    
+    /**
+     * 检查菜单访问权限
+     * @param {string} menuId 菜单ID
+     * @returns {boolean}
+     */
+    $canAccessMenu(menuId) {
+      return this.optimizedPermissionChecker ? 
+        this.optimizedPermissionChecker.canAccessMenu(menuId) : false
+    },
+    
+    /**
+     * 检查学习目标权限
+     * @param {string} action 操作类型
+     * @param {object} context 上下文信息
+     * @returns {boolean}
+     */
+    $canManageLearningGoal(action, context = {}) {
+      return this.optimizedPermissionChecker ? 
+        this.optimizedPermissionChecker.hasLearningGoalPermission(action, context) : false
+    },
+    
+    /**
+     * 检查学习计划权限
+     * @param {string} action 操作类型
+     * @param {object} context 上下文信息
+     * @returns {boolean}
+     */
+    $canManageLearningPlan(action, context = {}) {
+      return this.optimizedPermissionChecker ? 
+        this.optimizedPermissionChecker.hasLearningPlanPermission(action, context) : false
     },
     
     /**
@@ -132,8 +206,19 @@ export default {
      */
     $updateUserInfo() {
       this.currentUser = getCurrentUser()
-      this.userRole = this.currentUser?.role || null
+      this.userRole = this.currentUser?.role
       this.isUserAuthenticated = isAuthenticated()
+      // 更新权限检查器
+      this.permissionChecker = this.currentUser ? createPermissionChecker(this.currentUser) : null
+    },
+    
+    /**
+     * 清除权限缓存
+     */
+    $clearPermissionCache() {
+      if (this.optimizedPermissionChecker) {
+        this.optimizedPermissionChecker.clearUserCache()
+      }
     },
     
     /**

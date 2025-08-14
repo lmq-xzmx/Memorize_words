@@ -15,7 +15,7 @@ api.interceptors.request.use(
     // 添加认证token
     const token = localStorage.getItem('token')
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      config.headers.Authorization = `Token ${token}`
     }
     return config
   },

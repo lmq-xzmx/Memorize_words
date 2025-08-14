@@ -38,6 +38,7 @@ urlpatterns = [
     
     # 登录状态同步API
     path('api/auth/verify/', AuthVerifyView.as_view(), name='api_auth_verify'),
+    path('api/auth/user/', CurrentUserView.as_view(), name='api_auth_user'),
     path('api/users/current/', CurrentUserView.as_view(), name='api_current_user'),
     path('api/auth/sync/', AuthSyncView.as_view(), name='api_auth_sync'),
     

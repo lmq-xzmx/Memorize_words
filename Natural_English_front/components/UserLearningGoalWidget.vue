@@ -120,7 +120,7 @@ export default {
         // 调用学习目标API
         const response = await fetch('http://127.0.0.1:8001/teaching/api/learning-goals/', {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Token ${token}`,
             'Content-Type': 'application/json'
           }
         })

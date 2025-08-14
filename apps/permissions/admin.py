@@ -53,11 +53,13 @@ class MenuModuleConfigAdmin(admin.ModelAdmin):
 
 @admin.register(RoleMenuPermission)
 class RoleMenuPermissionAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
-    """角色菜单权限Admin"""
-    list_display = ['role', 'menu_module', 'get_permission_status', 'created_at']
-    list_filter = ['role', 'can_access', 'created_at']
-    search_fields = ['menu_module__name', 'menu_module__key']
-    ordering = ['role', 'menu_module__name']
+    """角色菜单权限Admin - 优化版"""
+    list_display = ['get_role_display_name', 'menu_module', 'get_permission_status', 'get_menu_level', 'created_at']
+    list_filter = ['role', 'can_access', 'menu_module__menu_level', 'created_at']
+    search_fields = ['menu_module__name', 'menu_module__key', 'role']
+    ordering = ['role', 'menu_module__menu_level', 'menu_module__sort_order']
+    list_per_page = 50
+    actions = ['enable_access', 'disable_access', 'sync_permissions']
     
     class Media:
         js = ('admin/js/dynamic_role_selector.js',)
@@ -66,6 +68,25 @@ class RoleMenuPermissionAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
         }
     
 
+    
+    @admin.display(description='角色名称')
+    def get_role_display_name(self, obj):
+        """显示角色名称"""
+        return obj.get_role_display()
+    
+    @admin.display(description='菜单级别')
+    def get_menu_level(self, obj):
+        """显示菜单级别"""
+        level_colors = {
+            'root': '#007bff',
+            'level1': '#28a745',
+            'level2': '#ffc107',
+        }
+        color = level_colors.get(obj.menu_module.menu_level, '#6c757d')
+        return format_html(
+            '<span style="color: {}; background: {}20; padding: 2px 6px; border-radius: 3px; font-size: 12px;">{}</span>',
+            color, color, obj.menu_module.get_menu_level_display()
+        )
     
     @admin.display(description='权限状态')
     def get_permission_status(self, obj):
@@ -80,6 +101,28 @@ class RoleMenuPermissionAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
                 '<span style="color: #dc3545; background: #f8d7da; padding: 2px 6px; border-radius: 3px; font-size: 12px;">'  
                 '✗ 禁止访问</span>'
             )
+    
+    @admin.action(description='启用访问权限')
+    def enable_access(self, request, queryset):
+        """批量启用访问权限"""
+        updated = queryset.update(can_access=True)
+        self.message_user(request, f'已启用 {updated} 个权限的访问')
+    
+    @admin.action(description='禁用访问权限')
+    def disable_access(self, request, queryset):
+        """批量禁用访问权限"""
+        updated = queryset.update(can_access=False)
+        self.message_user(request, f'已禁用 {updated} 个权限的访问')
+    
+    @admin.action(description='同步权限配置')
+    def sync_permissions(self, request, queryset):
+        """同步权限配置"""
+        try:
+            from .signals import sync_all_permissions
+            sync_all_permissions()
+            self.message_user(request, '权限配置同步成功')
+        except Exception as e:
+            self.message_user(request, f'权限同步失败: {str(e)}', level=messages.ERROR)
     
     fieldsets = (
         ('基本信息', {
@@ -530,12 +573,14 @@ admin.site.register(RoleMenuPermission, EnhancedRoleMenuPermissionAdmin)
 
 @admin.register(RoleManagement)
 class RoleManagementAdmin(StandardRoleAdminMixin, admin.ModelAdmin, RoleCreationAdminMixin):
-    """角色管理Admin - 支持角色继承"""
-    list_display = ['display_name', 'get_role_display_name', 'get_parent_role', 'is_active', 'sort_order', 'get_permissions_count', 'get_inherited_permissions_count', 'created_at']
+    """角色管理Admin - 支持角色继承和权限优化"""
+    list_display = ['display_name', 'get_role_display_name', 'get_parent_role', 'is_active', 'sort_order', 'get_permissions_count', 'get_inherited_permissions_count', 'get_hierarchy_level', 'created_at']
     list_filter = ['role', 'is_active', 'parent', 'created_at']
-    search_fields = ['display_name', 'description']
+    search_fields = ['display_name', 'description', 'role']
     ordering = ['sort_order', 'role']
     filter_horizontal = ['permissions']
+    list_per_page = 30
+    actions = ['activate_roles', 'deactivate_roles', 'sync_to_groups', 'optimize_permissions']
     
     class Media:
         js = ('admin/js/role_management_auto_fill.js', 'admin/js/dynamic_role_selector.js', 'admin/js/role_permission_sync.js')
@@ -726,6 +771,64 @@ class RoleManagementAdmin(StandardRoleAdminMixin, admin.ModelAdmin, RoleCreation
                 '<span style="color: #28a745; font-weight: bold;">{} 个</span>',
                 total_count
             )
+    
+    @admin.display(description='层级')
+    def get_hierarchy_level(self, obj):
+        """显示角色层级"""
+        level = obj.get_hierarchy_level()
+        level_colors = ['#dc3545', '#fd7e14', '#ffc107', '#28a745', '#20c997', '#6f42c1']
+        color = level_colors[min(level, len(level_colors) - 1)]
+        return format_html(
+            '<span style="color: {}; background: {}20; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: bold;">L{}</span>',
+            color, color, level
+        )
+    
+    @admin.action(description='激活选中角色')
+    def activate_roles(self, request, queryset):
+        """批量激活角色"""
+        updated = queryset.update(is_active=True)
+        self.message_user(request, f'已激活 {updated} 个角色')
+    
+    @admin.action(description='停用选中角色')
+    def deactivate_roles(self, request, queryset):
+        """批量停用角色"""
+        updated = queryset.update(is_active=False)
+        self.message_user(request, f'已停用 {updated} 个角色')
+    
+    def sync_role_to_group(self, role):
+        """同步角色到Django组"""
+        from django.contrib.auth.models import Group
+        try:
+            group, created = Group.objects.get_or_create(name=f'Role_{role.role}')
+            group.permissions.clear()
+            group.permissions.add(*role.permissions.all())
+            return True
+        except Exception as e:
+            return False
+    
+    @admin.action(description='同步到Django组')
+    def sync_to_groups(self, request, queryset):
+        """批量同步角色到Django组"""
+        synced_count = 0
+        for role in queryset:
+            try:
+                if self.sync_role_to_group(role):
+                    synced_count += 1
+            except Exception as e:
+                self.message_user(request, f'同步角色 {role.display_name} 失败: {str(e)}', level=messages.ERROR)
+        
+        if synced_count > 0:
+            self.message_user(request, f'已成功同步 {synced_count} 个角色到Django组')
+    
+    @admin.action(description='优化权限配置')
+    def optimize_permissions(self, request, queryset):
+        """优化权限配置"""
+        try:
+            from django.core.management import call_command
+            call_command('optimize_role_permissions', '--dry-run')
+            self.message_user(request, '权限配置优化预览完成，请查看控制台输出')
+        except Exception as e:
+            self.message_user(request, f'权限优化失败: {str(e)}', level=messages.ERROR)
     
     def clean_model(self, request, obj, form, change):
         """模型验证"""

@@ -246,7 +246,7 @@ describe('API 集成测试', () => {
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer token'
+            'Authorization': 'Token token'
           }
         }
       )

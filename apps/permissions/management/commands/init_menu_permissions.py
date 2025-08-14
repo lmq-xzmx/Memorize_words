@@ -91,6 +91,15 @@ class Command(BaseCommand):
                 'sort_order': 6,
                 'description': '系统权限配置'
             },
+            {
+                'key': 'access_dev_tools',
+                'name': '开发工具',
+                'menu_level': 'root',
+                'icon': 'fas fa-tools',
+                'url': '/dev',
+                'sort_order': 7,
+                'description': '开发工具和调试功能'
+            },
             
             # 一级子菜单
             {
@@ -239,6 +248,7 @@ class Command(BaseCommand):
                 'permissions_role': True,
                 'learning_practice_word': True,
                 'learning_practice_test': True,
+                'access_dev_tools': True,
             },
             UserRole.DEAN: {
                 # 教导主任权限

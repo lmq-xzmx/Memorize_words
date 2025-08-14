@@ -22,10 +22,13 @@ router.register(r'sync-logs', PermissionSyncLogViewSet, basename='permissionsync
 app_name = 'permissions'
 
 urlpatterns = [
+    # 优化后的权限API（优先使用）
+    path('optimized/', include('apps.permissions.optimized_urls')),
+    
     # API路由
     path('api/', include(router.urls)),
     
-    # 菜单权限API
+    # 菜单权限API（传统接口，保持兼容）
     path('api/user-menu-permissions/', get_user_menu_permissions, name='user_menu_permissions'),
     path('api/check-menu-permission/', check_menu_permission, name='check_menu_permission'),
     path('api/role-display-name/', get_role_display_name, name='role_display_name'),
