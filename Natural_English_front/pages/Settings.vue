@@ -242,81 +242,168 @@ export default {
 </script>
 
 <style scoped>
+/* 设置页面主容器 */
 .settings-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
-  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
 }
 
+.settings-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* 页面头部 */
 .header {
   text-align: center;
-  color: white;
-  margin-bottom: 30px;
-  padding-top: 20px;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 1;
 }
 
 .header h1 {
-  font-size: 2.2rem;
-  margin-bottom: 8px;
+  font-size: 2.5rem;
   font-weight: 700;
+  color: white;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: slideInDown 0.8s ease-out;
 }
 
 .subtitle {
-  font-size: 1rem;
-  opacity: 0.9;
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
+  animation: slideInUp 0.8s ease-out 0.2s both;
 }
 
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 内容区域 */
 .content {
   max-width: 800px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .settings-sections {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 2rem;
 }
 
+/* 设置区块 */
 .settings-section {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 15px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .settings-section h2 {
-  font-size: 1.3rem;
-  margin-bottom: 15px;
-  color: #333;
+  font-size: 1.5rem;
   font-weight: 600;
+  color: #333;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+/* 设置项 */
 .setting-item {
   display: flex;
   align-items: center;
-  padding: 15px 0;
-  border-bottom: 1px solid #eee;
+  padding: 1.5rem;
+  margin: 0 -1rem;
+  border-radius: 15px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.setting-item:last-child {
-  border-bottom: none;
+.setting-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
 .setting-item:hover {
-  background-color: rgba(116, 185, 255, 0.05);
-  border-radius: 8px;
-  margin: 0 -10px;
-  padding: 15px 10px;
+  background: rgba(102, 126, 234, 0.05);
+  transform: translateX(5px);
+}
+
+.setting-item:hover::before {
+  left: 100%;
 }
 
 .setting-icon {
-  font-size: 1.5rem;
-  margin-right: 15px;
-  width: 30px;
+  font-size: 2rem;
+  margin-right: 1rem;
+  width: 50px;
   text-align: center;
+  filter: grayscale(0.3);
+  transition: filter 0.3s ease;
+}
+
+.setting-item:hover .setting-icon {
+  filter: grayscale(0);
 }
 
 .setting-info {
@@ -324,37 +411,68 @@ export default {
 }
 
 .setting-info h3 {
-  font-size: 1rem;
-  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: #333;
-  font-weight: 500;
+  margin: 0 0 0.3rem 0;
 }
 
 .setting-info p {
-  font-size: 0.85rem;
-  margin: 0;
+  font-size: 0.9rem;
   color: #666;
+  margin: 0;
+  line-height: 1.4;
 }
 
 .setting-arrow {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   color: #999;
-  margin-left: 10px;
+  transition: all 0.3s ease;
 }
 
+.setting-item:hover .setting-arrow {
+  color: #667eea;
+  transform: translateX(5px);
+}
+
+/* 设置控件 */
 .setting-control {
-  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.setting-control input[type="number"] {
+  width: 80px;
+  padding: 0.5rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
+  text-align: center;
+  transition: border-color 0.3s ease;
+}
+
+.setting-control input[type="number"]:focus {
+  outline: none;
+  border-color: #667eea;
 }
 
 .setting-control select {
-  padding: 5px 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 0.5rem 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 1rem;
   background: white;
-  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
 }
 
-/* 开关样式 */
+.setting-control select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* 开关控件 */
 .switch {
   position: relative;
   display: inline-block;
@@ -376,7 +494,7 @@ export default {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  transition: .4s;
+  transition: 0.4s;
   border-radius: 24px;
 }
 
@@ -388,20 +506,20 @@ export default {
   left: 3px;
   bottom: 3px;
   background-color: white;
-  transition: .4s;
+  transition: 0.4s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background-color: #74b9ff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 input:checked + .slider:before {
   transform: translateX(26px);
 }
 
-/* 弹窗样式 */
-.modal-overlay {
+/* 修改密码弹窗 */
+.password-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -412,81 +530,323 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease;
 }
 
-.modal {
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.password-content {
   background: white;
-  border-radius: 15px;
-  padding: 30px;
+  border-radius: 20px;
+  padding: 2rem;
   max-width: 400px;
   width: 90%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: slideInScale 0.3s ease;
 }
 
-.modal h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
+@keyframes slideInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.password-content h3 {
   color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 1.5rem 0;
   text-align: center;
 }
 
-.modal input {
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.form-group input {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
+  padding: 0.8rem;
+  border: 2px solid #e1e5e9;
   border-radius: 8px;
   font-size: 1rem;
+  transition: border-color 0.3s ease;
   box-sizing: border-box;
 }
 
-.modal-buttons {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 20px;
+.form-group input:focus {
+  outline: none;
+  border-color: #667eea;
 }
 
-.modal-buttons button {
-  padding: 10px 20px;
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  flex: 1;
+  padding: 0.8rem 1.5rem;
   border: none;
   border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.modal-buttons button[type="button"] {
-  background: #f5f5f5;
-  color: #666;
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
-.modal-buttons button[type="submit"],
-.modal-buttons button:not([type]) {
-  background: #74b9ff;
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
-.modal-buttons button:hover {
-  opacity: 0.9;
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
+.btn-secondary {
+  background: #f8f9fa;
+  color: #666;
+  border: 1px solid #e9ecef;
+}
+
+.btn-secondary:hover {
+  background: #e9ecef;
+  color: #333;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
+  .settings-container {
+    padding: 1rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .settings-section {
+    padding: 1.5rem;
+  }
+  
+  .setting-item {
+    padding: 1rem;
+    margin: 0 -0.5rem;
+  }
+  
+  .setting-icon {
+    font-size: 1.5rem;
+    width: 40px;
+  }
+  
+  .setting-info h3 {
+    font-size: 1rem;
+  }
+  
+  .setting-info p {
+    font-size: 0.85rem;
+  }
+  
+  .setting-control {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings-container {
+    padding: 0.5rem;
+  }
+  
+  .header {
+    margin-bottom: 2rem;
+  }
+  
   .header h1 {
     font-size: 1.8rem;
   }
   
   .settings-section {
-    padding: 15px;
+    padding: 1rem;
   }
   
   .setting-item {
-    padding: 12px 0;
+    padding: 0.8rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
   }
   
   .setting-icon {
-    font-size: 1.3rem;
-    margin-right: 12px;
+    margin-right: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .setting-arrow {
+    display: none;
+  }
+  
+  .password-content {
+    padding: 1.5rem;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .settings-section,
+  .password-content {
+    background: rgba(30, 30, 30, 0.95);
+    color: #e0e0e0;
+  }
+  
+  .settings-section h2 {
+    color: #f0f0f0;
+  }
+  
+  .setting-info h3 {
+    color: #f0f0f0;
+  }
+  
+  .setting-info p {
+    color: #b0b0b0;
+  }
+  
+  .form-group label {
+    color: #e0e0e0;
+  }
+  
+  .form-group input,
+  .setting-control input,
+  .setting-control select {
+    background: #333;
+    color: #e0e0e0;
+    border-color: #555;
+  }
+  
+  .btn-secondary {
+    background: #333;
+    color: #e0e0e0;
+    border-color: #555;
+  }
+  
+  .btn-secondary:hover {
+    background: #444;
+  }
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .settings-container {
+    background: #000;
+  }
+  
+  .settings-section,
+  .password-content {
+    background: #fff;
+    border: 2px solid #000;
+  }
+  
+  .header h1,
+  .subtitle {
+    color: #fff;
+    text-shadow: 2px 2px 4px #000;
+  }
+  
+  .setting-info h3,
+  .setting-info p {
+    color: #000;
+  }
+}
+
+/* 焦点状态 */
+.setting-item:focus,
+.btn:focus,
+.form-group input:focus,
+.setting-control input:focus,
+.setting-control select:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .setting-item,
+  .btn {
+    min-height: 44px;
+  }
+  
+  .setting-item:hover {
+    transform: none;
+  }
+  
+  .btn:hover {
+    transform: none;
   }
 }
 </style>
+

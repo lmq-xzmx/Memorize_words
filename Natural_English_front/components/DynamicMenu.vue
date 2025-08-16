@@ -145,76 +145,116 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #f8f9fa;
-  border-right: 1px solid #e9ecef;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* 主菜单样式 */
 .main-menu {
   flex: 1;
-  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
-  margin: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   position: relative;
+  overflow: hidden;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.menu-item:hover::before {
+  left: 100%;
 }
 
 .menu-item:hover {
-  background: #e9ecef;
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 .menu-item.active {
-  background: #007bff;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 .menu-icon {
-  font-size: 1.2rem;
-  margin-right: 0.75rem;
-  width: 1.5rem;
+  font-size: 20px;
+  margin-right: 12px;
+  min-width: 24px;
   text-align: center;
 }
 
 .menu-title {
   flex: 1;
+  font-size: 14px;
   font-weight: 500;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .menu-badge {
-  background: #dc3545;
+  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
   color: white;
-  font-size: 0.75rem;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.75rem;
-  margin-left: 0.5rem;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  animation: pulse 2s infinite;
 }
 
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* 角色信息样式 */
 .role-info {
-  padding: 1rem;
-  border-top: 1px solid #e9ecef;
   display: flex;
   align-items: center;
-  background: white;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .user-avatar {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  margin-right: 0.75rem;
+  margin-right: 12px;
   overflow: hidden;
-  background: #007bff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .user-avatar img {
@@ -224,9 +264,16 @@ export default {
 }
 
 .default-avatar {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  font-weight: bold;
-  font-size: 1.1rem;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .user-details {
@@ -234,134 +281,186 @@ export default {
 }
 
 .username {
+  font-size: 16px;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 0.125rem;
+  color: white;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .user-role {
-  font-size: 0.875rem;
-  color: #6c757d;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-block;
 }
 
+/* 快速操作按钮样式 */
 .quick-actions {
-  padding: 0.5rem;
-  border-top: 1px solid #e9ecef;
   display: flex;
-  justify-content: space-around;
-  background: white;
+  gap: 8px;
+  justify-content: space-between;
 }
 
 .quick-btn {
-  width: 2.5rem;
-  height: 2.5rem;
+  flex: 1;
+  padding: 12px;
   border: none;
-  border-radius: 50%;
-  background: #f8f9fa;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 18px;
   cursor: pointer;
-  font-size: 1.1rem;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+}
+
+.quick-btn:hover::before {
+  width: 100px;
+  height: 100px;
 }
 
 .quick-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.quick-btn:active {
+  transform: translateY(0);
 }
 
 .analytics-btn:hover {
-  background: #e3f2fd;
+  background: rgba(52, 152, 219, 0.3);
 }
 
 .resource-btn:hover {
-  background: #fff3e0;
+  background: rgba(46, 204, 113, 0.3);
 }
 
 .admin-btn:hover {
-  background: #f3e5f5;
+  background: rgba(231, 76, 60, 0.3);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .dynamic-menu {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    border-right: none;
-    border-top: 1px solid #e9ecef;
-  }
-  
-  .main-menu {
-    display: flex;
-    flex: 1;
-    padding: 0.5rem;
-    overflow-x: auto;
+    padding: 12px;
   }
   
   .menu-item {
-    flex-direction: column;
-    min-width: 4rem;
-    margin: 0 0.25rem;
-    padding: 0.5rem;
-    text-align: center;
+    padding: 10px 12px;
   }
   
   .menu-icon {
-    margin-right: 0;
-    margin-bottom: 0.25rem;
+    font-size: 18px;
+    margin-right: 10px;
   }
   
   .menu-title {
-    font-size: 0.75rem;
+    font-size: 13px;
   }
   
   .role-info {
-    display: none;
+    padding: 12px;
   }
   
-  .quick-actions {
-    flex-direction: column;
-    padding: 0.25rem;
-  }
-  
-  .quick-btn {
-    margin: 0.125rem 0;
-    width: 2rem;
-    height: 2rem;
-    font-size: 0.9rem;
-  }
-}
-
-/* 暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-  .dynamic-menu {
-    background: #2d3748;
-    border-right-color: #4a5568;
-  }
-  
-  .menu-item:hover {
-    background: #4a5568;
-  }
-  
-  .role-info,
-  .quick-actions {
-    background: #2d3748;
-    border-top-color: #4a5568;
+  .user-avatar {
+    width: 40px;
+    height: 40px;
   }
   
   .username {
-    color: #e2e8f0;
-  }
-  
-  .user-role {
-    color: #a0aec0;
+    font-size: 14px;
   }
   
   .quick-btn {
-    background: #4a5568;
-    color: #e2e8f0;
+    padding: 10px;
+    font-size: 16px;
   }
 }
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .dynamic-menu {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  }
+  
+  .menu-item {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .role-info {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .quick-btn {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  .menu-item,
+  .quick-btn {
+    transition: none;
+  }
+  
+  .menu-item::before,
+  .quick-btn::before {
+    display: none;
+  }
+  
+  .menu-badge {
+    animation: none;
+  }
+}
+
+/* 加载状态 */
+.dynamic-menu.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.dynamic-menu.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
 </style>
+

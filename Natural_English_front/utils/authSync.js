@@ -3,6 +3,11 @@
  * 解决前端权限验证与后端登录状态不一致的问题
  */
 
+// 导入清除认证缓存函数
+import { clearAuthCache } from './permission.js'
+// 导入统一的API配置
+import { buildApiUrl, API_ENDPOINTS } from '../config/apiConfig.js'
+
 // 获取CSRF Token
 function getCsrfToken() {
   const cookies = document.cookie.split(';')
@@ -21,7 +26,8 @@ function getCsrfToken() {
  */
 export async function verifyBackendAuth() {
   try {
-    const response = await fetch('http://127.0.0.1:8001/accounts/api/auth/verify/', {
+    const url = buildApiUrl(API_ENDPOINTS.AUTH.VERIFY)
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include', // 包含cookies
       headers: {
@@ -48,7 +54,8 @@ export async function verifyBackendAuth() {
  */
 export async function fetchUserFromBackend() {
   try {
-    const response = await fetch('http://127.0.0.1:8001/accounts/api/users/current/', {
+    const url = buildApiUrl(API_ENDPOINTS.AUTH.USER_CURRENT)
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -108,6 +115,9 @@ export async function syncAuthState() {
         
         localStorage.setItem('user', JSON.stringify(backendUser))
         
+        // 清除认证缓存
+        clearAuthCache()
+        
         // 触发权限变更事件
         if (window.permissionWatcher) {
           window.permissionWatcher.notifyChange(backendUser)
@@ -125,6 +135,9 @@ export async function syncAuthState() {
       if (frontendToken || frontendUser) {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
+        
+        // 清除认证缓存
+        clearAuthCache()
         
         // 触发权限变更事件
         if (window.permissionWatcher) {

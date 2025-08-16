@@ -210,305 +210,646 @@ export default {
 <style scoped>
 .fashion {
   min-height: 100vh;
-  background: #f8f9fa;
-  padding-bottom: 80px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6c5ce7 100%);
+  position: relative;
+  overflow-x: hidden;
 }
 
+/* 背景装饰 */
+.fashion::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="fashion-pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23fashion-pattern)"/></svg>') repeat;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 头部样式 */
 .header {
-  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-  color: white;
   text-align: center;
-  padding: 30px 20px;
+  padding: 4rem 2rem 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .header h1 {
-  font-size: 24px;
-  margin-bottom: 8px;
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  animation: fadeInDown 1s ease-out;
+  background: linear-gradient(45deg, #ffffff, #e8f4fd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .header p {
-  font-size: 14px;
-  opacity: 0.9;
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  animation: fadeInUp 1s ease-out 0.3s both;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 内容区域 */
 .content {
-  max-width: 600px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 2rem;
+  position: relative;
+  z-index: 1;
 }
 
+/* 标签页样式 */
 .tabs {
   display: flex;
-  background: white;
-  border-radius: 12px;
-  padding: 4px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
 }
 
 .tab-item {
-  flex: 1;
-  text-align: center;
-  padding: 12px;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  padding: 1rem 2rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 14px;
-  color: #666;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tab-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.tab-item:hover::before {
+  left: 100%;
+}
+
+.tab-item:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
 
 .tab-item.active {
-  background: #ff6b6b;
-  color: white;
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 
-.trend-card,
-.expression-card,
-.culture-card {
-  background: white;
-  border-radius: 12px;
+/* 标签内容 */
+.tab-content {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 趋势列表 */
+.trends-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.trend-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: slideInUp 0.6s ease-out;
+  position: relative;
+}
+
+.trend-card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .trend-image {
-  height: 150px;
-  background: #f0f0f0;
+  height: 200px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.trend-placeholder {
-  color: #aaa;
-  font-size: 18px;
-  font-weight: bold;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 
 .trend-tag {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  background: rgba(255, 107, 107, 0.8);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  top: 1rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  padding: 0.5rem 1rem;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.trend-placeholder {
+  text-align: center;
+  padding: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .trend-content {
-  padding: 16px;
+  padding: 1.5rem;
 }
 
 .trend-content h3 {
-  font-size: 16px;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #333;
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
 }
 
 .trend-content p {
   color: #666;
-  line-height: 1.5;
-  margin-bottom: 12px;
-  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 1rem;
 }
 
 .trend-meta {
   display: flex;
   justify-content: space-between;
-  color: #999;
-  font-size: 12px;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* 表达列表 */
+.expressions-list {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
 
 .expression-card {
-  padding: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: slideInLeft 0.6s ease-out;
+  border-left: 4px solid #667eea;
+}
+
+.expression-card:hover {
+  transform: translateX(10px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .expression-header {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .expression-icon {
-  width: 36px;
-  height: 36px;
-  background: #f8f9fa;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-  font-size: 18px;
+  font-size: 2rem;
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-5px);
+  }
+  60% {
+    transform: translateY(-3px);
+  }
 }
 
 .expression-title {
+  font-size: 1.2rem;
   font-weight: 600;
   color: #333;
-  font-size: 16px;
 }
 
 .expression-content {
-  margin-bottom: 16px;
+  margin-bottom: 1.5rem;
 }
 
 .expression-original {
-  font-size: 18px;
-  color: #ff6b6b;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 0.5rem;
 }
 
 .expression-translation {
+  font-size: 1.1rem;
   color: #666;
-  margin-bottom: 12px;
-  font-size: 14px;
+  margin-bottom: 1rem;
+}
+
+.expression-example {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 3px solid #a29bfe;
 }
 
 .example-title {
   font-weight: 600;
   color: #333;
-  margin-bottom: 4px;
-  font-size: 14px;
+  margin-bottom: 0.5rem;
 }
 
 .example-content {
-  color: #666;
+  color: #555;
   font-style: italic;
-  line-height: 1.5;
-  font-size: 14px;
 }
 
 .expression-actions {
   display: flex;
-  gap: 8px;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 16px;
-  background: white;
-  color: #666;
-  font-size: 12px;
+  gap: 0.5rem;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.2rem;
+  border-radius: 25px;
   cursor: pointer;
+  font-weight: 600;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.action-btn:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .action-btn:hover {
-  background: #f5f5f5;
-  border-color: #ff6b6b;
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.action-btn .icon {
+  font-size: 1.1rem;
+}
+
+/* 文化列表 */
+.culture-list {
+  display: grid;
+  gap: 2rem;
+  margin-bottom: 3rem;
 }
 
 .culture-card {
-  padding: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  animation: slideInRight 0.6s ease-out;
+  border-top: 4px solid #a29bfe;
+}
+
+.culture-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
 .culture-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .culture-header h3 {
-  font-size: 16px;
+  font-size: 1.4rem;
+  font-weight: 700;
   color: #333;
   margin: 0;
 }
 
 .culture-category {
-  background: #f0f0f0;
-  color: #666;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  background: #a29bfe;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 15px;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
-.culture-content {
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 12px;
-  font-size: 14px;
+.culture-content p {
+  color: #555;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
 }
 
 .culture-keywords {
   display: flex;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  margin-bottom: 1.5rem;
 }
 
 .keyword {
-  background: #f0f0f0;
-  color: #666;
-  padding: 4px 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.3rem 0.8rem;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .culture-footer {
   display: flex;
   justify-content: space-between;
-  color: #999;
-  font-size: 12px;
-  margin-top: 12px;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+  color: #888;
+  font-size: 0.9rem;
 }
 
+/* 订阅区域 */
 .subscription {
-  background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-  padding: 30px 20px;
-  margin-top: 30px;
-}
-
-.subscription-content {
-  max-width: 600px;
-  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  margin: 4rem 2rem 2rem;
+  border-radius: 30px;
+  padding: 3rem;
   text-align: center;
-  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 1;
 }
 
 .subscription-content h3 {
-  font-size: 20px;
-  margin-bottom: 8px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .subscription-content p {
-  font-size: 14px;
-  margin-bottom: 20px;
-  opacity: 0.9;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2rem;
 }
 
 .subscription-form {
   display: flex;
+  gap: 1rem;
   max-width: 400px;
   margin: 0 auto;
+  flex-wrap: wrap;
 }
 
 .subscription-form input {
   flex: 1;
-  padding: 12px 16px;
+  min-width: 200px;
+  padding: 1rem 1.5rem;
   border: none;
-  border-radius: 8px 0 0 8px;
-  font-size: 14px;
-}
-
-.subscription-form button {
-  background: #333;
-  color: white;
-  border: none;
-  padding: 0 20px;
-  border-radius: 0 8px 8px 0;
-  cursor: pointer;
+  border-radius: 25px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease;
 }
 
+.subscription-form input:focus {
+  outline: none;
+  background: white;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+  transform: scale(1.02);
+}
+
+.subscription-form button {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.subscription-form button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
+}
+
+.subscription-form button:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
 .subscription-form button:hover {
-  background: #555;
+  transform: scale(1.05);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* 动画效果 */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .header {
+    padding: 2rem 1rem 1rem;
+  }
+  
+  .header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .header p {
+    font-size: 1.1rem;
+  }
+  
+  .content {
+    padding: 0 1rem;
+  }
+  
+  .tabs {
+    gap: 0.5rem;
+  }
+  
+  .tab-item {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .trends-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .expression-actions {
+    justify-content: center;
+  }
+  
+  .culture-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .culture-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .subscription {
+    margin: 2rem 1rem;
+    padding: 2rem;
+  }
+  
+  .subscription-content h3 {
+    font-size: 1.5rem;
+  }
+  
+  .subscription-form {
+    flex-direction: column;
+  }
+  
+  .subscription-form input,
+  .subscription-form button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .trend-card,
+  .expression-card,
+  .culture-card {
+    padding: 1.5rem;
+  }
+  
+  .action-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
 }
 </style>
+

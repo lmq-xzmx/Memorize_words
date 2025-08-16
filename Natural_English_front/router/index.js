@@ -1,4 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { 
+  isAuthenticated, 
+  canAccessPage, 
+  checkRoutePermission,
+  getDefaultPageForRole,
+  getCurrentUser,
+  getRolePermissions
+} from '../utils/permission.js'
+import { ROLES } from '../utils/roleDefinitions.js'
+import { pageRequiresAuth } from '../utils/learningModePermissions.js'
 
 // 导入页面组件
 import HomePage from '../pages/HomePage.vue'
@@ -26,6 +36,8 @@ import LearningModeSelector from '../pages/LearningModeSelector.vue'
 import WordRootAnalysis from '../pages/WordRootAnalysis.vue'
 import WordExamples from '../pages/WordExamples.vue'
 import PositionTestPage from '../pages/PositionTestPage.vue'
+import NotFound from '../components/NotFound.vue'
+import ErrorHandler from '../components/ErrorHandler.vue'
 
 // 导入子页面组件
 import WordChallenge from '../pages/word-challenge/index.vue'
@@ -34,6 +46,8 @@ import WordSelectionPractice from '../pages/word-selection-practice/index.vue'
 import WordSelectionIndex from '../pages/word-selection/index.vue'
 import AuthTest from '../pages/AuthTest.vue'
 import LoginTest from '../pages/login-test.vue'
+import CommunityIndex from '../pages/community/index.vue'
+import FashionIndex from '../pages/fashion/index.vue'
 
 // 路由配置
 const routes = [
@@ -80,16 +94,16 @@ const routes = [
     meta: { title: '发现' }
   },
   {
-    path: '/dev',
+    path: '/dev-index',
     name: 'DevIndex',
     component: DevIndex,
-    meta: { title: '开发索引' }
+    meta: { title: '开发中心' }
   },
   {
-    path: '/dev-index',
-    name: 'DevIndexAlias',
+    path: '/admin/dev-index',
+    name: 'AdminDevIndex',
     component: DevIndex,
-    meta: { title: '开发中心' }
+    meta: { title: '管理员开发中心', requiresAuth: true }
   },
   {
     path: '/word-learning',
@@ -176,6 +190,24 @@ const routes = [
     meta: { title: '学习模式选择' }
   },
   {
+    path: '/learning-modes',
+    name: 'LearningModes',
+    component: LearningModeSelector,
+    meta: { title: '学习模式' }
+  },
+  {
+    path: '/fashion',
+    name: 'Fashion',
+    component: FashionIndex,
+    meta: { title: '时尚' }
+  },
+  {
+    path: '/community',
+    name: 'Community',
+    component: CommunityIndex,
+    meta: { title: '社区' }
+  },
+  {
     path: '/word-root-analysis',
     name: 'WordRootAnalysis',
     component: WordRootAnalysis,
@@ -254,11 +286,23 @@ const routes = [
     component: WordSelectionPractice,
     meta: { title: '快刷模式' }
   },
+  // 错误处理页面
+  {
+    path: '/error',
+    name: 'Error',
+    component: ErrorHandler,
+    props: route => ({
+      errorType: route.query.type || 'general',
+      errorMessage: route.query.message || ''
+    }),
+    meta: { title: '错误页面' }
+  },
   // 404 页面
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    redirect: '/'
+    component: NotFound,
+    meta: { title: '页面未找到' }
   }
 ]
 
@@ -275,35 +319,36 @@ const router = createRouter({
   }
 })
 
-// 导入权限检查工具
-import { isAuthenticated, getCurrentUser, canAccessPage } from '../utils/permission.js'
-
-// 路由守卫
-router.beforeEach((to, from, next) => {
+// 全局前置守卫
+router.beforeEach(async (to, from, next) => {
   // 设置页面标题
-  if (to.meta.title) {
+  if (to.meta && to.meta.title) {
     document.title = `${to.meta.title} - Natural English`
   }
   
-  // 检查是否需要认证
-  if (to.meta.requiresAuth) {
-    if (!isAuthenticated()) {
-      console.log('用户未认证，重定向到登录页')
+  try {
+    // 使用统一的路由权限检查，传递完整的路由对象
+    await checkRoutePermission(to, from, next)
+  } catch (error) {
+    console.error('路由权限检查失败:', error)
+    // 发生错误时的安全处理
+    const authenticated = await isAuthenticated()
+    if (!authenticated) {
       next('/login')
-      return
+    } else {
+      next('/dashboard')
     }
   }
-  
-  // 检查页面权限
-  const user = getCurrentUser()
-  if (user && !canAccessPage(user.role, to.path)) {
-    console.warn(`用户 ${user.username}(${user.role}) 无权访问页面 ${to.path}`)
-    // 重定向到仪表板或首页
-    next('/dashboard')
-    return
+})
+
+// 全局后置守卫 - 用于权限日志记录和分析
+router.afterEach((to, from) => {
+  // 记录页面访问日志（可选）
+  if (import.meta.env.MODE === 'development') {
+    console.log(`页面访问: ${from.path} -> ${to.path}`)
   }
   
-  next()
+  // 可以在这里添加页面访问统计或权限使用分析
 })
 
 export default router

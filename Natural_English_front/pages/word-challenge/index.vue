@@ -241,249 +241,263 @@ export default {
 
 <style scoped>
 .word-challenge {
-  max-width: 1200px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .challenge-header {
   text-align: center;
-  margin-bottom: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+  padding: 30px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .challenge-title {
-  font-size: 2.5rem;
-  font-weight: bold;
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
   margin-bottom: 10px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .challenge-subtitle {
-  font-size: 1.2rem;
-  opacity: 0.9;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-weight: 400;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .stat-card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 25px;
   text-align: center;
-  transition: transform 0.3s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 .stat-number {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #667eea;
-  margin-bottom: 5px;
+  font-size: 36px;
+  font-weight: 700;
+  color: #4facfe;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-label {
+  font-size: 14px;
   color: #666;
-  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .progress-container {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 25px;
   margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.progress-container h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .progress-bar {
   width: 100%;
-  height: 20px;
-  background: #e9ecef;
-  border-radius: 10px;
+  height: 12px;
+  background: rgba(79, 172, 254, 0.2);
+  border-radius: 6px;
   overflow: hidden;
-  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  border-radius: 10px;
-  transition: width 0.5s ease;
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  box-shadow: 0 2px 8px rgba(79, 172, 254, 0.3);
 }
 
 .progress-text {
-  margin-top: 10px;
+  margin: 0;
   color: #666;
+  font-size: 14px;
+  text-align: center;
 }
 
 .challenge-section {
-  background: white;
-  border-radius: 15px;
-  padding: 30px;
   margin-bottom: 30px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .section-title {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
   margin-bottom: 20px;
-  color: #333;
-  border-bottom: 2px solid #667eea;
-  padding-bottom: 10px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .word-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
-  margin-top: 20px;
 }
 
 .word-card {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
 }
 
 .word-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-
-.word-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s;
-}
-
-.word-card:hover::before {
-  left: 100%;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 .word-text {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 10px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #4facfe;
+  margin-bottom: 8px;
 }
 
 .word-phonetic {
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: 14px;
+  color: #888;
   margin-bottom: 10px;
+  font-style: italic;
 }
 
 .word-definition {
-  font-size: 1rem;
-  margin-bottom: 15px;
-  line-height: 1.4;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: 500;
 }
 
 .word-example {
-  font-size: 0.9rem;
-  opacity: 0.9;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
   font-style: italic;
-  margin-bottom: 10px;
+  padding: 10px;
+  background: rgba(79, 172, 254, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #4facfe;
 }
 
 .word-mastery {
-  margin-top: 10px;
-  font-size: 0.9rem;
-  opacity: 0.8;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 15px;
+  font-weight: 500;
 }
 
 .challenge-actions {
   display: flex;
-  gap: 15px;
-  margin-top: 15px;
+  gap: 10px;
 }
 
 .btn-challenge {
-  padding: 8px 16px;
+  flex: 1;
+  padding: 12px 16px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: bold;
   transition: all 0.3s ease;
-  text-decoration: none;
-  display: inline-block;
+  text-transform: none;
 }
 
 .btn-mastered {
-  background: #28a745;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   color: white;
 }
 
 .btn-mastered:hover {
-  background: #218838;
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 172, 254, 0.3);
 }
 
 .btn-difficult {
-  background: #ffc107;
-  color: #333;
+  background: linear-gradient(135deg, #ffa726 0%, #ff7043 100%);
+  color: white;
 }
 
 .btn-difficult:hover {
-  background: #e0a800;
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 167, 38, 0.3);
 }
 
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #666;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .empty-state h3 {
-  font-size: 1.5rem;
+  font-size: 24px;
+  color: #4facfe;
   margin-bottom: 10px;
-  color: #333;
 }
 
 .empty-state p {
-  font-size: 1rem;
+  font-size: 16px;
+  color: #666;
   margin-bottom: 20px;
 }
 
 .btn-add-words {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
   color: white;
-  padding: 12px 24px;
   border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  text-decoration: none;
-  display: inline-block;
-  transition: all 0.3s ease;
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .btn-add-words:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
 }
 
 .suggestions-grid {
@@ -493,61 +507,56 @@ export default {
 }
 
 .suggestion-card {
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: 10px;
-  border-left: 4px solid #28a745;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.suggestion-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 .suggestion-card h4 {
-  color: #28a745;
+  font-size: 16px;
+  color: #4facfe;
   margin-bottom: 10px;
+  font-weight: 600;
 }
 
 .suggestion-card p {
+  font-size: 14px;
   color: #666;
-  font-size: 0.9rem;
-}
-
-.suggestion-card:nth-child(2) {
-  border-left-color: #ffc107;
-}
-
-.suggestion-card:nth-child(2) h4 {
-  color: #ffc107;
-}
-
-.suggestion-card:nth-child(3) {
-  border-left-color: #17a2b8;
-}
-
-.suggestion-card:nth-child(3) h4 {
-  color: #17a2b8;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .message-toast {
   position: fixed;
   top: 20px;
   right: 20px;
-  padding: 15px 20px;
-  border-radius: 5px;
+  padding: 15px 25px;
+  border-radius: 8px;
   color: white;
-  font-weight: bold;
+  font-weight: 500;
   z-index: 1000;
   animation: slideIn 0.3s ease;
 }
 
 .message-toast.success {
-  background: #28a745;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
 }
 
 .message-toast.error {
-  background: #dc3545;
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
 }
 
 .message-toast.warning {
-  background: #ffc107;
-  color: #333;
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
 }
 
 @keyframes slideIn {
@@ -562,20 +571,68 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .challenge-title {
-    font-size: 2rem;
+  .word-challenge {
+    padding: 15px;
   }
   
-  .word-grid {
-    grid-template-columns: 1fr;
+  .challenge-title {
+    font-size: 24px;
   }
   
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .stat-number {
+    font-size: 28px;
+  }
+  
+  .word-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .word-card {
+    padding: 20px;
   }
   
   .suggestions-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .challenge-header {
+    padding: 20px 15px;
+  }
+  
+  .challenge-title {
+    font-size: 20px;
+  }
+  
+  .challenge-subtitle {
+    font-size: 14px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .challenge-actions {
+    flex-direction: column;
+  }
+  
+  .message-toast {
+    right: 10px;
+    left: 10px;
+    top: 10px;
   }
 }
 </style>
+

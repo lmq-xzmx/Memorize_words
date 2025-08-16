@@ -100,29 +100,53 @@ export default {
 </script>
 
 <style scoped>
+/* 页面容器 */
 .word-flashcard-container {
-  padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
+/* 页面头部 */
 .flashcard-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 3rem;
+  color: white;
 }
 
 .flashcard-header h2 {
-  color: #4A90E2;
-  margin-bottom: 10px;
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.flashcard {
+.flashcard-header p {
+  font-size: 1.25rem;
+  margin: 0;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+/* 卡片内容区域 */
+.flashcard-content {
+  max-width: 500px;
   width: 100%;
-  height: 300px;
+  text-align: center;
+}
+
+/* 翻转卡片 */
+.flashcard {
   position: relative;
-  margin-bottom: 30px;
-  cursor: pointer;
+  width: 100%;
+  height: 400px;
+  margin-bottom: 2rem;
   perspective: 1000px;
+  cursor: pointer;
 }
 
 .flashcard-front,
@@ -131,23 +155,26 @@ export default {
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  transition: transform 0.6s ease;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  transition: transform 0.6s;
+  padding: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .flashcard-front {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  transform: rotateY(0deg);
 }
 
 .flashcard-back {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
   transform: rotateY(180deg);
 }
 
@@ -159,124 +186,282 @@ export default {
   transform: rotateY(0deg);
 }
 
-.word-display {
-  text-align: center;
-}
-
+/* 卡片正面 */
 .word-display h1 {
-  font-size: 48px;
-  margin: 0 0 10px 0;
-  font-weight: 300;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .phonetic {
-  font-size: 18px;
-  opacity: 0.9;
-  margin: 0;
+  font-size: 1.5rem;
+  color: #667eea;
+  font-weight: 500;
+  margin: 0 0 2rem 0;
+  font-style: italic;
 }
 
 .flip-hint {
   position: absolute;
-  bottom: 20px;
-  font-size: 14px;
-  opacity: 0.7;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1rem;
+  color: #a0aec0;
+  opacity: 0.8;
+  animation: pulse 2s infinite;
 }
 
-.meaning-display {
-  text-align: center;
-  padding: 20px;
-}
-
+/* 卡片背面 */
 .meaning-display h3 {
-  font-size: 24px;
-  margin: 0 0 15px 0;
+  font-size: 1.5rem;
+  color: #667eea;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
 }
 
 .meaning {
-  font-size: 20px;
-  margin: 0 0 20px 0;
-  line-height: 1.4;
+  font-size: 1.25rem;
+  color: #2d3748;
+  font-weight: 500;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
 }
 
 .example {
-  border-top: 1px solid rgba(255,255,255,0.3);
-  padding-top: 15px;
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border-left: 4px solid #667eea;
 }
 
 .example-en {
-  font-size: 16px;
-  margin: 0 0 8px 0;
+  font-size: 1.125rem;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
   font-style: italic;
 }
 
 .example-cn {
-  font-size: 14px;
+  font-size: 1rem;
+  color: #718096;
   margin: 0;
-  opacity: 0.9;
 }
 
+/* 控制按钮 */
 .card-controls {
   display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
   justify-content: center;
-  gap: 15px;
-  margin-bottom: 30px;
+  flex-wrap: wrap;
 }
 
 .control-btn {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 15px 20px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-.control-btn.difficult {
-  background: #ff6b6b;
-  color: white;
-}
-
-.control-btn.easy {
-  background: #51cf66;
-  color: white;
-}
-
-.control-btn.known {
-  background: #339af0;
-  color: white;
+  gap: 0.5rem;
+  min-width: 100px;
+  font-weight: 600;
+  color: #2d3748;
 }
 
 .control-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
 }
 
+.control-btn.difficult {
+  border-color: rgba(245, 101, 101, 0.5);
+}
+
+.control-btn.difficult:hover {
+  background: rgba(245, 101, 101, 0.1);
+  border-color: #f56565;
+}
+
+.control-btn.easy {
+  border-color: rgba(72, 187, 120, 0.5);
+}
+
+.control-btn.easy:hover {
+  background: rgba(72, 187, 120, 0.1);
+  border-color: #48bb78;
+}
+
+.control-btn.known {
+  border-color: rgba(102, 126, 234, 0.5);
+}
+
+.control-btn.known:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+}
+
+.control-btn span:first-child {
+  font-size: 1.5rem;
+}
+
+.control-btn span:last-child {
+  font-size: 0.875rem;
+}
+
+/* 进度条 */
 .progress {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 1rem;
+  color: white;
 }
 
 .progress-bar {
   flex: 1;
-  height: 8px;
-  background: #e9ecef;
-  border-radius: 4px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
   overflow: hidden;
+  position: relative;
 }
 
 .progress-fill {
   height: 100%;
-  background: #4A90E2;
-  transition: width 0.3s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  transition: width 0.5s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
 }
 
 .progress-text {
-  font-size: 14px;
-  color: #666;
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+  color: white;
+}
+
+/* 动画 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .word-flashcard-container {
+    padding: 1rem;
+  }
+  
+  .flashcard-header h2 {
+    font-size: 2.5rem;
+  }
+  
+  .flashcard {
+    height: 350px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .flashcard-front,
+  .flashcard-back {
+    padding: 1.5rem;
+  }
+  
+  .word-display h1 {
+    font-size: 2.5rem;
+  }
+  
+  .phonetic {
+    font-size: 1.25rem;
+  }
+  
+  .card-controls {
+    gap: 0.75rem;
+  }
+  
+  .control-btn {
+    padding: 0.875rem 1.25rem;
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .flashcard-header h2 {
+    font-size: 2rem;
+  }
+  
+  .flashcard {
+    height: 300px;
+  }
+  
+  .flashcard-front,
+  .flashcard-back {
+    padding: 1rem;
+  }
+  
+  .word-display h1 {
+    font-size: 2rem;
+  }
+  
+  .phonetic {
+    font-size: 1.125rem;
+  }
+  
+  .meaning-display h3 {
+    font-size: 1.25rem;
+  }
+  
+  .meaning {
+    font-size: 1.125rem;
+  }
+  
+  .example {
+    padding: 1rem;
+  }
+  
+  .card-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .control-btn {
+    width: 100%;
+    max-width: 200px;
+    flex-direction: row;
+    justify-content: center;
+  }
 }
 </style>
+

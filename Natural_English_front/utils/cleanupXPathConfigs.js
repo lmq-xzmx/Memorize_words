@@ -1,4 +1,5 @@
 import axios from 'axios'
+import apiEnhancer from './apiInterceptorEnhancer.js'
 
 // 获取CSRF token的函数
 function getCsrfToken() {
@@ -19,12 +20,18 @@ function getCsrfToken() {
 
 // 创建API实例
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8001/accounts/api',
-  timeout: 10000,
+  baseURL: 'http://127.0.0.1:8000/accounts/api',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   },
   withCredentials: true
+})
+
+// 应用性能增强到主API实例
+apiEnhancer.enhance(api, {
+  enableCache: true,
+  cachableEndpoints: ['/accounts/api']
 })
 
 // 请求拦截器 - 自动添加Token和CSRF token
@@ -57,16 +64,21 @@ api.interceptors.response.use(
       console.warn('API返回HTML内容，可能是未认证被重定向到登录页')
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      localStorage.removeItem('user_id')
+      localStorage.removeItem('username')
+      localStorage.removeItem('real_name')
+      localStorage.removeItem('role')
+      localStorage.removeItem('email')
       // 标记需要重新登录，让路由守卫处理跳转
       if (window.location.pathname !== '/login') {
-        // 延迟执行，避免在API调用过程中立即跳转
+        // 减少延迟，快速响应认证失效
         setTimeout(() => {
           if (window.VueRouter) {
             window.VueRouter.push('/login')
           } else {
             window.location.href = '/login'
           }
-        }, 100)
+        }, 50)
       }
       return Promise.reject(new Error('未认证，请重新登录'))
     }
@@ -77,15 +89,20 @@ api.interceptors.response.use(
       // Token过期或无效，清除本地存储并跳转到登录页
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      localStorage.removeItem('user_id')
+      localStorage.removeItem('username')
+      localStorage.removeItem('real_name')
+      localStorage.removeItem('role')
+      localStorage.removeItem('email')
       if (window.location.pathname !== '/login') {
-        // 延迟执行，避免在API调用过程中立即跳转
+        // 减少延迟，快速响应认证失效
         setTimeout(() => {
            if (window.VueRouter) {
              window.VueRouter.push('/login')
            } else {
              window.location.href = '/login'
            }
-         }, 100)
+         }, 50)
       }
     }
     // 检查错误响应是否为HTML内容
@@ -94,15 +111,20 @@ api.interceptors.response.use(
       console.warn('错误响应包含HTML内容，清除认证信息')
       localStorage.removeItem('token')
       localStorage.removeItem('user')
+      localStorage.removeItem('user_id')
+      localStorage.removeItem('username')
+      localStorage.removeItem('real_name')
+      localStorage.removeItem('role')
+      localStorage.removeItem('email')
       if (window.location.pathname !== '/login') {
-        // 延迟执行，避免在API调用过程中立即跳转
+        // 减少延迟，快速响应认证失效
         setTimeout(() => {
            if (window.VueRouter) {
              window.VueRouter.push('/login')
            } else {
              window.location.href = '/login'
            }
-         }, 100)
+         }, 50)
       }
       return Promise.reject(new Error('认证失效，请重新登录'))
     }
@@ -161,12 +183,18 @@ export const learningAPI = {
 
 // 创建单词API实例
 const wordApi = axios.create({
-  baseURL: 'http://127.0.0.1:8001/words/api',
-  timeout: 10000,
+  baseURL: 'http://127.0.0.1:8000/words/api',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   },
   withCredentials: true
+})
+
+// 应用性能增强到单词API实例
+apiEnhancer.enhance(wordApi, {
+  enableCache: true,
+  cachableEndpoints: ['/words/api']
 })
 
 // 单词API请求拦截器
@@ -271,12 +299,18 @@ export const wordAPI = {
 
 // 创建资源授权API实例
 const resourceAuthApi = axios.create({
-  baseURL: 'http://127.0.0.1:8001/api/resource-auth',
-  timeout: 10000,
+  baseURL: 'http://127.0.0.1:8000/api/resource-auth',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   },
   withCredentials: true
+})
+
+// 应用性能增强到资源授权API实例
+apiEnhancer.enhance(resourceAuthApi, {
+  enableCache: true,
+  cachableEndpoints: ['/api/resource-auth']
 })
 
 // 资源授权API请求拦截器
@@ -459,12 +493,18 @@ export const resourceAuthAPI = {
 
 // 创建analytics API实例
 const analyticsApi = axios.create({
-  baseURL: 'http://127.0.0.1:8001/analytics',
-  timeout: 10000,
+  baseURL: 'http://127.0.0.1:8000/analytics',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   },
   withCredentials: true
+})
+
+// 应用性能增强到analytics API实例
+apiEnhancer.enhance(analyticsApi, {
+  enableCache: true,
+  cachableEndpoints: ['/analytics']
 })
 
 // Analytics API请求拦截器
@@ -557,12 +597,18 @@ export const analyticsAPI = {
 
 // 创建teaching API实例
 const teachingApi = axios.create({
-  baseURL: 'http://127.0.0.1:8001/api/teaching',
-  timeout: 10000,
+  baseURL: 'http://127.0.0.1:8000/api/teaching',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json'
   },
   withCredentials: true
+})
+
+// 应用性能增强到teaching API实例
+apiEnhancer.enhance(teachingApi, {
+  enableCache: true,
+  cachableEndpoints: ['/api/teaching']
 })
 
 // Teaching API请求拦截器

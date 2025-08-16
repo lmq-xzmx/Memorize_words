@@ -71,8 +71,11 @@
 </template>
 
 <script>
+import permissionMixin from '../mixins/permissionMixin.js';
+
 export default {
   name: 'WordReading',
+  mixins: [permissionMixin],
   data() {
     return {
       stats: {
@@ -92,9 +95,31 @@ export default {
   },
   methods: {
     startMode(mode) {
+      // 检查不同模式的权限
+      const modePermissions = {
+        'flashcard': 'view_word_learning',
+        'spelling': 'practice_spelling',
+        'quiz': 'take_word_quiz'
+      }
+      
+      const requiredPermission = modePermissions[mode]
+      if (requiredPermission && !this.$hasPermission(requiredPermission)) {
+        this.$showError(`您没有权限使用${this.getModeDisplayName(mode)}功能`)
+        return
+      }
+      
       console.log('Starting mode:', mode)
       // 这里可以跳转到具体的学习模式页面
       this.$router.push(`/word-learning/${mode}`)
+    },
+    
+    getModeDisplayName(mode) {
+      const modeNames = {
+        'flashcard': '单词卡片',
+        'spelling': '拼写练习',
+        'quiz': '单词测试'
+      }
+      return modeNames[mode] || mode
     },
     getStatusText(status) {
       const statusMap = {
@@ -103,6 +128,26 @@ export default {
         'review': '待复习'
       }
       return statusMap[status] || '未知'
+    }
+  },
+  
+  async created() {
+    // 检查页面访问权限
+    if (!this.$hasPermission('view_word_reading')) {
+      this.$showError('您没有权限访问单词阅读页面')
+      this.$router.push('/dashboard')
+      return
+    }
+    
+    // 检查统计数据查看权限
+    if (!this.$hasPermission('view_learning_stats')) {
+      // 如果没有统计权限，隐藏统计数据
+      this.stats = {
+        totalWords: 0,
+        masteredWords: 0,
+        todayWords: 0,
+        streakDays: 0
+      }
     }
   }
 }
@@ -300,3 +345,4 @@ export default {
   }
 }
 </style>
+

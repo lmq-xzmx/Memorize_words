@@ -2,54 +2,56 @@
   <div class="tab-bar-container">
     <!-- 底部导航栏 -->
     <div class="tab-bar">
-      <!-- 斩词 -->
-      <div 
-        class="tab-item"
-        :class="{ active: activeMenu === 'word' }"
-        @click="handleWordClick"
-      >
-        <div class="tab-icon">
-          <span class="icon chinese-icon">斩</span>
+      <div class="tab-container">
+        <!-- 斩词 -->
+        <div 
+          class="tab-item"
+          :class="{ active: activeMenu === 'word' }"
+          @click="handleWordClick"
+        >
+          <div class="tab-icon">
+            <span class="icon chinese-icon">斩</span>
+          </div>
+          <div class="tab-text">斩词</div>
         </div>
-        <div class="tab-text">斩词</div>
-      </div>
 
-      <!-- 工具 -->
-      <div 
-        class="tab-item"
-        :class="{ active: activeMenu === 'tools' }"
-        @click="handleToolsClick"
-        ref="toolsTab"
-      >
-        <div class="tab-icon">
-          <span class="icon chinese-icon">新</span>
+        <!-- 工具 -->
+        <div 
+          class="tab-item"
+          :class="{ active: activeMenu === 'tools' }"
+          @click="handleToolsClick"
+          ref="toolsTab"
+        >
+          <div class="tab-icon">
+            <span class="icon chinese-icon">新</span>
+          </div>
+          <div class="tab-text">工具</div>
         </div>
-        <div class="tab-text">工具</div>
-      </div>
 
-      <!-- 时尚 -->
-      <div 
-        class="tab-item"
-        :class="{ active: activeMenu === 'fashion' }"
-        @click="toggleMenu('fashion')"
-        ref="fashionTab"
-      >
-        <div class="tab-icon">
-          <span class="icon chinese-icon">榜</span>
+        <!-- 时尚 -->
+        <div 
+          class="tab-item"
+          :class="{ active: activeMenu === 'fashion' }"
+          @click="toggleMenu('fashion')"
+          ref="fashionTab"
+        >
+          <div class="tab-icon">
+            <span class="icon chinese-icon">榜</span>
+          </div>
+          <div class="tab-text">时尚</div>
         </div>
-        <div class="tab-text">时尚</div>
-      </div>
 
-      <!-- 我的 -->
-      <div 
-        class="tab-item"
-        :class="{ active: currentTab === '/profile' }"
-        @click="navigateTo('/profile')"
-      >
-        <div class="tab-icon">
-          <span class="icon">👤</span>
+        <!-- 我的 -->
+        <div 
+          class="tab-item"
+          :class="{ active: currentTab === '/profile' }"
+          @click="navigateTo('/profile')"
+        >
+          <div class="tab-icon">
+            <span class="icon">👤</span>
+          </div>
+          <div class="tab-text">我的</div>
         </div>
-        <div class="tab-text">我的</div>
       </div>
     </div>
 
@@ -316,10 +318,10 @@ export default {
     },
     // 处理工具点击
     handleToolsClick() {
-      if (this.selectedTool && this.enabledMenuItems.length > 0) {
+      if (this.selectedTool && this.enabledMenuItems && this.enabledMenuItems.length > 0) {
         // 如果有选中的工具，导航到对应页面
-        const selectedItem = this.enabledMenuItems.find(item => item.id === this.selectedTool)
-        if (selectedItem) {
+        const selectedItem = this.enabledMenuItems.find(item => item && item.id === this.selectedTool)
+        if (selectedItem && selectedItem.path) {
           this.navigateTo(selectedItem.path)
           return
         }
@@ -332,11 +334,29 @@ export default {
      calculateMenuPosition(menuType) {
        this.$nextTick(() => {
          const tabRef = menuType === 'tools' ? this.$refs.toolsTab : this.$refs.fashionTab
-         if (tabRef) {
+         if (tabRef && typeof tabRef.getBoundingClientRect === 'function') {
            const rect = tabRef.getBoundingClientRect()
+           if (!rect) return
+           
+           const menuWidth = menuType === 'tools' ? 200 : 160 // 菜单宽度
+           const windowWidth = window.innerWidth || 375 // 默认移动端宽度
+           const bottomNavHeight = 60 // 底部导航栏高度
+           const menuGap = 12 // 菜单与按钮的间距
+           
+           // 计算菜单左侧位置，确保居中对齐按钮
+           let leftPosition = (rect.left || 0) + (rect.width || 0) / 2 - menuWidth / 2
+           
+           // 确保菜单不超出屏幕边界
+           if (leftPosition < 8) {
+             leftPosition = 8
+           } else if (leftPosition + menuWidth > windowWidth - 8) {
+             leftPosition = windowWidth - menuWidth - 8
+           }
+           
+           // 菜单显示在按钮正上方
            const position = {
-             left: rect.left + rect.width / 2 + 'px',
-             transform: 'translateX(-50%)'
+             left: leftPosition + 'px',
+             bottom: (bottomNavHeight + menuGap) + 'px'
            }
            
            if (menuType === 'tools') {
@@ -355,22 +375,25 @@ export default {
            const rect = toolsMenu.getBoundingClientRect()
            const windowWidth = window.innerWidth
            const menuWidth = 320 // 二级菜单的最大宽度
+           const menuGap = 8 // 菜单间距
+           const bottomNavHeight = 60 // 底部导航栏高度
            
-           let leftPosition = rect.right + 8
+           let leftPosition = rect.right + menuGap
            
            // 如果右侧空间不够，则显示在左侧
-           if (leftPosition + menuWidth > windowWidth) {
-             leftPosition = rect.left - menuWidth - 8
+           if (leftPosition + menuWidth > windowWidth - 8) {
+             leftPosition = rect.left - menuWidth - menuGap
            }
            
-           // 确保不超出屏幕左边界
+           // 如果左侧也放不下，则居中显示
            if (leftPosition < 8) {
-             leftPosition = 8
+             leftPosition = (windowWidth - menuWidth) / 2
            }
            
+           // 二级菜单与一级菜单底部对齐
            this.devCenterMenuPosition = {
              left: leftPosition + 'px',
-             bottom: '68px'
+             bottom: (bottomNavHeight + 12) + 'px' // 与一级菜单同一高度
            }
          }
        })
@@ -581,562 +604,488 @@ export default {
 </script>
 
 <style scoped>
-.tab-bar-container {
+.tab-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 9999;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+  z-index: 1000;
+  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
 }
 
-.tab-bar {
-  height: 60px;
-  background: #ffffff;
-  border-top: 1px solid #e5e5e5;
+.tab-container {
   display: flex;
-  align-items: center;
   justify-content: space-around;
-  /* 适配安全区域 */
-  padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 10000;
-}
-
-.popup-container {
-  position: absolute;
-  bottom: 60px;
-  left: 0;
-  right: 0;
-  pointer-events: none;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
 .tab-item {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 4px 0;
+  padding: 0.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  border-radius: 12px;
   position: relative;
+  min-width: 60px;
 }
 
-.tab-item:active {
-  transform: scale(0.95);
-}
-
-.tab-icon {
-  position: relative;
-  margin-bottom: 2px;
-}
-
-.icon {
-  font-size: 22px;
-  display: block;
-  transition: all 0.3s ease;
-}
-
-.chinese-icon {
-  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-weight: bold;
-  font-size: 24px;
-  color: #333;
-}
-
-.tab-item.active .icon {
-  transform: scale(1.1);
-}
-
-.tab-item.active .chinese-icon {
-  color: #007aff;
-}
-
-.badge {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #ff4757;
-  color: white;
-  border-radius: 10px;
-  min-width: 16px;
-  height: 16px;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  box-sizing: border-box;
-}
-
-.tab-text {
-  font-size: 10px;
-  color: #999999;
-  transition: all 0.3s ease;
-  line-height: 1;
-}
-
-.tab-item.active .tab-text {
-  color: #007aff;
-  font-weight: 600;
+.tab-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
 }
 
 .tab-item.active {
-  color: #007aff;
+  background: rgba(74, 144, 226, 0.1);
+  transform: scale(1.05);
 }
 
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .tab-bar {
-    background: #1c1c1e;
-    border-top-color: #38383a;
-  }
-  
-  .tab-text {
-    color: #8e8e93;
-  }
-  
-  .tab-item.active .tab-text {
-    color: #007aff;
-  }
+.tab-item.active::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background: linear-gradient(90deg, #4a90e2, #357abd);
+  border-radius: 2px;
+  animation: slideIn 0.3s ease-out;
 }
 
-/* 小程序适配 */
-@media screen and (max-width: 750px) {
-  .tab-bar {
-    height: 50px;
+@keyframes slideIn {
+  from {
+    width: 0;
+    opacity: 0;
   }
-  
-  .icon {
-    font-size: 20px;
-  }
-  
-  .tab-text {
-    font-size: 9px;
+  to {
+    width: 30px;
+    opacity: 1;
   }
 }
 
-/* iOS安全区域适配 */
-@supports (bottom: env(safe-area-inset-bottom)) {
-  .tab-bar {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 4px);
-    height: calc(60px + env(safe-area-inset-bottom));
+.tab-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.2rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tab-item.active .tab-icon {
+  color: #4a90e2;
+  animation: bounce 0.5s ease-out;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-1px);
   }
 }
 
-/* 弹出菜单样式 */
-.popup-menu {
-  position: fixed;
-  bottom: 68px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  min-width: 160px;
-  padding: 8px 0;
-  z-index: 10001;
-  pointer-events: auto;
+.tab-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+  text-align: center;
+  line-height: 1.2;
 }
 
-/* 一级菜单样式 */
-.popup-menu.level-1 {
-  z-index: 10001;
+.tab-item.active .tab-text {
+  color: #4a90e2;
+  font-weight: 600;
 }
 
-/* 二级菜单样式 */
-.popup-menu.level-2 {
-  z-index: 10002;
+/* 中文图标样式 */
+.chinese-icon {
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-weight: 600;
+  font-size: 1.2em;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.tab-item.active .chinese-icon {
+  color: #4a90e2;
+}
+
+.tab-item:hover .chinese-icon {
+  color: #4a90e2;
+  transform: scale(1.1);
+}
+
+/* 下拉菜单样式 */
+.dropdown-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  margin-bottom: 0.5rem;
   min-width: 280px;
   max-width: 320px;
-  max-height: 400px;
-  overflow-y: auto;
-  position: fixed;
+  z-index: 1001;
+  animation: slideUp 0.3s ease-out;
 }
 
-.popup-menu::after {
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.dropdown-menu::before {
   content: '';
   position: absolute;
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: white;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(255, 255, 255, 0.98);
+}
+
+.menu-header {
+  text-align: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.menu-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.3rem;
+}
+
+.menu-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.8rem;
 }
 
 .menu-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 12px 16px;
-  font-size: 14px;
-  color: #333;
+  padding: 1rem 0.5rem;
+  border-radius: 12px;
   cursor: pointer;
-  transition: background 0.2s ease;
-  white-space: nowrap;
+  transition: all 0.3s ease;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
+  overflow: hidden;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(74, 144, 226, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.menu-item:hover::before {
+  left: 100%;
 }
 
 .menu-item:hover {
-  background: #f5f5f5;
+  background: rgba(74, 144, 226, 0.05);
+  border-color: rgba(74, 144, 226, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.menu-item:active {
-  background: #e8e8e8;
-  transform: scale(0.98);
+.menu-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.dev-center-item {
-  justify-content: space-between;
+.menu-item.disabled:hover {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.05);
+  transform: none;
+  box-shadow: none;
 }
 
-.menu-arrow {
-  font-size: 12px;
-  color: #666;
-  transition: transform 0.3s ease;
+.menu-item-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
 }
 
-.menu-item:first-child {
-  border-radius: 12px 12px 0 0;
+.menu-item:hover .menu-item-icon {
+  transform: scale(1.1);
 }
 
-.menu-item:last-child {
-  border-radius: 0 0 12px 12px;
-}
-
-/* 工具菜单特殊样式 */
-.tools-menu {
-  min-width: 200px;
-  max-width: 250px;
-  padding: 8px 0;
-}
-
-.menu-icon {
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-.menu-text {
-  font-size: 14px;
-}
-
-/* 菜单分隔线 */
-.menu-divider {
-  height: 1px;
-  background: #e5e5e5;
-  margin: 8px 16px;
-}
-
-/* 启用的工具菜单项 */
-.enabled-tools {
-  padding: 0;
-}
-
-.tool-menu-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.tool-menu-item:hover {
-  background: #f5f5f5;
-}
-
-.tool-radio {
-  margin-right: 8px;
-  cursor: pointer;
-}
-
-.tool-label {
-  flex: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-
-.tool-label .tool-name {
-  font-size: 14px;
-  color: #333;
-}
-
-/* 无功能提示样式 */
-.no-tools-tip {
-  padding: 0;
-}
-
-.tip-text {
-  padding: 12px 16px;
-  font-size: 13px;
-  color: #999;
-  text-align: center;
-  font-style: italic;
-}
-
-/* 开发中心二级菜单样式 */
-.dev-center-menu {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  padding: 0;
-}
-
-.dev-center-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-  background: #f8f9fa;
-  border-radius: 12px 12px 0 0;
-}
-
-.dev-center-header h3 {
-  margin: 0;
-  font-size: 14px;
+.menu-item-title {
+  font-size: 0.9rem;
   font-weight: 600;
   color: #333;
+  text-align: center;
+  margin-bottom: 0.2rem;
+  position: relative;
+  z-index: 1;
 }
 
-.dev-tool-list {
-  max-height: 300px;
-  overflow-y: auto;
-  padding: 8px 0;
-}
-
-.dev-tool-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f5f5f5;
-  transition: background-color 0.2s ease;
-}
-
-.dev-tool-item:hover {
-  background-color: #f8f9fa;
-}
-
-.dev-tool-item:last-child {
-  border-bottom: none;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
+.menu-item-desc {
+  font-size: 0.75rem;
   color: #666;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
+  text-align: center;
+  line-height: 1.3;
+  position: relative;
+  z-index: 1;
+}
+
+/* 启用状态指示器 */
+.menu-item.enabled::after {
+  content: '✓';
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s ease;
+  font-size: 0.7rem;
+  font-weight: bold;
+  z-index: 2;
 }
 
-.close-btn:hover {
-  background: #e9ecef;
-}
-
-/* 移除旧的dev-tool-cards样式，使用新的dev-tool-list */
-
-.dev-tool-item .tool-info {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.tool-icon {
-  font-size: 24px;
-  margin-right: 12px;
-}
-
-.tool-details {
-  flex: 1;
-}
-
-.dev-tool-item .tool-name {
-  display: block;
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-.dev-tool-item .tool-desc {
-  display: block;
-  font-size: 13px;
-  color: #666;
-  line-height: 1.4;
-}
-
-/* 开关按钮样式 */
-.tool-switch {
-  position: relative;
-}
-
-.tool-switch input[type="checkbox"] {
-  display: none;
-}
-
-.switch-label {
-  display: block;
-  width: 44px;
-  height: 24px;
-  background: #ccc;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  position: relative;
-}
-
-.switch-label::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.3s ease;
-}
-
-.tool-switch input[type="checkbox"]:checked + .switch-label {
-  background: #007aff;
-}
-
-.tool-switch input[type="checkbox"]:checked + .switch-label::after {
-  transform: translateX(20px);
-}
-
-/* 遮罩层样式 */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 9998;
-  pointer-events: auto;
-}
-
-/* 动画效果 */
-/* 弹出菜单动画 */
-.popup-fade-enter-active,
-.popup-fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.popup-fade-enter-from {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-.popup-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
-
-/* 模态框动画 */
-.modal-fade-enter-active,
-.modal-fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.modal-fade-enter-from {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.9);
-}
-
-.modal-fade-leave-to {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.9);
-}
-
-/* 遮罩层动画 */
-.overlay-fade-enter-active,
-.overlay-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.overlay-fade-enter-from,
-.overlay-fade-leave-to {
-  opacity: 0;
-}
-
-/* Android适配 */
-@media screen and (max-height: 640px) {
-  .tab-bar {
-    height: 50px;
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .tab-container {
+    padding: 0 0.5rem;
   }
   
   .tab-item {
-    padding: 2px 0;
+    min-width: 50px;
+    padding: 0.3rem;
   }
   
-  .tools-menu {
-    min-width: 180px;
-    max-width: 220px;
+  .tab-icon {
+    font-size: 1.3rem;
   }
   
-  .dev-center-popup {
-    width: 95vw;
-    max-height: 70vh;
+  .tab-text {
+    font-size: 0.7rem;
   }
   
-  .dev-tool-cards {
-    max-height: calc(70vh - 80px);
+  .dropdown-menu {
+    min-width: 260px;
+    max-width: 90vw;
+    padding: 0.8rem;
+  }
+  
+  .menu-grid {
+    gap: 0.6rem;
+  }
+  
+  .menu-item {
+    padding: 0.8rem 0.3rem;
+  }
+  
+  .menu-item-icon {
+    font-size: 1.5rem;
+  }
+  
+  .menu-item-title {
+    font-size: 0.8rem;
+  }
+  
+  .menu-item-desc {
+    font-size: 0.7rem;
   }
 }
 
-/* 深色模式适配 */
+@media (max-width: 480px) {
+  .tab-item {
+    min-width: 45px;
+  }
+  
+  .tab-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.1rem;
+  }
+  
+  .tab-text {
+    font-size: 0.65rem;
+  }
+  
+  .dropdown-menu {
+    min-width: 240px;
+    padding: 0.6rem;
+  }
+  
+  .menu-item {
+    padding: 0.6rem 0.2rem;
+  }
+  
+  .menu-item-icon {
+    font-size: 1.3rem;
+  }
+}
+
+/* 深色模式支持 */
 @media (prefers-color-scheme: dark) {
-  .dev-center-popup {
-    background: #1c1c1e;
-    color: white;
+  .tab-bar {
+    background: rgba(30, 30, 30, 0.95);
+    border-top-color: rgba(255, 255, 255, 0.1);
   }
   
-  .dev-center-header {
-    background: #2c2c2e;
-    border-bottom-color: #38383a;
+  .tab-item:hover {
+    background: rgba(255, 255, 255, 0.1);
   }
   
-  .dev-center-header h3 {
-    color: white;
+  .tab-item.active {
+    background: rgba(74, 144, 226, 0.2);
   }
   
-  .close-btn {
-    color: #8e8e93;
+  .tab-text {
+    color: #ccc;
   }
   
-  .close-btn:hover {
-    background: #38383a;
+  .tab-item.active .tab-text {
+    color: #4a90e2;
   }
   
-  .dev-tool-card {
-    background: #2c2c2e;
-    border-color: #38383a;
+  .dropdown-menu {
+    background: rgba(30, 30, 30, 0.98);
+    border-color: rgba(255, 255, 255, 0.1);
   }
   
-  .dev-tool-card:hover {
-    background: #38383a;
+  .dropdown-menu::before {
+    border-top-color: rgba(30, 30, 30, 0.98);
   }
   
-  .dev-tool-card .tool-name {
-    color: white;
+  .menu-title {
+    color: #fff;
   }
   
-  .dev-tool-card .tool-desc {
-    color: #8e8e93;
+  .menu-subtitle {
+    color: #ccc;
   }
   
-  .menu-divider {
-    background: #38383a;
+  .menu-item {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
   }
   
-  .tool-label .tool-name {
-    color: white;
+  .menu-item:hover {
+    background: rgba(74, 144, 226, 0.1);
+    border-color: rgba(74, 144, 226, 0.3);
+  }
+  
+  .menu-item-title {
+    color: #fff;
+  }
+  
+  .menu-item-desc {
+    color: #ccc;
+  }
+}
+
+/* 动画增强 */
+.tab-item {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.tab-item:nth-child(1) { animation-delay: 0.1s; }
+.tab-item:nth-child(2) { animation-delay: 0.2s; }
+.tab-item:nth-child(3) { animation-delay: 0.3s; }
+.tab-item:nth-child(4) { animation-delay: 0.4s; }
+.tab-item:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 触摸反馈 */
+.tab-item:active {
+  transform: scale(0.95);
+}
+
+.menu-item:active {
+  transform: scale(0.95);
+}
+
+/* 无障碍支持 */
+.tab-item:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+.menu-item:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+/* 加载状态 */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading .tab-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 </style>
+

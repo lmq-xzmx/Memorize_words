@@ -28,17 +28,9 @@ class CustomLoginView(LoginView):
         if next_url:
             return next_url
         
-        # 根据用户角色重定向
-        if self.request.user.role == UserRole.ADMIN:
-            return reverse('admin:index')
-        elif self.request.user.role == UserRole.TEACHER:
-            return reverse('teaching:dashboard')
-        elif self.request.user.role == UserRole.STUDENT:
-            return reverse('teaching:dashboard')
-        elif self.request.user.role == UserRole.PARENT:
-            return reverse('analytics:parent_dashboard')
-        else:
-            return reverse('teaching:dashboard')
+        # 统一重定向到前端应用，避免跳转到后台管理页面
+        # 前端应用会根据用户角色和权限进行相应的页面展示
+        return 'http://localhost:3004/'
     
     def form_valid(self, form):
         """表单验证成功"""

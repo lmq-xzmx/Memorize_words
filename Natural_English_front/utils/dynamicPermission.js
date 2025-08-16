@@ -1,5 +1,7 @@
 // 动态权限管理 - 从后端API获取权限数据
 import { syncAuthState } from './authSync.js'
+// 导入统一的API配置
+import { getBackendHost, buildApiUrl, API_ENDPOINTS } from '../config/apiConfig.js'
 
 // 权限缓存
 let permissionCache = {
@@ -8,13 +10,6 @@ let permissionCache = {
   userRole: null,
   lastUpdate: null,
   cacheTimeout: 5 * 60 * 1000 // 5分钟缓存
-}
-
-/**
- * 获取API基础URL
- */
-function getApiBaseUrl() {
-  return 'http://127.0.0.1:8001'
 }
 
 /**
@@ -29,7 +24,7 @@ async function apiRequest(url, options = {}) {
     }
   }
   
-  const response = await fetch(`${getApiBaseUrl()}${url}`, {
+  const response = await fetch(`${getBackendHost()}${url}`, {
     ...defaultOptions,
     ...options,
     headers: {
@@ -50,24 +45,28 @@ async function apiRequest(url, options = {}) {
  */
 export async function fetchUserMenuPermissions() {
   try {
-    // 检查用户是否已登录
+    // 检查用户是否已登录（同时验证token和用户信息）
     const token = localStorage.getItem('token')
-    if (!token) {
-      console.log('用户未登录，跳过权限API调用')
+    const currentUser = getCurrentUser()
+    
+    if (!token || !currentUser) {
+      console.log('用户未登录或登录信息无效，跳过权限API调用')
       return { success: false, message: '用户未登录' }
     }
     
-    const data = await apiRequest('/permissions/optimized/api/user-menu-permissions/')
+    console.log('用户已登录，获取权限信息:', currentUser.username)
+    
+    const data = await apiRequest(API_ENDPOINTS.PERMISSIONS.OPTIMIZED_USER_MENU)
     
     if (data.success) {
       // 更新缓存
-      permissionCache.userMenus = data.menus
-      permissionCache.allPermissions = data.all_permissions
-      permissionCache.userRole = data.user_role
+      permissionCache.userMenus = data.data.menus
+      permissionCache.allPermissions = data.data.all_permissions
+      permissionCache.userRole = data.data.user_role
       permissionCache.lastUpdate = Date.now()
       
       // console.log('成功获取用户菜单权限:', data)
-      return data
+      return data.data
     } else {
       console.error('获取菜单权限失败:', data.message)
       return null
@@ -83,7 +82,7 @@ export async function fetchUserMenuPermissions() {
  */
 export async function checkMenuPermission(menuKey) {
   try {
-    const data = await apiRequest('/permissions/api/check-menu-permission/', {
+    const data = await apiRequest(API_ENDPOINTS.PERMISSIONS.CHECK_MENU_PERMISSION, {
       method: 'POST',
       body: JSON.stringify({ menu_key: menuKey })
     })
@@ -100,7 +99,7 @@ export async function checkMenuPermission(menuKey) {
  */
 export async function fetchRoleDisplayName() {
   try {
-    const data = await apiRequest('/permissions/api/role-display-name/')
+    const data = await apiRequest(API_ENDPOINTS.PERMISSIONS.ROLE_DISPLAY_NAME)
     return data.success ? data : null
   } catch (error) {
     console.error('获取角色显示名称失败:', error)
@@ -113,7 +112,7 @@ export async function fetchRoleDisplayName() {
  */
 export async function fetchMenuHierarchy() {
   try {
-    const data = await apiRequest('/permissions/api/menu-hierarchy/')
+    const data = await apiRequest(API_ENDPOINTS.PERMISSIONS.MENU_HIERARCHY)
     return data.success ? data.menu_hierarchy : null
   } catch (error) {
     console.error('获取菜单层级失败:', error)
@@ -269,8 +268,15 @@ export async function isAuthenticated() {
 
 /**
  * 获取用户角色显示名称
+ * 统一使用roleDefinitions.js中的角色定义
  */
 export function getRoleDisplayName(role) {
+  // 导入统一的角色显示名称
+  import('./roleDefinitions.js').then(({ ROLE_DISPLAY_NAMES }) => {
+    return ROLE_DISPLAY_NAMES[role] || role
+  })
+  
+  // 临时兼容性映射，建议直接使用roleDefinitions.js
   const roleNames = {
     'admin': '管理员',
     'dean': '教导主任',
@@ -382,6 +388,21 @@ if (typeof window !== 'undefined') {
   }
 }
 
+export function getDynamicPermissions() {
+  return permissionCache
+}
+
+export function refreshDynamicPermissions() {
+  permissionCache = {
+    userMenus: null,
+    allPermissions: null,
+    userRole: null,
+    lastUpdate: null,
+    cacheTimeout: 5 * 60 * 1000
+  }
+  return fetchUserMenuPermissions()
+}
+
 export default {
   hasPermission,
   canAccessPage,
@@ -395,5 +416,7 @@ export default {
   checkMenuPermission,
   fetchRoleDisplayName,
   fetchMenuHierarchy,
-  permissionWatcher
+  permissionWatcher,
+  getDynamicPermissions,
+  refreshDynamicPermissions
 }

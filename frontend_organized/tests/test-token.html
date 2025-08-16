@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token测试页面</title>
+</head>
+<body>
+    <h1>Token测试页面</h1>
+    <button onclick="updateToken()">更新Token</button>
+    <button onclick="testPermission()">测试权限</button>
+    <div id="result"></div>
+    
+    <script>
+        function updateToken() {
+            // 设置正确的token
+            localStorage.setItem('token', '856e7dbe9aa2ccfac4099ea85355d4a507ca227e');
+            localStorage.setItem('user', JSON.stringify({
+                id: 1,
+                username: 'admin',
+                role: 'admin',
+                is_superuser: true
+            }));
+            document.getElementById('result').innerHTML = 'Token已更新';
+        }
+        
+        async function testPermission() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                document.getElementById('result').innerHTML = '请先更新Token';
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8001/permissions/optimized/api/user-menu-permissions/', {
+                    headers: {
+                        'Authorization': `Token ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                const hasDevTools = data.all_permissions?.access_dev_tools;
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>权限测试结果:</h3>
+                    <p>用户角色: ${data.user_role}</p>
+                    <p>开发工具权限: ${hasDevTools ? '有权限' : '无权限'}</p>
+                    <p>是否超级用户: ${data.is_superuser ? '是' : '否'}</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = '权限测试失败: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

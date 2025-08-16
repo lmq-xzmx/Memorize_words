@@ -68,9 +68,11 @@
 
 <script>
 import { getDefaultPlaceholder, handleImageError, IMAGE_TYPES } from '../utils/imageConfig.js';
+import permissionMixin from '../mixins/permissionMixin.js';
 
 export default {
   name: 'WordLearning',
+  mixins: [permissionMixin],
   data() {
     return {
       currentWord: {
@@ -114,21 +116,46 @@ export default {
       this.$router.go(-1)
     },
     selectCard(card) {
+      if (!this.$hasPermission('view_word_learning')) {
+        this.$showError('您没有权限进行单词学习操作')
+        return
+      }
       console.log('选择卡片:', card)
       // 这里可以添加卡片选择逻辑
     },
     toggleAnalysis() {
+      if (!this.$hasPermission('analyze_word_roots')) {
+        this.$showError('您没有权限使用词根分析功能')
+        return
+      }
       console.log('切换分析模式')
     },
     toggleBookmark() {
+      if (!this.$hasPermission('manage_bookmarks')) {
+        this.$showError('您没有权限管理书签')
+        return
+      }
       console.log('切换书签')
     },
     playAudio() {
+      if (!this.$hasPermission('use_audio_features')) {
+        this.$showError('您没有权限使用音频功能')
+        return
+      }
       console.log('播放音频')
       // 这里可以添加音频播放逻辑
     },
     handleImageError(event) {
       handleImageError(event, IMAGE_TYPES.WORD_EXAMPLE);
+    }
+  },
+  
+  async created() {
+    // 检查页面访问权限
+    if (!this.$hasPermission('view_word_learning')) {
+      this.$showError('您没有权限访问单词学习页面')
+      this.$router.push('/dashboard')
+      return
     }
   }
 }
@@ -137,119 +164,144 @@ export default {
 <style scoped>
 .word-learning-container {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
 }
 
-/* 状态栏样式 */
 .status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 20px;
-  background: #000;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   color: white;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .status-icons {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
 }
 
-/* 导航栏样式 */
 .nav-bar {
   display: flex;
   align-items: center;
   padding: 15px 20px;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .back-btn {
-  padding: 5px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  margin-right: 15px;
+  transition: all 0.3s ease;
+  margin-right: 20px;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
 .arrow {
+  color: white;
   font-size: 18px;
-  color: #333;
+  font-weight: bold;
 }
 
 .nav-info {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 20px;
 }
 
 .nav-text {
-  font-size: 12px;
-  color: #666;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
-/* 单词显示区域 */
 .word-display {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  background: white;
+  text-align: center;
 }
 
 .word-main {
-  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  padding: 40px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+  min-width: 300px;
 }
 
 .word-text {
   font-size: 48px;
-  font-weight: 300;
-  color: #4A90E2;
-  margin: 0 0 10px 0;
-  letter-spacing: 1px;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 15px;
+  letter-spacing: -1px;
 }
 
 .word-phonetic {
   font-size: 18px;
-  color: #999;
-  margin: 0;
+  color: #718096;
   font-style: italic;
+  margin: 0;
 }
 
-/* 图片卡片区域 */
 .cards-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
   padding: 20px;
-  background: #f5f5f5;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .word-card {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 15px;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .word-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 1);
 }
 
 .card-image {
-  height: 100px;
-  background: #e8f4f8;
+  width: 100%;
+  height: 80px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
 .card-image img {
@@ -259,76 +311,99 @@ export default {
 }
 
 .card-content {
-  padding: 12px;
+  text-align: left;
 }
 
 .card-type {
   font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 5px;
 }
 
 .card-meaning {
   font-size: 14px;
-  color: #333;
-  font-weight: 500;
-  margin-bottom: 4px;
+  color: #2d3748;
+  font-weight: 600;
+  margin-bottom: 5px;
   line-height: 1.3;
 }
 
 .card-example {
   font-size: 12px;
-  color: #999;
+  color: #718096;
+  line-height: 1.3;
 }
 
-/* 底部控制栏 */
 .bottom-controls {
   display: flex;
   justify-content: center;
-  gap: 40px;
+  gap: 30px;
   padding: 20px;
-  background: white;
-  border-top: 1px solid #eee;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .control-btn {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .control-btn:hover {
-  background: #e0e0e0;
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
 .control-icon {
-  font-size: 24px;
+  font-size: 20px;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .word-text {
     font-size: 36px;
+  }
+  
+  .word-main {
+    padding: 30px 20px;
+    min-width: auto;
+  }
+  
+  .cards-container {
+    grid-template-columns: 1fr;
+    max-height: 250px;
+  }
+  
+  .nav-info {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .word-text {
+    font-size: 28px;
   }
   
   .word-phonetic {
     font-size: 16px;
   }
   
-  .cards-container {
-    padding: 15px;
-    gap: 8px;
+  .bottom-controls {
+    gap: 20px;
   }
   
-  .card-content {
-    padding: 10px;
+  .control-btn {
+    width: 45px;
+    height: 45px;
   }
 }
 </style>
+

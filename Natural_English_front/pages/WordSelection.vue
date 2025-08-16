@@ -33,27 +33,74 @@
         </div>
       </div>
       
-      <!-- 学习目标选择区域 -->
-      <div class="config-section" v-if="!currentLearningGoal || learningGoals.length > 0">
-        <h3>{{ currentLearningGoal ? '选择其他学习目标' : '选择学习目标' }}</h3>
-        <div class="goal-selector">
-          <select v-model="selectedGoalId" @change="loadGoalWords">
-            <option value="">{{ currentLearningGoal ? '使用当前学习目标' : '请选择学习目标' }}</option>
-            <option v-if="currentLearningGoal" :value="currentLearningGoal.id">
-              {{ currentLearningGoal.name }} (当前目标)
-            </option>
-            <option v-for="goal in learningGoals.filter(g => !currentLearningGoal || g.id !== currentLearningGoal.id)" :key="goal.id" :value="goal.id">
-              {{ goal.name }} ({{ goal.total_words }}词)
-            </option>
-          </select>
+      <!-- 学习目标配置区域 -->
+      <div class="config-section">
+        <div class="goal-config-header">
+          <h3>学习目标配置</h3>
+          <button class="config-btn" @click="showGoalConfig = !showGoalConfig">
+            {{ showGoalConfig ? '收起配置' : '展开配置' }}
+          </button>
         </div>
         
-        <!-- 提示信息 -->
-        <div v-if="currentLearningGoal" class="alternative-goals">
-          <p class="alternative-text">当前正在使用您的活跃学习目标，也可以选择其他目标进行练习</p>
+        <!-- 学习目标配置组件 -->
+        <div v-if="showGoalConfig" class="goal-config-panel">
+          <LearningGoalConfig 
+            :current-goal="currentLearningGoal"
+            :available-goals="learningGoals"
+            @goal-changed="handleGoalChanged"
+            @goal-created="handleGoalCreated"
+            @plan-updated="handlePlanUpdated"
+          />
         </div>
-        <div v-else-if="learningGoals.length === 0" class="no-goals-hint">
-          <p class="hint-text">您还没有创建任何学习目标，请先创建学习目标</p>
+        
+        <!-- 简化的学习目标选择 -->
+        <div v-else class="simple-goal-selector">
+          <div class="current-goal-display" v-if="currentLearningGoal">
+            <div class="goal-info">
+              <span class="goal-name">{{ currentLearningGoal.name }}</span>
+              <span class="goal-progress">({{ currentLearningGoal.learned_words || 0 }}/{{ currentLearningGoal.target_words || 0 }})</span>
+            </div>
+            <button class="change-goal-btn" @click="showGoalSelector = true">切换目标</button>
+          </div>
+          
+          <div v-else class="no-goal-selected">
+            <p>未选择学习目标</p>
+            <button class="select-goal-btn" @click="showGoalSelector = true">选择目标</button>
+          </div>
+        </div>
+        
+        <!-- 目标选择弹窗 -->
+        <div v-if="showGoalSelector" class="goal-selector-modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h4>选择学习目标</h4>
+              <button class="close-btn" @click="showGoalSelector = false">×</button>
+            </div>
+            <div class="modal-body">
+              <div v-if="learningGoals.length === 0" class="no-goals">
+                <p>暂无可用的学习目标</p>
+                <button class="create-goal-btn" @click="showGoalConfig = true; showGoalSelector = false">创建学习目标</button>
+              </div>
+              <div v-else class="goals-list">
+                <div 
+                  v-for="goal in learningGoals" 
+                  :key="goal.id" 
+                  class="goal-item"
+                  :class="{ active: selectedGoalId === goal.id }"
+                  @click="selectGoal(goal)"
+                >
+                  <div class="goal-content">
+                    <h5>{{ goal.name }}</h5>
+                    <p>{{ goal.description }}</p>
+                    <div class="goal-stats">
+                      <span>总词数: {{ goal.total_words || 0 }}</span>
+                      <span>已学: {{ goal.learned_words || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -266,9 +313,13 @@
 
 <script>
 import { learningAPI, userAPI } from '../utils/api.js'
+import LearningGoalConfig from '../components/LearningGoalConfig.vue'
 
 export default {
   name: 'EnhancedWordPractice',
+  components: {
+    LearningGoalConfig
+  },
   data() {
     return {
       // 配置状态
@@ -283,6 +334,10 @@ export default {
       learningGoals: [],
       selectedGoalId: '',
       currentLearningGoal: null,
+      
+      // UI状态
+      showGoalConfig: false,
+      showGoalSelector: false,
       
       // 练习设置
       practiceMode: '', // 'meaning' 或 'pronunciation'
@@ -417,11 +472,15 @@ export default {
         this.loading = true
         this.networkError = false
         const response = await learningAPI.getLearningGoals({ is_active: true })
-        this.learningGoals = response.results || response
+        const goals = response.results || response
+        // 确保learningGoals始终是数组
+        this.learningGoals = Array.isArray(goals) ? goals : []
         console.log('所有学习目标:', this.learningGoals)
         this.retryCount = 0
       } catch (error) {
         console.error('加载学习目标失败:', error)
+        // 出错时确保learningGoals是空数组
+        this.learningGoals = []
         await this.handleApiError(error, '加载学习目标失败')
       } finally {
         this.loading = false
@@ -489,6 +548,39 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    
+    // 学习目标配置相关方法
+    async selectGoal(goal) {
+      this.selectedGoalId = goal.id
+      this.currentLearningGoal = goal
+      this.showGoalSelector = false
+      await this.loadGoalWords()
+    },
+    
+    async handleGoalChanged(goal) {
+      this.currentLearningGoal = goal
+      this.selectedGoalId = goal.id
+      await this.loadGoalWords()
+      this.$message?.success('学习目标已切换')
+    },
+    
+    async handleGoalCreated(goal) {
+      // 重新加载学习目标列表
+      await this.loadLearningGoals()
+      // 设置新创建的目标为当前目标
+      this.currentLearningGoal = goal
+      this.selectedGoalId = goal.id
+      await this.loadGoalWords()
+      this.$message?.success('学习目标创建成功')
+    },
+    
+    async handlePlanUpdated(plan) {
+      // 学习计划更新后，可能需要刷新当前学习目标的信息
+      if (this.currentLearningGoal && this.currentLearningGoal.id === plan.goal) {
+        await this.loadCurrentLearningGoal()
+      }
+      this.$message?.success('学习计划已更新')
     },
     
     // 练习控制方法
@@ -840,731 +932,90 @@ export default {
 </script>
 
 <style scoped>
-/* 主容器 */
-.enhanced-word-practice-container {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+/* 学习目标配置相关样式 */
+.goal-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.config-btn {
+  padding: 8px 16px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.config-btn:hover {
+  background: #0056b3;
+}
+
+.goal-config-panel {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background: #f9f9f9;
+}
+
+.simple-goal-selector {
+  margin-bottom: 20px;
+}
+
+.current-goal-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #e8f5e8;
+  border-radius: 8px;
+  border: 1px solid #c3e6c3;
+}
+
+.goal-info {
   display: flex;
   flex-direction: column;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  gap: 5px;
 }
 
-/* 顶部导航栏 */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 20px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-  color: #333;
-  font-size: 16px;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+.goal-name {
+  font-weight: bold;
+  color: #2d5a2d;
 }
 
-.back-btn, .settings-btn {
-  padding: 8px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+.goal-progress {
+  font-size: 14px;
+  color: #666;
 }
 
-.back-btn:hover, .settings-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
-  transform: scale(1.1);
-}
-
-.arrow {
-  font-size: 20px;
-  color: #667eea;
-}
-
-.title {
-  font-weight: 600;
-  font-size: 18px;
-  color: #333;
-}
-
-.settings-icon {
-  font-size: 18px;
-}
-
-/* 练习配置界面 */
-.practice-config {
-  flex: 1;
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* 用户信息卡片 */
-.user-info-card {
-  background: #f8f9fa;
-  padding: 15px;
-  border-radius: 8px;
-  border-left: 4px solid #007bff;
-  margin-bottom: 20px;
-}
-
-.user-info-card p {
-  margin: 5px 0;
-  color: #495057;
-}
-
-/* 学习目标卡片 */
-.goal-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.change-goal-btn, .select-goal-btn, .create-goal-btn {
+  padding: 8px 16px;
+  background: #28a745;
   color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.change-goal-btn:hover, .select-goal-btn:hover, .create-goal-btn:hover {
+  background: #1e7e34;
+}
+
+.no-goal-selected {
+  text-align: center;
   padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.goal-card h4 {
-  margin: 0 0 10px 0;
-  font-size: 1.3em;
-  font-weight: 600;
-}
-
-.goal-card p {
-  margin: 8px 0;
-  opacity: 0.9;
-}
-
-/* 替代选择提示 */
-.alternative-goals {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #e9ecef;
-}
-
-.alternative-text {
-  color: #6c757d;
-  font-size: 0.9em;
-  margin: 0;
-  font-style: italic;
-}
-
-/* 无学习目标提示 */
-.no-goals-hint {
-  margin-top: 15px;
-  padding: 15px;
   background: #fff3cd;
   border: 1px solid #ffeaa7;
   border-radius: 8px;
-  text-align: center;
-}
-
-.hint-text {
   color: #856404;
-  font-size: 0.9em;
-  margin: 0;
-  font-weight: 500;
 }
 
-.config-section {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  padding: 0;
-  margin-bottom: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  overflow: hidden;
-}
-
-.config-section h3 {
-  margin: 0;
-  color: #333;
-  font-size: 20px;
-  font-weight: 600;
-  display: none;
-}
-
-.goal-selector select {
-  width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e1e5e9;
-  border-radius: 12px;
-  font-size: 16px;
-  background: white;
-  transition: all 0.3s ease;
-}
-
-.goal-selector select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-/* 模式选择器 */
-.mode-selector {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.mode-option {
-  padding: 20px;
-  border: 2px solid #e1e5e9;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-align: center;
-  background: white;
-}
-
-.mode-option:hover {
-  border-color: #667eea;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
-}
-
-.mode-option.active {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-}
-
-.mode-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
-}
-
-.mode-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.mode-desc {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-/* 练习设置 */
-.practice-settings {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.setting-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.setting-item label {
-  font-weight: 500;
-  min-width: 80px;
-}
-
-.setting-item select {
-  padding: 8px 12px;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
-  background: white;
-}
-
-.setting-desc {
-  font-size: 14px;
-  color: #666;
-  margin-left: 8px;
-}
-
-/* 单词练习列表样式 */
-.word-practice-list {
-  background: #4CAF50;
-  color: white;
-  min-height: 600px;
-}
-
-.practice-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 15px 20px;
-  background: #4CAF50;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.back-arrow {
-  font-size: 24px;
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 50%;
-  transition: background-color 0.3s;
-}
-
-.back-arrow:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.practice-title {
-  font-size: 18px;
-  font-weight: 600;
-  flex: 1;
-  text-align: center;
-}
-
-.save-btn {
-  font-size: 16px;
-  cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 20px;
-  transition: background-color 0.3s;
-}
-
-.save-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.word-list-container {
-  padding: 20px;
-  max-height: 450px;
-  overflow-y: auto;
-}
-
-.word-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.1);
-  margin-bottom: 8px;
-  border-radius: 8px;
-}
-
-.word-item:last-child {
-  margin-bottom: 0;
-}
-
-.word-content {
-  flex: 1;
-  font-size: 18px;
-  font-weight: 500;
-  color: white;
-}
-
-.word-actions {
-  display: flex;
-}
-
-.action-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 255, 255, 0.3);
-  color: white;
-}
-
-.action-btn:hover {
-  background-color: rgba(255, 255, 255, 0.5);
-  transform: scale(1.05);
-}
-
-.action-btn.active {
-  background-color: #2E7D32;
-  transform: scale(1.1);
-}
-
-.practice-footer {
-  padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.progress-info {
-  display: flex;
-  justify-content: center;
-}
-
-.progress-text {
-  font-size: 16px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* 练习界面 */
-.practice-interface {
-  flex: 1;
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* 进度条 */
-.progress-bar {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 50px;
-  padding: 8px;
-  margin-bottom: 24px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.progress-fill {
-  height: 8px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  border-radius: 50px;
-  transition: width 0.5s ease;
-}
-
-.progress-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-/* 单词练习区域 */
-.word-practice-area {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 40px;
-  margin-bottom: 24px;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  min-height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.current-word {
-  width: 100%;
-}
-
-.word-display {
-  margin-bottom: 32px;
-}
-
-.word-text {
-  font-size: 48px;
-  font-weight: 700;
-  color: #333;
-  margin: 0 0 16px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.audio-controls {
-  margin-top: 16px;
-}
-
-.play-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 25px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.play-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-}
-
-.question {
-  font-size: 20px;
-  color: #333;
-  margin-bottom: 24px;
-  font-weight: 500;
-}
-
-.answer-buttons {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  margin-bottom: 24px;
-}
-
-.know-btn, .unknown-btn, .correct-btn, .incorrect-btn {
-  padding: 16px 32px;
-  border: none;
-  border-radius: 50px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 120px;
-}
-
-.know-btn, .correct-btn {
-  background: linear-gradient(135deg, #4CAF50, #45a049);
-  color: white;
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-}
-
-.unknown-btn, .incorrect-btn {
-  background: linear-gradient(135deg, #f44336, #d32f2f);
-  color: white;
-  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
-}
-
-.know-btn:hover, .correct-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
-}
-
-.unknown-btn:hover, .incorrect-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(244, 67, 54, 0.4);
-}
-
-.word-meaning, .word-info {
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 20px;
-}
-
-.next-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 25px;
-  font-size: 16px;
-  cursor: pointer;
-  margin-top: 16px;
-  transition: all 0.3s ease;
-}
-
-.next-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-}
-
-/* 练习统计 */
-.practice-stats {
-  display: flex;
-  justify-content: space-around;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-label {
-  display: block;
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
-}
-
-.stat-value.correct {
-  color: #4CAF50;
-}
-
-.stat-value.incorrect {
-  color: #f44336;
-}
-
-/* 练习完成界面 */
-.practice-completed {
-  flex: 1;
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-.completion-header {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 40px;
-  text-align: center;
-  margin-bottom: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.completion-header h2 {
-  font-size: 32px;
-  margin: 0 0 24px 0;
-  color: #333;
-}
-
-.completion-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.stat-card {
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-}
-
-.stat-number {
-  font-size: 32px;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 8px;
-}
-
-.stat-number.correct {
-  color: #4CAF50;
-}
-
-.stat-number.incorrect {
-  color: #f44336;
-}
-
-/* 详细报告 */
-.detailed-report {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.detailed-report h3 {
-  margin: 0 0 20px 0;
-  color: #333;
-  font-size: 20px;
-}
-
-.report-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.tab-btn {
-  padding: 12px 20px;
-  border: 2px solid #e1e5e9;
-  background: white;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.tab-btn.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border-color: transparent;
-}
-
-.word-list {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.word-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-radius: 8px;
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
-}
-
-.word-item.mastered {
-  background: rgba(76, 175, 80, 0.1);
-  border-left: 4px solid #4CAF50;
-}
-
-.word-item.review {
-  background: rgba(244, 67, 54, 0.1);
-  border-left: 4px solid #f44336;
-}
-
-.word-item .word {
-  font-weight: 600;
-  color: #333;
-}
-
-.word-item .meaning {
-  color: #666;
-  font-size: 14px;
-}
-
-/* 完成操作按钮 */
-.completion-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.action-btn {
-  padding: 14px 28px;
-  border: none;
-  border-radius: 25px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  min-width: 120px;
-}
-
-.action-btn.primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-}
-
-.action-btn.secondary {
-  background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
-}
-
-.action-btn:hover {
-  transform: translateY(-2px);
-}
-
-.action-btn.primary:hover {
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-}
-
-/* 设置弹窗 */
-.settings-modal {
+.goal-selector-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -1572,34 +1023,31 @@ export default {
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
-  backdrop-filter: blur(5px);
 }
 
 .modal-content {
   background: white;
-  border-radius: 16px;
-  max-width: 400px;
+  border-radius: 8px;
   width: 90%;
+  max-width: 500px;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e1e5e9;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.modal-header h3 {
+.modal-header h4 {
   margin: 0;
   color: #333;
-  font-size: 18px;
 }
 
 .close-btn {
@@ -1608,117 +1056,508 @@ export default {
   font-size: 24px;
   cursor: pointer;
   color: #666;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  color: #333;
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 20px;
 }
 
-.setting-group {
+.no-goals {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.goals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.goal-item {
+  padding: 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.goal-item:hover {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+.goal-item.active {
+  border-color: #007bff;
+  background: #e3f2fd;
+}
+
+.goal-content h5 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.goal-content p {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.goal-stats {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  color: #888;
+}
+
+.goal-stats span {
+  background: #f0f0f0;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+/* 主容器样式 */
+.word-selection {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.word-selection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* 容器内容 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* 页面标题 */
+.page-title {
+  text-align: center;
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: 1px;
+}
+
+/* 用户信息卡片 */
+.user-info {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.user-info:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.user-info h3 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.user-info p {
+  color: #666;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+/* 学习目标选择区域 */
+.goal-selection {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.goal-selection h3 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.setting-group label {
+.goal-selection h3::before {
+  content: '🎯';
+  font-size: 1.2rem;
+}
+
+/* 选择框样式 */
+.goal-select {
+  width: 100%;
+  padding: 1rem;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.goal-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.goal-select:hover {
+  border-color: #667eea;
+}
+
+/* 提示信息 */
+.goal-hint {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+  border-radius: 12px;
+  color: #2d3436;
+  font-size: 0.9rem;
+  border-left: 4px solid #fdcb6e;
+}
+
+/* 单词预览区域 */
+.word-preview {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.word-preview h3 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.word-preview h3::before {
+  content: '📚';
+  font-size: 1.2rem;
+}
+
+/* 单词网格 */
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.word-item {
+  background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 12px;
+  text-align: center;
   font-weight: 500;
-  min-width: 80px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
 }
 
-.setting-group input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: #667eea;
+.word-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .practice-config {
-    padding: 16px;
-  }
-  
-  .config-section {
-    padding: 20px;
-  }
-  
-  .mode-selector {
-    grid-template-columns: 1fr;
-  }
-  
-  .word-text {
-    font-size: 36px;
-  }
-  
-  .answer-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .completion-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .completion-actions {
-    flex-direction: column;
-  }
-  
-  .practice-stats {
-    flex-direction: column;
-    gap: 16px;
-  }
+.word-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(116, 185, 255, 0.3);
 }
 
-@media (max-width: 480px) {
-  .header {
-    padding: 12px 16px;
-  }
-  
-  .title {
-    font-size: 16px;
-  }
-  
-  .word-practice-area {
-    padding: 24px 16px;
-  }
-  
-  .word-text {
-    font-size: 28px;
-  }
-  
-  .completion-stats {
-    grid-template-columns: 1fr;
-  }
+.word-item:hover::before {
+  left: 100%;
 }
 
-/* 动画效果 */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* 开始学习按钮 */
+.start-learning {
+  text-align: center;
+  margin-top: 2rem;
 }
 
-.config-section, .practice-interface > *, .practice-completed > * {
-  animation: fadeInUp 0.6s ease-out;
+.start-btn {
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 184, 148, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.start-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 184, 148, 0.4);
+}
+
+.start-btn:hover::before {
+  left: 100%;
+}
+
+.start-btn:active {
+  transform: translateY(0);
+}
+
+.start-btn:disabled {
+  background: #ddd;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* 加载状态 */
 .loading {
-  opacity: 0.6;
-  pointer-events: none;
+  text-align: center;
+  padding: 3rem;
+  color: white;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 错误状态 */
+.error {
+  background: rgba(255, 107, 107, 0.9);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1rem 0;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.retry-btn {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+}
+
+.retry-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 空状态 */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+}
+
+.empty-state .icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .word-selection {
+    padding: 1rem;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .user-info,
+  .goal-selection,
+  .word-preview {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .word-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.8rem;
+  }
+  
+  .start-btn {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .word-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  
+  .word-item {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .user-info,
+  .goal-selection,
+  .word-preview {
+    background: rgba(30, 30, 30, 0.95);
+    color: #e0e0e0;
+  }
+  
+  .user-info h3,
+  .goal-selection h3,
+  .word-preview h3 {
+    color: #f0f0f0;
+  }
+  
+  .user-info p {
+    color: #b0b0b0;
+  }
+  
+  .goal-select {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+  
+  .goal-select:focus {
+    border-color: #667eea;
+  }
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .word-selection {
+    background: #000;
+  }
+  
+  .user-info,
+  .goal-selection,
+  .word-preview {
+    background: #fff;
+    border: 2px solid #000;
+  }
+  
+  .word-item {
+    background: #000;
+    color: #fff;
+    border: 2px solid #fff;
+  }
+}
+
+/* 焦点状态 */
+.goal-select:focus,
+.start-btn:focus,
+.retry-btn:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .word-item,
+  .start-btn,
+  .retry-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .word-item:hover,
+  .start-btn:hover,
+  .retry-btn:hover {
+    transform: none;
+  }
 }
 </style>
+

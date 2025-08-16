@@ -155,9 +155,11 @@ export default {
 
 <style scoped>
 .word-detail {
-  background: #f5f5f5;
   min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  position: relative;
+  overflow-x: hidden;
 }
 
 /* 状态栏样式 */
@@ -165,227 +167,376 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 16px;
-  background: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.1);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .status-icons {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
   align-items: center;
 }
 
-/* 内容区域 */
+/* 主要内容区域 */
 .content {
-  padding: 20px 16px;
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 /* 单词标题区域 */
 .word-header {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .word-title {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  margin-bottom: 1rem;
 }
 
 .word {
-  font-size: 32px;
+  font-size: 2.5rem;
   font-weight: 700;
-  color: #2c3e50;
+  color: #2d3748;
   margin: 0;
+  letter-spacing: -0.02em;
 }
 
 .favorite-btn {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 1.5rem;
   cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
   opacity: 0.6;
-  transition: opacity 0.3s;
+}
+
+.favorite-btn:hover {
+  background: rgba(255, 193, 7, 0.1);
+  transform: scale(1.1);
 }
 
 .favorite-btn.active {
   opacity: 1;
+  color: #ffc107;
 }
 
 .pronunciation {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .phonetic {
-  font-size: 18px;
-  color: #666;
-  font-family: 'Times New Roman', serif;
+  font-size: 1.25rem;
+  color: #4a5568;
+  font-family: 'Courier New', monospace;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.2);
 }
 
 .play-btn, .sentence-play-btn {
-  background: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
-  font-size: 20px;
+  color: white;
+  padding: 0.75rem;
+  border-radius: 50%;
   cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.3s;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .play-btn:hover, .sentence-play-btn:hover {
-  opacity: 1;
+  transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 .word-info {
-  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .part-of-speech {
-  color: #3498db;
+  background: rgba(34, 197, 94, 0.1);
+  color: #059669;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
   font-weight: 600;
-  margin-right: 12px;
+  font-size: 0.875rem;
+  border: 1px solid rgba(34, 197, 94, 0.2);
 }
 
 .chinese-meaning {
-  color: #2c3e50;
-  font-size: 16px;
+  font-size: 1.125rem;
+  color: #2d3748;
+  font-weight: 500;
 }
 
 .word-forms {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .form-label {
-  color: #7f8c8d;
-  font-size: 14px;
-}
-
-.form-value {
-  color: #2c3e50;
+  font-size: 0.875rem;
+  color: #6b7280;
   font-weight: 500;
 }
 
-/* 图文例句区域 */
-.example-section {
-  margin-bottom: 20px;
+.form-value {
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 600;
+  background: rgba(156, 163, 175, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 8px;
 }
 
+/* 区域标题样式 */
 .section-title {
-  font-size: 18px;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 12px;
+  color: white;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-title::before {
+  content: '📖';
+  font-size: 1rem;
+}
+
+/* 例句区域 */
+.example-section {
+  margin-bottom: 1.5rem;
 }
 
 .example-card {
-  background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .example-image {
-  width: 100%;
-  height: 200px;
+  margin-bottom: 1rem;
+  border-radius: 12px;
   overflow: hidden;
+  background: #f8fafc;
 }
 
-.example-image img {
+.sentence-image {
   width: 100%;
-  height: 100%;
+  height: 200px;
   object-fit: cover;
+  border-radius: 12px;
 }
 
 .example-content {
-  padding: 20px;
+  space-y: 1rem;
 }
 
 .example-sentence {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .english-sentence {
   flex: 1;
-  font-size: 16px;
-  line-height: 1.5;
-  color: #2c3e50;
+  font-size: 1.125rem;
+  color: #2d3748;
+  line-height: 1.6;
   margin: 0;
-  margin-right: 12px;
+  font-weight: 500;
 }
 
 .chinese-translation {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.4;
-  margin: 0;
-}
-
-/* 词根词缀和英文释义区域 */
-.etymology-section,
-.english-definition-section {
-  background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.etymology-content p,
-.definition-content p {
-  margin: 0;
-  font-size: 15px;
+  font-size: 1rem;
+  color: #6b7280;
   line-height: 1.5;
-  color: #2c3e50;
+  margin: 0;
+  font-style: italic;
+}
+
+/* 词根词缀区域 */
+.etymology-section {
+  margin-bottom: 1.5rem;
+}
+
+.etymology-section .section-title::before {
+  content: '🌱';
+}
+
+.etymology-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.etymology-content p {
+  font-size: 1rem;
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+  font-family: 'Courier New', monospace;
+  background: rgba(102, 126, 234, 0.05);
+  padding: 1rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+/* 英文释义区域 */
+.english-definition-section {
+  margin-bottom: 2rem;
+}
+
+.english-definition-section .section-title::before {
+  content: '📚';
+}
+
+.definition-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.definition-content p {
+  font-size: 1rem;
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+  font-style: italic;
 }
 
 /* 底部操作按钮 */
 .action-buttons {
-  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
 }
 
 .continue-btn {
-  width: 100%;
-  background: #3498db;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
+  padding: 1rem 2rem;
   border-radius: 25px;
-  padding: 16px;
-  font-size: 16px;
+  font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  min-width: 200px;
 }
 
 .continue-btn:hover {
-  background: #2980b9;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+}
+
+.continue-btn:active {
+  transform: translateY(0);
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .content {
-    padding: 16px 12px;
+    padding: 1rem;
   }
-  
-  .word {
-    font-size: 28px;
-  }
-  
+
   .word-header {
-    padding: 20px 16px;
+    padding: 1.5rem;
+  }
+
+  .word {
+    font-size: 2rem;
+  }
+
+  .word-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .word-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pronunciation {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .example-sentence {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .sentence-play-btn {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .word {
+    font-size: 1.75rem;
+  }
+
+  .phonetic {
+    font-size: 1rem;
+  }
+
+  .example-card,
+  .etymology-content,
+  .definition-content {
+    padding: 1rem;
+  }
+
+  .continue-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    min-width: 160px;
   }
 }
 </style>
+

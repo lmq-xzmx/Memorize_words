@@ -25,6 +25,12 @@ export default {
         this.resetElementByXPath('//*[@id="app"]/div[3]/div[2]/div[1]')
         this.resetElementByXPath('//*[@id="app"]/div[2]/div/div[2]/div[1]')
         
+        // 重置用户报告的按钮样式失效问题
+        this.resetElementByXPath('//*[@id="app"]/div[2]/div/div[3]')
+        
+        // 重置用户报告的样式表丢失问题
+        this.resetElementByXPath('//*[@id="app"]/div[3]/div/div[1]/div[1]')
+        
         // 重置可能的词汇阅读中心相关元素
         this.resetVocabularyReadingCenter()
         

@@ -1,12 +1,26 @@
 import axios from 'axios'
+import apiEnhancer from './apiInterceptorEnhancer.js'
 
 // 创建 axios 实例
 const api = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? '/api' : 'http://127.0.0.1:8001/api',
-  timeout: 10000,
+  baseURL: import.meta.env.MODE === 'production' ? '/api' : 'http://127.0.0.1:8000/api',
+  timeout: 15000, // 增加超时时间
   headers: {
     'Content-Type': 'application/json'
   }
+})
+
+// 应用性能增强
+apiEnhancer.enhance(api, {
+  enableCache: true,
+  enableBatch: false,
+  cacheableMethods: ['GET', 'HEAD'],
+  cachableEndpoints: [
+    '/api/words',
+    '/api/learning-goals',
+    '/api/user/profile',
+    '/api/analytics'
+  ]
 })
 
 // 请求拦截器
@@ -30,11 +44,30 @@ api.interceptors.response.use(
     return response.data
   },
   error => {
+    // 使用全局错误处理器处理API错误
+    if (window.globalErrorHandler) {
+      window.globalErrorHandler.handleAPIError(error, {
+        url: error.config?.url,
+        method: error.config?.method
+      })
+    }
+    
     if (error.response?.status === 401) {
       // 清除token并跳转到登录页
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      localStorage.removeItem('user')
+      
+      // 清除权限缓存
+      if (window.permissionWatcher) {
+        window.permissionWatcher.notifyChange(null)
+      }
+      
+      // 避免在登录页重复跳转
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
     }
+    
     return Promise.reject(error)
   }
 )
@@ -134,27 +167,27 @@ export const wordAPI = {
 export const learningAPI = {
   // 获取学习目标
   getLearningGoals(params = {}) {
-    return api.get('/teaching/learning-goals/', { params })
+    return api.get('/teaching/goals/', { params })
   },
   
   // 获取当前学习目标
   getCurrentLearningGoal() {
-    return api.get('/teaching/current-learning-goal/')
+    return api.get('/teaching/goals/current/')
   },
   
   // 创建学习目标
   createLearningGoal(data) {
-    return api.post('/teaching/learning-goals/', data)
+    return api.post('/teaching/goals/', data)
   },
   
   // 更新学习目标
   updateLearningGoal(id, data) {
-    return api.put(`/teaching/learning-goals/${id}/`, data)
+    return api.put(`/teaching/goals/${id}/`, data)
   },
   
   // 删除学习目标
   deleteLearningGoal(id) {
-    return api.delete(`/teaching/learning-goals/${id}/`)
+    return api.delete(`/teaching/goals/${id}/`)
   },
   
   // 获取练习单词
@@ -180,6 +213,32 @@ export const learningAPI = {
   // 获取学习进度
   getLearningProgress() {
     return api.get('/analytics/learning-progress/')
+  },
+
+  // 学习计划相关API
+  // 获取学习计划
+  getLearningPlans(params = {}) {
+    return api.get('/teaching/learning-plans/', { params })
+  },
+
+  // 创建学习计划
+  createLearningPlan(data) {
+    return api.post('/teaching/learning-plans/', data)
+  },
+
+  // 更新学习计划
+  updateLearningPlan(id, data) {
+    return api.put(`/teaching/learning-plans/${id}/`, data)
+  },
+
+  // 删除学习计划
+  deleteLearningPlan(id) {
+    return api.delete(`/teaching/learning-plans/${id}/`)
+  },
+
+  // 获取学习目标的关联学习计划
+  getGoalPlans(goalId) {
+    return api.get(`/teaching/learning-goals/${goalId}/plans/`)
   }
 }
 

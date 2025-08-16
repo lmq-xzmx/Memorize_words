@@ -100,9 +100,11 @@
 <script>
 import { mapState } from 'vuex'
 import api from '@/utils/api'
+import permissionMixin from '../mixins/permissionMixin.js'
 
 export default {
   name: 'Dashboard',
+  mixins: [permissionMixin],
   data() {
     return {
       stats: {
@@ -132,20 +134,37 @@ export default {
     }
   },
   async mounted() {
+    // 确保权限系统已初始化
+    await this.$nextTick()
+    
+    // 权限检查
+    if (!this.$hasPermission('view_dashboard')) {
+      this.$showError('您没有权限访问仪表板')
+      this.$router.push('/')
+      return
+    }
+
+    // 加载仪表板数据
     await this.loadDashboardData()
   },
   methods: {
     async loadDashboardData() {
       try {
-        const [statsRes, progressRes, activitiesRes] = await Promise.all([
-          api.getUserStats(),
-          api.getUserProgress(),
-          api.getRecentActivities()
-        ])
-        
-        this.stats = statsRes.data
-        this.progress = progressRes.data
-        this.recentActivities = activitiesRes.data
+        // 检查统计数据查看权限
+        if (this.$hasPermission('view_learning_stats')) {
+          const [statsRes, progressRes, activitiesRes] = await Promise.all([
+            api.getUserStats(),
+            api.getUserProgress(),
+            api.getRecentActivities()
+          ])
+          
+          this.stats = statsRes.data
+          this.progress = progressRes.data
+          this.recentActivities = activitiesRes.data
+        } else {
+          // 如果没有统计权限，使用默认数据
+          this.loadMockData()
+        }
       } catch (error) {
         console.error('加载仪表板数据失败:', error)
         // 使用模拟数据
@@ -192,198 +211,509 @@ export default {
 </script>
 
 <style scoped>
+/* 仪表板主容器 */
 .dashboard {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  position: relative;
+  overflow-x: hidden;
 }
 
+.dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* 欢迎区域 */
 .welcome-section {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 1;
 }
 
 .welcome-title {
   font-size: 2.5rem;
-  color: #2c3e50;
-  margin-bottom: 10px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: slideInDown 0.8s ease-out;
 }
 
 .welcome-subtitle {
   font-size: 1.2rem;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  animation: slideInUp 0.8s ease-out 0.2s both;
 }
 
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 统计卡片网格 */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 1;
 }
 
 .stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
   display: flex;
   align-items: center;
-  transition: transform 0.2s;
+  gap: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease-out;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 .stat-icon {
-  font-size: 2.5rem;
-  margin-right: 16px;
+  font-size: 3rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .stat-content h3 {
   font-size: 2rem;
-  color: #2c3e50;
-  margin: 0 0 4px 0;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 0.5rem 0;
 }
 
 .stat-content p {
-  color: #7f8c8d;
+  font-size: 1rem;
+  color: #666;
   margin: 0;
+  font-weight: 500;
 }
 
-.quick-actions, .progress-section, .recent-section {
-  margin-bottom: 40px;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.quick-actions h2, .progress-section h2, .recent-section h2 {
-  color: #2c3e50;
-  margin-bottom: 20px;
+/* 快速操作区域 */
+.quick-actions {
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 1;
+}
+
+.quick-actions h2 {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
 }
 
 .action-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
   text-decoration: none;
   color: inherit;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  transition: all 0.2s;
+  display: block;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
 .action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.action-card:hover::before {
+  left: 100%;
 }
 
 .action-icon {
   font-size: 3rem;
-  margin-bottom: 12px;
+  margin-bottom: 1rem;
+  display: block;
 }
 
 .action-card h3 {
-  color: #2c3e50;
-  margin: 0 0 8px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 0.5rem 0;
 }
 
 .action-card p {
-  color: #7f8c8d;
+  color: #666;
   margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* 学习进度区域 */
+.progress-section {
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 1;
+}
+
+.progress-section h2 {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .progress-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.progress-header {
+.progress-info {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.progress-info h3 {
+  color: #333;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: #2c3e50;
+  margin: 0;
+}
+
+.progress-text {
+  color: #666;
+  font-size: 0.95rem;
 }
 
 .progress-bar {
-  height: 8px;
-  background: #ecf0f1;
-  border-radius: 4px;
+  width: 100%;
+  height: 12px;
+  background: #e1e5e9;
+  border-radius: 6px;
   overflow: hidden;
-  margin-bottom: 12px;
+  position: relative;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #3498db, #2ecc71);
-  transition: width 0.3s ease;
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+  border-radius: 6px;
+  transition: width 1s ease-out;
+  position: relative;
 }
 
-.progress-text {
-  color: #7f8c8d;
-  margin: 0;
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
 }
 
-.recent-list {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
-.recent-item {
+/* 最近活动区域 */
+.recent-activities {
+  position: relative;
+  z-index: 1;
+}
+
+.recent-activities h2 {
+  color: white;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-item {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
+  padding: 1.5rem;
   display: flex;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #ecf0f1;
+  gap: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
 }
 
-.recent-item:last-child {
-  border-bottom: none;
+.activity-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-.recent-icon {
+.activity-icon {
   font-size: 2rem;
-  margin-right: 16px;
+  flex-shrink: 0;
 }
 
-.recent-content h4 {
-  color: #2c3e50;
-  margin: 0 0 4px 0;
+.activity-content {
+  flex: 1;
 }
 
-.recent-content p {
-  color: #7f8c8d;
-  margin: 0 0 4px 0;
+.activity-content h4 {
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.3rem 0;
 }
 
-.recent-time {
-  color: #bdc3c7;
+.activity-content p {
+  color: #666;
   font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.4;
 }
 
+.activity-time {
+  color: #999;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
   .dashboard {
-    padding: 15px;
+    padding: 1rem;
   }
   
   .welcome-title {
     font-size: 2rem;
   }
   
+  .welcome-subtitle {
+    font-size: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  
+  .stat-card {
+    padding: 1.5rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .stat-icon {
+    font-size: 2.5rem;
+  }
+  
+  .action-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .action-card {
+    padding: 1.5rem;
+  }
+  
+  .activity-item {
+    padding: 1rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
   
-  .action-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .stat-card {
+    padding: 1rem;
+  }
+  
+  .stat-content h3 {
+    font-size: 1.5rem;
+  }
+  
+  .action-card {
+    padding: 1rem;
+  }
+  
+  .action-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .stat-card,
+  .action-card,
+  .progress-card,
+  .activity-item {
+    background: rgba(30, 30, 30, 0.95);
+    color: #e0e0e0;
+  }
+  
+  .stat-content h3,
+  .action-card h3,
+  .progress-info h3,
+  .activity-content h4 {
+    color: #f0f0f0;
+  }
+  
+  .stat-content p,
+  .action-card p,
+  .progress-text,
+  .activity-content p {
+    color: #b0b0b0;
+  }
+  
+  .activity-time {
+    color: #888;
+  }
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 高对比度模式 */
+@media (prefers-contrast: high) {
+  .dashboard {
+    background: #000;
+  }
+  
+  .stat-card,
+  .action-card,
+  .progress-card,
+  .activity-item {
+    background: #fff;
+    border: 2px solid #000;
+  }
+  
+  .welcome-title,
+  .quick-actions h2,
+  .progress-section h2,
+  .recent-activities h2 {
+    color: #fff;
+    text-shadow: 2px 2px 4px #000;
+  }
+}
+
+/* 焦点状态 */
+.action-card:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .stat-card,
+  .action-card,
+  .activity-item {
+    min-height: 44px;
+  }
+  
+  .stat-card:hover,
+  .action-card:hover,
+  .activity-item:hover {
+    transform: none;
   }
 }
 </style>
+

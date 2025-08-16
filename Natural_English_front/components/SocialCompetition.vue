@@ -104,13 +104,22 @@ export default {
   height: 100vh;
   pointer-events: none;
   z-index: 9999;
+  overflow: hidden;
 }
 
 .particle {
   position: absolute;
-  font-size: 20px;
-  animation: particleFloat 2s ease-out forwards;
-  opacity: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: particleFloat linear forwards;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes particleFloat {
@@ -120,54 +129,197 @@ export default {
   }
   50% {
     opacity: 1;
-    transform: translateY(-100px) scale(1) rotate(180deg);
+    transform: translateY(-50px) scale(1) rotate(180deg);
   }
   100% {
     opacity: 0;
-    transform: translateY(-200px) scale(0.5) rotate(360deg);
+    transform: translateY(-100px) scale(0.3) rotate(360deg);
   }
 }
 
-/* 不同类型的特殊动画 */
+/* 成功效果 */
+.particle-container[data-type="success"] .particle {
+  animation: successParticle linear forwards;
+}
+
+@keyframes successParticle {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+    filter: brightness(1);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.2);
+    filter: brightness(1.5);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-40px) scale(1);
+    filter: brightness(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.5);
+    filter: brightness(0.8);
+  }
+}
+
+/* 连击效果 */
 .particle-container[data-type="combo"] .particle {
-  animation: comboParticle 1.5s ease-out forwards;
+  animation: comboParticle linear forwards;
 }
 
 @keyframes comboParticle {
   0% {
     opacity: 1;
-    transform: scale(0) rotate(0deg);
+    transform: translateY(0) scale(0.5) rotate(0deg);
+    filter: hue-rotate(0deg);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1.3) rotate(90deg);
+    filter: hue-rotate(45deg);
   }
   50% {
     opacity: 1;
-    transform: scale(1.5) rotate(180deg);
+    transform: translateY(-30px) scale(1.1) rotate(180deg);
+    filter: hue-rotate(90deg);
+  }
+  75% {
+    opacity: 0.8;
+    transform: translateY(-45px) scale(0.9) rotate(270deg);
+    filter: hue-rotate(135deg);
   }
   100% {
     opacity: 0;
-    transform: scale(0.5) rotate(360deg);
+    transform: translateY(-60px) scale(0.3) rotate(360deg);
+    filter: hue-rotate(180deg);
   }
 }
 
+/* 升级效果 */
 .particle-container[data-type="levelup"] .particle {
-  animation: levelupParticle 2.5s ease-out forwards;
+  animation: levelupParticle linear forwards;
 }
 
 @keyframes levelupParticle {
   0% {
     opacity: 1;
-    transform: translateY(100px) scale(0) rotate(0deg);
+    transform: translateY(0) scale(0.3);
+    box-shadow: 0 0 5px currentColor;
   }
-  30% {
+  20% {
     opacity: 1;
-    transform: translateY(0) scale(1.2) rotate(120deg);
+    transform: translateY(-10px) scale(1.5);
+    box-shadow: 0 0 15px currentColor;
   }
-  70% {
+  40% {
     opacity: 1;
-    transform: translateY(-50px) scale(1) rotate(240deg);
+    transform: translateY(-25px) scale(1.2);
+    box-shadow: 0 0 20px currentColor;
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-40px) scale(1);
+    box-shadow: 0 0 15px currentColor;
+  }
+  80% {
+    opacity: 0.7;
+    transform: translateY(-55px) scale(0.8);
+    box-shadow: 0 0 10px currentColor;
   }
   100% {
     opacity: 0;
-    transform: translateY(-150px) scale(0.3) rotate(360deg);
+    transform: translateY(-70px) scale(0.4);
+    box-shadow: 0 0 5px currentColor;
+  }
+}
+
+/* 成就效果 */
+.particle-container[data-type="achievement"] .particle {
+  animation: achievementParticle linear forwards;
+}
+
+@keyframes achievementParticle {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.6) rotate(0deg);
+    box-shadow: 0 0 10px gold;
+    filter: brightness(1);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.4) rotate(45deg);
+    box-shadow: 0 0 20px gold;
+    filter: brightness(1.5);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1.2) rotate(90deg);
+    box-shadow: 0 0 25px gold;
+    filter: brightness(1.3);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1) rotate(180deg);
+    box-shadow: 0 0 20px gold;
+    filter: brightness(1.2);
+  }
+  70% {
+    opacity: 0.8;
+    transform: translateY(-45px) scale(0.8) rotate(270deg);
+    box-shadow: 0 0 15px gold;
+    filter: brightness(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.4) rotate(360deg);
+    box-shadow: 0 0 5px gold;
+    filter: brightness(0.8);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .particle {
+    font-size: 1.2rem;
+    width: 25px;
+    height: 25px;
+  }
+}
+
+@media (max-width: 480px) {
+  .particle {
+    font-size: 1rem;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+/* 性能优化 */
+.particle {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* 减少动画在低性能设备上的影响 */
+@media (prefers-reduced-motion: reduce) {
+  .particle {
+    animation-duration: 0.5s !important;
+  }
+  
+  @keyframes particleFloat {
+    0% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.8);
+    }
   }
 }
 </style>
+

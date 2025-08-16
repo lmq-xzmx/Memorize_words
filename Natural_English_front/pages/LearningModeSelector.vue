@@ -1,5 +1,15 @@
 <template>
   <div class="learning-mode-selector">
+    <!-- 几何背景装饰层 -->
+    <div class="geometric-background">
+      <div class="geometric-shape shape-1"></div>
+      <div class="geometric-shape shape-2"></div>
+      <div class="geometric-shape shape-3"></div>
+      <div class="geometric-shape shape-4"></div>
+      <div class="geometric-shape shape-5"></div>
+      <div class="geometric-shape shape-6"></div>
+    </div>
+    
     <div class="header">
       <h1>英语学习中心</h1>
       <p class="subtitle">选择您的学习模式</p>
@@ -497,6 +507,396 @@
   </div>
 </template>
 
+<style scoped>
+.learning-mode-selector {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* 几何背景装饰 */
+.geometric-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.geometric-shape {
+  position: absolute;
+  opacity: 0.1;
+  animation: float 6s ease-in-out infinite;
+}
+
+.shape-1 {
+  top: 10%;
+  left: 10%;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(45deg, #fff, transparent);
+  border-radius: 50%;
+  animation-delay: 0s;
+}
+
+.shape-2 {
+  top: 20%;
+  right: 15%;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(45deg, #fff, transparent);
+  transform: rotate(45deg);
+  animation-delay: 1s;
+}
+
+.shape-3 {
+  bottom: 30%;
+  left: 20%;
+  width: 100px;
+  height: 100px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation-delay: 2s;
+}
+
+.shape-4 {
+  bottom: 20%;
+  right: 10%;
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(45deg, #fff, transparent);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  animation-delay: 3s;
+}
+
+.shape-5 {
+  top: 50%;
+  left: 5%;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(45deg, #fff, transparent);
+  transform: rotate(45deg);
+  animation-delay: 4s;
+}
+
+.shape-6 {
+  top: 70%;
+  right: 25%;
+  width: 90px;
+  height: 90px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transform: rotate(30deg);
+  animation-delay: 5s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}
+
+/* 主要内容区域 */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 2;
+}
+
+.header h1 {
+  color: white;
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.category-section {
+  margin-bottom: 3rem;
+  position: relative;
+  z-index: 2;
+}
+
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.category-title {
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.modes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.mode-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.mode-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+.mode-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+  text-align: center;
+}
+
+.mode-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.mode-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.mode-description {
+  color: #666;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.mode-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.feature-tag {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.mode-stats {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #888;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.stat-value {
+  color: #333;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.homepage-selector {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.homepage-selector input[type="radio"] {
+  margin: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.homepage-selector label {
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mode-button {
+  width: 100%;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mode-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.homepage-tip {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  z-index: 2;
+}
+
+.tip-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tip-icon {
+  font-size: 1.5rem;
+}
+
+.clear-btn {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+  border: 1px solid #ff3b30;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-btn:hover {
+  background: #ff3b30;
+  color: white;
+}
+
+.tip-text {
+  color: #555;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.tip-button {
+  padding: 10px 20px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 1px solid #667eea;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tip-button:hover {
+  background: #667eea;
+  color: white;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .learning-mode-selector {
+    padding: 16px;
+  }
+  
+  .category-title {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .modes-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .mode-card {
+    padding: 1.5rem;
+  }
+  
+  .mode-icon {
+    font-size: 2.5rem;
+  }
+  
+  .mode-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .category-title {
+    font-size: 1.75rem;
+  }
+  
+  .mode-card {
+    padding: 1.25rem;
+  }
+  
+  .mode-icon {
+    font-size: 2rem;
+  }
+}
+</style>
+
 <script>
 import { UserSettingsManager } from '../utils/userSettings.js'
 import userPersonalizationMixin, { predefinedElementConfigs } from '../mixins/userPersonalization.js'
@@ -549,16 +949,19 @@ export default {
      */
     canUseMode(mode) {
       const permission = this.modePermissions[mode]
-      return permission ? this.$hasPermission(permission) : false
+      if (!permission) {
+        console.warn(`未定义模式 ${mode} 的权限要求`)
+        return false
+      }
+      return this.$hasPermission(permission)
     },
     
     /**
      * 导航到指定模式（带权限检查）
      */
     navigateToMode(mode) {
-      // 权限检查
       if (!this.canUseMode(mode)) {
-        this.$showError(`您没有权限使用${homepageManager.getModeName(mode)}功能`)
+        this.$showError(`您没有权限使用${this.getModeName(mode)}功能`)
         return
       }
       
@@ -612,9 +1015,8 @@ export default {
     },
     
     setHomepage(mode) {
-      // 检查权限
       if (!this.canUseMode(mode)) {
-        this.$showError(`您没有权限将${homepageManager.getModeName(mode)}设置为首页`)
+        this.$showError(`您没有权限将${this.getModeName(mode)}设置为首页`)
         return
       }
       
@@ -622,9 +1024,14 @@ export default {
       if (success) {
         this.selectedHomepage = mode
         
-        // 显示设置成功提示
+        // 显示设置成功提示并跳转
         this.$nextTick(() => {
-          this.$showSuccess(`已将"${homepageManager.getModeName(mode)}"设置为首页`)
+          this.$showSuccess(`已将"${homepageManager.getModeName(mode)}"设置为首页，正在跳转...`)
+          
+          // 延迟跳转，让用户看到成功提示
+          setTimeout(() => {
+            this.navigateToMode(mode)
+          }, 1000)
         })
       } else {
         this.$showError('设置首页失败，请重试')
@@ -691,225 +1098,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.learning-mode-selector {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
-  padding-bottom: 120px; /* 增加底部内边距，确保内容不被遮挡 */
-}
-
-.category-section {
-  margin-bottom: 40px;
-}
-
-.category-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  text-align: center;
-  background: linear-gradient(45deg, #fff, #f0f8ff, #fff);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 3s ease-in-out infinite;
-  text-shadow: 2px 2px 8px rgba(0,0,0,0.4);
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.header {
-  text-align: center;
-  color: white;
-  margin-bottom: 30px;
-}
-
-.header h1 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
-  font-weight: 700;
-}
-
-.subtitle {
-  font-size: 1.1rem;
-  opacity: 0.9;
-}
-
-.mode-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.mode-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-}
-
-.mode-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-}
-
-.mode-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.mode-icon {
-  font-size: 2.5rem;
-  margin-right: 12px;
-}
-
-.mode-title {
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: #333;
-  flex: 1;
-}
-
-.homepage-selector {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.homepage-selector input[type="radio"] {
-  margin: 0;
-}
-
-.mode-description p {
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 12px;
-}
-
-.mode-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.feature-tag {
-  background: #f0f4ff;
-  color: #4f46e5;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.mode-stats {
-  border-top: 1px solid #eee;
-  padding-top: 16px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.stat-label {
-  color: #888;
-  font-size: 0.9rem;
-}
-
-.stat-value {
-  color: #333;
-  font-weight: 600;
-}
-
-.homepage-tip {
-  position: fixed;
-  bottom: 80px; /* 调整为80px，确保不被底部菜单栏遮挡 */
-  left: 50%;
-  transform: translateX(-50%);
-  background: white;
-  padding: 12px 20px;
-  border-radius: 25px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-}
-
-.tip-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.tip-icon {
-  font-size: 1.2rem;
-}
-
-.tip-text {
-  color: #333;
-  font-weight: 500;
-}
-
-.clear-btn {
-  background: #ff4757;
-  color: white;
-  border: none;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.clear-btn:hover {
-  background: #ff3742;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .mode-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .header h1 {
-    font-size: 2rem;
-  }
-  
-  .mode-card {
-    padding: 20px;
-  }
-  
-  .mode-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .homepage-selector {
-    align-self: flex-end;
-  }
-}
-</style>

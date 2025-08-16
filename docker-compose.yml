@@ -25,7 +25,7 @@ services:
     #   dockerfile: Dockerfile
     image: natural-english-backend:latest
     ports:
-      - "8080:8080"
+      - "8000:8000"
     depends_on:
       - database
       - redis

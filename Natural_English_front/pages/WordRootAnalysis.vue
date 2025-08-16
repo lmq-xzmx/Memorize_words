@@ -154,247 +154,282 @@ export default {
 <style scoped>
 .word-root-analysis {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* 状态栏样式 */
 .status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 20px;
-  background: #000;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   color: white;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .status-icons {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
 }
 
-/* 导航栏样式 */
 .nav-bar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   padding: 15px 20px;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
 }
 
 .back-btn {
-  padding: 5px;
   cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
 .arrow {
-  font-size: 18px;
-  color: #333;
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .nav-info {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  gap: 20px;
 }
 
 .nav-text {
   font-size: 12px;
-  color: #666;
+  opacity: 0.8;
 }
 
 .nav-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
+  text-align: right;
 }
 
 .nav-word {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
 }
 
 .nav-details {
   font-size: 12px;
-  color: #666;
+  opacity: 0.8;
 }
 
-/* 词根分解显示区域 */
 .word-root-display {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background: white;
+  padding: 30px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  margin: 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .word-breakdown {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 15px;
   margin-bottom: 20px;
 }
 
 .root-part {
-  font-size: 48px;
-  font-weight: 300;
-  letter-spacing: 1px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  padding: 15px 25px;
+  border-radius: 15px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #667eea;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.root-part:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .root-prefix {
-  color: #4A90E2;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  color: white;
 }
 
 .root-suffix {
-  color: #4A90E2;
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #667eea;
 }
 
 .root-separator {
-  font-size: 36px;
-  color: #999;
-  margin: 0 5px;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .root-explanation {
-  text-align: center;
-  color: #666;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: white;
   font-size: 14px;
-  line-height: 1.5;
 }
 
 .prefix-meaning,
-.suffix-meaning,
-.word-formation {
-  display: block;
-  margin-bottom: 4px;
+.suffix-meaning {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8px 15px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
 }
 
 .word-formation {
-  color: #333;
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.9);
+  color: #667eea;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: 600;
 }
 
-/* 图片卡片区域 */
 .cards-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  flex: 1;
   padding: 20px;
-  background: #f5f5f5;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  overflow-y: auto;
 }
 
 .word-card {
-  background: white;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .word-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
 }
 
 .card-image {
-  height: 100px;
-  background: #e8f4f8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 120px;
   overflow: hidden;
+  position: relative;
 }
 
 .card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+.word-card:hover .card-image img {
+  transform: scale(1.05);
 }
 
 .card-content {
-  padding: 12px;
+  padding: 15px;
 }
 
 .card-type {
   font-size: 12px;
-  color: #666;
-  margin-bottom: 4px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 5px;
+  text-transform: uppercase;
 }
 
 .card-meaning {
   font-size: 14px;
-  color: #333;
-  font-weight: 500;
-  margin-bottom: 4px;
-  line-height: 1.3;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 5px;
+  line-height: 1.4;
 }
 
 .card-example {
   font-size: 12px;
-  color: #999;
+  color: #718096;
+  line-height: 1.3;
 }
 
-/* 底部控制栏 */
 .bottom-controls {
   display: flex;
   justify-content: center;
   gap: 40px;
-  padding: 20px;
-  background: white;
-  border-top: 1px solid #eee;
+  padding: 25px 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .control-btn {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-  background: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.control-btn:hover {
-  background: #e0e0e0;
-  transform: scale(1.05);
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
 }
 
 .slash-btn {
-  background: #ff6b6b;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
   color: white;
 }
 
 .slash-btn:hover {
-  background: #ff5252;
+  transform: scale(1.1);
+  box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
 }
 
 .light-btn {
-  background: #ffd93d;
+  background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+  color: white;
 }
 
 .light-btn:hover {
-  background: #ffcd02;
+  transform: scale(1.1);
+  box-shadow: 0 10px 25px rgba(254, 202, 87, 0.3);
 }
 
 .detail-btn {
-  background: #4ecdc4;
+  background: linear-gradient(135deg, #48dbfb 0%, #0abde3 100%);
   color: white;
 }
 
 .detail-btn:hover {
-  background: #26a69a;
+  transform: scale(1.1);
+  box-shadow: 0 10px 25px rgba(72, 219, 251, 0.3);
 }
 
 .control-text {
@@ -403,30 +438,65 @@ export default {
 }
 
 .control-icon {
-  font-size: 24px;
+  font-size: 20px;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .root-part {
-    font-size: 36px;
+  .cards-container {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
   
-  .root-separator {
-    font-size: 28px;
+  .word-breakdown {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .root-explanation {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .nav-info {
+    gap: 10px;
+  }
+  
+  .bottom-controls {
+    gap: 25px;
+  }
+  
+  .control-btn {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .word-root-display {
+    margin: 10px;
+    padding: 20px 15px;
+  }
+  
+  .root-part {
+    padding: 10px 15px;
+    font-size: 16px;
   }
   
   .cards-container {
     padding: 15px;
-    gap: 8px;
   }
   
-  .card-content {
-    padding: 10px;
+  .card-image {
+    height: 100px;
   }
   
-  .bottom-controls {
-    gap: 30px;
+  .nav-bar {
+    padding: 10px 15px;
+  }
+  
+  .nav-right {
+    font-size: 12px;
   }
 }
 </style>
+

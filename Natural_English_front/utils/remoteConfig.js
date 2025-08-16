@@ -1,4 +1,6 @@
 // 远程配置管理
+import { getBackendHost } from '../config/apiConfig.js'
+
 class RemoteConfig {
   constructor() {
     this.cache = new Map()
@@ -37,7 +39,7 @@ class RemoteConfig {
     
     // 返回默认配置
     return {
-      apiBaseUrl: 'http://127.0.0.1:8001',
+      apiBaseUrl: getBackendHost(),
       features: {
         darkMode: true,
         notifications: true,

@@ -13,7 +13,8 @@ urlpatterns = [
     path('api/words/', include('apps.words.urls')),
     path('api/teaching/', include('apps.teaching.urls')),
     path('api/vocabulary/', include('apps.vocabulary_manager.urls')),
-    path('permissions/', include('apps.permissions.urls')),  # 添加permissions应用URL
+    path('api/permissions/', include(('apps.permissions.urls', 'permissions'), namespace='api_permissions')),  # 添加permissions应用API路由
+    path('permissions/', include(('apps.permissions.urls', 'permissions'), namespace='permissions_web')),  # 添加permissions应用URL
     # path('', include('gamification.urls')),  # 临时禁用
     path('dev_login.html', dev_login_view, name='dev_login'),
     path('', RedirectView.as_view(url='/admin/', permanent=False)),

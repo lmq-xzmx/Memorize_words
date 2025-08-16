@@ -30,7 +30,7 @@ class LearningPlanInline(admin.TabularInline):
             from django.http import HttpRequest
             from django.contrib.auth.models import AnonymousUser
             request = HttpRequest()
-            # 使用setattr避免类型检查错误
+            # 使用setattr避免类型检查器警告
             setattr(request, 'user', AnonymousUser())
         
         formset = super().get_formset(request, obj, **kwargs)
@@ -337,14 +337,11 @@ class LearningPlanAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, change, **kwargs)
         
         # 为计划类型字段添加onchange事件
-        try:
-            base_fields = getattr(form, 'base_fields', {})
-            if 'plan_type' in base_fields:
-                base_fields['plan_type'].widget.attrs.update({
-                    'onchange': 'updatePlanSettings(this.value);'
-                })
-        except (AttributeError, TypeError):
-            pass
+        base_fields = getattr(form, 'base_fields', {})
+        if 'plan_type' in base_fields:
+            base_fields['plan_type'].widget.attrs.update({
+                'onchange': 'updatePlanSettings(this.value);'
+            })
         
         return form
     
@@ -433,7 +430,7 @@ class GuidedPracticeSessionAdmin(admin.ModelAdmin):
     list_filter = ['session_type', 'is_completed', 'start_time']
     search_fields = ['user__username', 'goal__name']
     date_hierarchy = 'start_time'
-    readonly_fields = ['start_time', 'end_time']
+    readonly_fields = ['start_time']
     ordering = ['-start_time']
     list_per_page = 50
     
@@ -443,10 +440,6 @@ class GuidedPracticeSessionAdmin(admin.ModelAdmin):
         }),
         ('会话数据', {
             'fields': ('start_time', 'end_time', 'total_questions', 'correct_answers', 'is_completed')
-        }),
-        ('时间戳', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
         })
     )
     
@@ -471,7 +464,7 @@ class GuidedPracticeSessionAdmin(admin.ModelAdmin):
 class GuidedPracticeQuestionAdmin(admin.ModelAdmin):
     """引导练习题目管理"""
     list_display = [
-        'session', 'question_type', 'question_content_short', 'correct_answer',
+        'session', 'question_type', 'question_text_short', 'correct_answer',
         'order', 'created_at'
     ]
     list_filter = ['question_type', 'created_at']
@@ -494,7 +487,7 @@ class GuidedPracticeQuestionAdmin(admin.ModelAdmin):
     )
     
     @admin.display(description='题目内容')
-    def question_content_short(self, obj):
+    def question_text_short(self, obj):
         """显示题目内容简短版"""
         content = obj.question_text
         if len(content) > 50:

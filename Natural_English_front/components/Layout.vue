@@ -1,15 +1,46 @@
 <template>
   <div class="layout">
     <!-- 顶部导航栏 -->
-    <TopNavBar />
+    <TopNavBar>
+      <!-- 将菜单移动到顶部导航栏右侧 -->
+      <template #right-menu v-if="showTopMenu">
+        <div class="top-menu-container">
+          <div class="menu-toggle" @click="toggleMenu">
+            <span class="menu-icon">☰</span>
+            <span class="menu-text">工具</span>
+          </div>
+          
+          <!-- 下拉菜单 -->
+          <transition name="dropdown">
+            <div v-if="showDropdownMenu" class="dropdown-menu" @click.stop>
+              <div 
+                v-for="menu in accessibleMenus" 
+                :key="menu.id"
+                class="dropdown-item"
+                :class="{ active: isActiveMenu(menu.path) }"
+                @click="navigateToMenu(menu)"
+              >
+                <span class="item-icon">{{ menu.icon }}</span>
+                <span class="item-title">{{ menu.title }}</span>
+                <span v-if="menu.badge" class="item-badge">{{ menu.badge }}</span>
+              </div>
+            </div>
+          </transition>
+        </div>
+      </template>
+    </TopNavBar>
     
-    <!-- 侧边栏（桌面端） -->
+    <!-- 侧边栏（桌面端，使用优化版动态菜单） -->
     <aside class="sidebar" v-if="showSidebar">
-      <DynamicMenu />
+      <OptimizedDynamicMenu 
+        :show-dev-tools="isDeveloper || isAdmin"
+        @menu-click="handleMenuClick"
+        @collapse-change="handleSidebarCollapse"
+      />
     </aside>
     
     <!-- 主要内容区域 -->
-    <main class="main-content" :class="{ 'with-sidebar': showSidebar }">
+    <main class="main-content">
       <!-- 权限检查提示 -->
       <div v-if="!isUserAuthenticated && $route.meta.requiresAuth" class="auth-required">
         <div class="auth-message">
@@ -36,26 +67,31 @@
     </main>
     
     <!-- 底部导航栏（移动端） -->
-    <BottomNavigation v-if="showBottomNav" />
+    <BottomNavBar v-if="showBottomNav" />
   </div>
 </template>
 
 <script>
 import TopNavBar from './TopNavBar.vue'
-import BottomNavigation from './BottomNavigation.vue'
+import BottomNavBar from './navigation/BottomNavBar.vue'
 import DynamicMenu from './DynamicMenu.vue'
+import OptimizedDynamicMenu from './OptimizedDynamicMenu.vue'
+import permissionMixin from '../mixins/permissionMixin.js'
 
 export default {
   name: 'Layout',
+  mixins: [permissionMixin],
   components: {
     TopNavBar,
-    BottomNavigation,
-    DynamicMenu
+    BottomNavBar,
+    DynamicMenu,
+    OptimizedDynamicMenu
   },
   
   data() {
     return {
-      windowWidth: window.innerWidth
+      windowWidth: window.innerWidth,
+      showDropdownMenu: false
     }
   },
   
@@ -65,6 +101,13 @@ export default {
      */
     showSidebar() {
       return this.windowWidth >= 768 && this.isUserAuthenticated
+    },
+    
+    /**
+     * 是否显示顶部菜单
+     */
+    showTopMenu() {
+      return this.isUserAuthenticated
     },
     
     /**
@@ -87,6 +130,20 @@ export default {
       }
       
       return this.$canAccessPage(this.$route.path)
+    },
+    
+    /**
+     * 是否为开发者
+     */
+    isDeveloper() {
+      return this.$hasRole('developer')
+    },
+    
+    /**
+     * 是否为管理员
+     */
+    isAdmin() {
+      return this.$hasRole('admin')
     }
   },
   
@@ -99,6 +156,42 @@ export default {
     },
     
     /**
+     * 切换菜单显示状态
+     */
+    toggleMenu() {
+      this.showDropdownMenu = !this.showDropdownMenu
+    },
+    
+    /**
+     * 检查菜单是否为当前激活状态
+     */
+    isActiveMenu(path) {
+      return this.$route.path === path || this.$route.path.startsWith(path + '/')
+    },
+    
+    /**
+     * 导航到菜单页面
+     */
+    navigateToMenu(menu) {
+      if (this.$canAccessPage(menu.path)) {
+        this.$router.push(menu.path)
+        this.showDropdownMenu = false // 关闭菜单
+      } else {
+        this.$showError(`您没有权限访问 ${menu.title}`)
+      }
+    },
+    
+    /**
+     * 处理点击外部关闭菜单
+     */
+    handleClickOutside(event) {
+      const menuContainer = event.target.closest('.top-menu-container')
+      if (!menuContainer && this.showDropdownMenu) {
+        this.showDropdownMenu = false
+      }
+    },
+    
+    /**
      * 处理权限变更
      */
     $onPermissionChange(user) {
@@ -106,17 +199,38 @@ export default {
       if (this.$route.meta.requiresAuth && (!user || !this.$canAccessPage(this.$route.path))) {
         this.$router.push(user ? '/dashboard' : '/login')
       }
+    },
+    
+    /**
+     * 处理侧边栏菜单点击
+     * @param {Object} menu - 菜单项
+     */
+    handleMenuClick(menu) {
+      console.log('侧边栏菜单点击:', menu)
+    },
+    
+    /**
+     * 处理侧边栏折叠状态变化
+     * @param {boolean} collapsed - 是否折叠
+     */
+    handleSidebarCollapse(collapsed) {
+      console.log('侧边栏折叠状态:', collapsed)
+      // 可以在这里保存用户偏好设置
     }
   },
   
   mounted() {
     // 监听窗口大小变化
     window.addEventListener('resize', this.handleResize)
+    
+    // 监听点击外部关闭菜单
+    document.addEventListener('click', this.handleClickOutside)
   },
   
   beforeUnmount() {
     // 清理事件监听
     window.removeEventListener('resize', this.handleResize)
+    document.removeEventListener('click', this.handleClickOutside)
   }
 }
 </script>
@@ -124,180 +238,403 @@ export default {
 <style scoped>
 .layout {
   min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  position: relative;
   display: flex;
   flex-direction: column;
 }
 
+/* 侧边栏样式 */
 .sidebar {
   position: fixed;
+  top: 0;
   left: 0;
-  top: 60px;
-  width: 250px;
-  height: calc(100vh - 60px);
-  z-index: 100;
-  background: #f8f9fa;
-  border-right: 1px solid #e9ecef;
-  overflow-y: auto;
+  height: 100vh;
+  z-index: 1000;
+  background: #ffffff;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
 }
 
+/* 主内容区域适配侧边栏 */
 .main-content {
   flex: 1;
-  padding-top: 60px;
-  padding-bottom: 20px;
-  overflow-y: auto;
   transition: margin-left 0.3s ease;
 }
 
-.main-content.with-sidebar {
-  margin-left: 250px;
+@media (min-width: 768px) {
+  .main-content {
+    margin-left: 280px; /* 默认侧边栏宽度 */
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 64px; /* 折叠后的侧边栏宽度 */
+  }
 }
 
-.content-wrapper {
-  padding: 20px;
+/* 顶部菜单容器 */
+.top-menu-container {
+  position: relative;
+  display: inline-block;
 }
 
-.auth-required,
-.permission-denied {
+.menu-toggle {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: calc(100vh - 140px);
-  padding: 20px;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.auth-message,
-.permission-message {
-  text-align: center;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  width: 100%;
+.menu-toggle:hover {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.auth-message {
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  border: 1px solid rgba(33, 150, 243, 0.2);
+.menu-icon {
+  font-size: 1.2rem;
+  color: #667eea;
+  transition: transform 0.3s ease;
 }
 
-.permission-message {
-  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-  border: 1px solid rgba(255, 152, 0, 0.2);
+.menu-toggle:hover .menu-icon {
+  transform: rotate(90deg);
 }
 
-.auth-message h3 {
-  color: #1976d2;
-  margin-bottom: 16px;
-  font-size: 1.5rem;
-}
-
-.permission-message h3 {
-  color: #f57c00;
-  margin-bottom: 16px;
-  font-size: 1.5rem;
-}
-
-.auth-message p,
-.permission-message p {
-  color: #666;
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-
-.role-info {
+.menu-text {
   font-weight: 600;
-  color: #f57c00;
+  color: #333;
+  font-size: 0.9rem;
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 12px 24px;
+/* 下拉菜单 */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  min-width: 250px;
+  z-index: 950;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transform: translateX(5px);
+}
+
+.dropdown-item.active {
+  background: rgba(102, 126, 234, 0.1);
+  border-left: 4px solid #667eea;
+}
+
+.dropdown-item.active:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.item-icon {
+  font-size: 1.3rem;
+  width: 24px;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-item:hover .item-icon {
+  transform: scale(1.2);
+}
+
+.item-title {
+  flex: 1;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.item-badge {
+  background: #ff4757;
+  color: white;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.dropdown-item:hover .item-badge {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* 下拉动画 */
+.dropdown-enter-active {
+  transition: all 0.3s ease;
+}
+
+.dropdown-leave-active {
+  transition: all 0.3s ease;
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+/* 主内容区域 */
+.main-content {
+  min-height: calc(100vh - 120px);
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.main-content.with-sidebar {
+  margin-left: 280px;
+}
+
+.main-content.with-bottom-nav {
+  padding-bottom: 100px;
+}
+
+/* 侧边栏样式 */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 80px;
+  width: 280px;
+  height: calc(100vh - 80px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+/* 权限提示 */
+.permission-denied {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.permission-icon {
+  font-size: 4rem;
+  color: #ff4757;
+  margin-bottom: 1.5rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.permission-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.permission-message {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 2rem;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.permission-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.permission-btn {
+  padding: 0.8rem 2rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 25px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 16px;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+.permission-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.permission-btn.primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+}
+
+.permission-btn.secondary {
+  background: rgba(255, 255, 255, 0.8);
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.permission-btn.secondary:hover {
+  background: #667eea;
   color: white;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-}
-
-.btn-secondary {
-  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-  color: white;
-}
-
-.btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
-}
-
-/* 移动端适配 */
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
-  
-  .main-content {
-    margin-left: 0;
-    padding-bottom: 100px;
-  }
-  
   .main-content.with-sidebar {
     margin-left: 0;
   }
   
-  .content-wrapper {
-    padding: 10px;
+  .sidebar {
+    transform: translateX(-100%);
   }
   
-  .auth-message,
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  
+  .dropdown-menu {
+    min-width: 200px;
+    right: -20px;
+  }
+  
+  .menu-toggle {
+    padding: 0.6rem 1rem;
+  }
+  
+  .menu-text {
+    display: none;
+  }
+  
+  .permission-title {
+    font-size: 1.5rem;
+  }
+  
   .permission-message {
-    padding: 20px;
-    margin: 10px;
+    font-size: 1rem;
+  }
+  
+  .permission-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .permission-btn {
+    width: 100%;
+    max-width: 250px;
+    justify-content: center;
   }
 }
 
-/* 暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-  .sidebar {
-    background: #2d3748;
-    border-right-color: #4a5568;
+@media (max-width: 480px) {
+  .main-content {
+    padding: 1rem;
   }
   
-  .auth-message {
-    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-    border-color: rgba(66, 165, 245, 0.3);
+  .dropdown-menu {
+    min-width: 180px;
+    right: -30px;
   }
   
-  .permission-message {
-    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-    border-color: rgba(255, 183, 77, 0.3);
+  .dropdown-item {
+    padding: 0.8rem 1rem;
   }
   
-  .auth-message h3 {
-    color: #42a5f5;
+  .item-title {
+    font-size: 0.9rem;
   }
   
-  .permission-message h3 {
-    color: #ffb74d;
+  .permission-icon {
+    font-size: 3rem;
   }
   
-  .auth-message p,
-  .permission-message p {
-    color: #a0aec0;
-  }
-  
-  .role-info {
-    color: #ffb74d;
+  .permission-title {
+    font-size: 1.3rem;
   }
 }
+
+/* 加载动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.layout {
+  animation: fadeIn 0.6s ease-out;
+}
 </style>
+

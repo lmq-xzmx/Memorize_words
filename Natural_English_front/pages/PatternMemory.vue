@@ -192,117 +192,91 @@ export default {
 
 <style scoped>
 .pattern-memory {
-  width: 100%;
-  height: 100vh;
-  background: linear-gradient(135deg, #87CEEB 0%, #98D8E8 50%, #B0E0E6 100%);
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* 装饰性几何图形 */
-.pattern-memory::before {
-  content: '';
-  position: absolute;
-  top: 20%;
-  left: -10%;
-  width: 200px;
-  height: 200px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  z-index: 0;
-}
-
-.pattern-memory::after {
-  content: '';
-  position: absolute;
-  bottom: 30%;
-  right: -15%;
-  width: 150px;
-  height: 150px;
-  background: rgba(255, 255, 255, 0.08);
-  transform: rotate(45deg);
-  z-index: 0;
-}
-
-/* 状态栏 */
 .status-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .status-icons {
   display: flex;
-  gap: 5px;
+  gap: 10px;
   align-items: center;
 }
 
-/* 导航栏 */
 .nav-bar {
   padding: 15px 20px;
-  z-index: 10;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-left {
   display: flex;
   align-items: center;
-  color: #666;
+  gap: 10px;
   cursor: pointer;
+  color: white;
 }
 
 .back-icon {
   font-size: 24px;
-  margin-right: 8px;
-  color: #007AFF;
+  font-weight: bold;
 }
 
 .nav-title {
   font-size: 16px;
-  color: #666;
+  font-weight: 600;
 }
 
-/* Level选择器 */
 .level-selector {
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 10px;
   padding: 20px;
-  z-index: 10;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .level-btn {
-  padding: 12px 24px;
-  border-radius: 25px;
-  font-size: 14px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  color: white;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.level-btn:hover {
   background: rgba(255, 255, 255, 0.3);
-  color: #666;
-  border: 2px solid transparent;
+  transform: translateY(-2px);
 }
 
 .level-btn.active {
-  background: #FF6B35;
-  color: white;
-  transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  color: #ff6b9d;
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
 }
 
-/* 学习内容区域 */
 .learning-content {
   flex: 1;
   padding: 20px;
-  z-index: 10;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -314,43 +288,45 @@ export default {
 }
 
 .question-text {
-  font-size: 24px;
-  font-weight: 700;
-  color: #8B4513;
-  margin-bottom: 40px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 30px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .image-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
   max-width: 400px;
   margin: 0 auto;
 }
 
 .image-option {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
   border-radius: 15px;
   padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  border: 2px solid transparent;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .image-option:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .image-option.selected {
-  border: 3px solid #FF6B35;
-  transform: scale(1.05);
+  border-color: #ff6b9d;
+  background: rgba(255, 107, 157, 0.1);
 }
 
 .image-option img {
   width: 100%;
-  height: 120px;
+  height: 80px;
   object-fit: cover;
   border-radius: 10px;
   margin-bottom: 10px;
@@ -358,7 +334,7 @@ export default {
 
 .image-label {
   font-size: 14px;
-  color: #666;
+  color: #2d3748;
   font-weight: 500;
 }
 
@@ -368,20 +344,19 @@ export default {
 }
 
 .large-image {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .large-image img {
-  width: 300px;
+  width: 200px;
   height: 200px;
   object-fit: cover;
-  border-radius: 15px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
 }
 
 .options-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 15px;
   max-width: 300px;
   margin: 0 auto;
@@ -390,35 +365,44 @@ export default {
 .text-option {
   display: flex;
   align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 15px;
   padding: 15px 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 18px;
-  font-weight: 600;
+  border: 2px solid transparent;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .text-option:hover {
-  background: rgba(255, 255, 255, 1);
-  transform: translateX(10px);
+  transform: translateX(5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
 }
 
 .text-option.selected {
-  background: #4CAF50;
-  color: white;
-  transform: scale(1.05);
+  border-color: #ff6b9d;
+  background: rgba(255, 107, 157, 0.1);
 }
 
 .option-letter {
-  color: #8B4513;
-  font-weight: 700;
-  margin-right: 15px;
-  font-size: 20px;
+  width: 30px;
+  height: 30px;
+  background: #ff6b9d;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
 }
 
-.text-option.selected .option-letter {
-  color: white;
+.option-text {
+  font-size: 16px;
+  color: #2d3748;
+  font-weight: 500;
 }
 
 /* Level 3 样式 */
@@ -427,15 +411,20 @@ export default {
 }
 
 .word-image {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .word-image img {
-  width: 250px;
-  height: 180px;
+  width: 150px;
+  height: 150px;
   object-fit: cover;
-  border-radius: 15px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.word-completion {
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 .word-pattern {
@@ -448,107 +437,133 @@ export default {
 .pattern-char {
   width: 40px;
   height: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #8B4513;
-  color: white;
-  font-size: 24px;
-  font-weight: 700;
-  border-radius: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #2d3748;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .letter-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 10px;
-  max-width: 300px;
-  margin: 0 auto;
 }
 
 .letter-option {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 600;
-  color: #333;
+  color: #2d3748;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .letter-option:hover {
-  background: #FF6B35;
+  background: #ff6b9d;
   color: white;
-  transform: scale(1.1);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
 }
 
-/* 底部控制栏 */
 .bottom-controls {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  gap: 30px;
   padding: 20px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  z-index: 10;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .control-btn {
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .control-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .btn-icon {
-  font-size: 24px;
-  font-weight: 700;
-  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
 }
 
-/* 底部指示器 */
 .bottom-indicator {
-  width: 134px;
-  height: 5px;
-  background: #333;
-  border-radius: 3px;
-  margin: 10px auto;
-  z-index: 10;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 0 20px 20px;
+  border-radius: 2px;
 }
 
-/* 响应式设计 */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .image-grid {
     grid-template-columns: 1fr;
-    max-width: 300px;
-  }
-  
-  .question-text {
-    font-size: 20px;
+    max-width: 250px;
   }
   
   .large-image img {
-    width: 250px;
+    width: 150px;
     height: 150px;
   }
   
+  .word-image img {
+    width: 120px;
+    height: 120px;
+  }
+  
   .letter-grid {
-    max-width: 250px;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .question-text {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .level-selector {
+    gap: 5px;
+    padding: 15px;
+  }
+  
+  .level-btn {
+    padding: 8px 15px;
+    font-size: 11px;
+  }
+  
+  .bottom-controls {
+    gap: 20px;
+  }
+  
+  .control-btn {
+    width: 45px;
+    height: 45px;
   }
 }
 </style>
+

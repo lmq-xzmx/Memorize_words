@@ -134,13 +134,15 @@ export class HomepageManager {
       }
       
       // 如果是强制显示选择页面，不重定向
-      if (route.query.force === 'true') {
+      if (route.query && route.query.force === 'true') {
         return null
       }
       
-      // 只在特定路径下进行重定向
+      // 只在特定路径下进行重定向，排除learning-modes等重要页面
       const redirectPaths = ['/', '/index', '/dashboard']
-      if (!redirectPaths.includes(route.path)) {
+      const excludePaths = ['/learning-modes', '/learning-mode', '/login', '/register', '/error']
+      
+      if (!redirectPaths.includes(route.path) || excludePaths.includes(route.path)) {
         return null
       }
       

@@ -147,7 +147,7 @@ class WordAdmin(BaseBatchImportAdmin):
     
     def batch_import_view(self, request, *args, **kwargs):
         """批量导入单词视图"""
-        return self.process_batch_import(request)
+        return self.process_batch_import(request, 'admin/words/batch_import.html')
 
     def perform_import(self, request, reader):
         """执行单词导入"""
@@ -672,7 +672,7 @@ class WordResourceAdmin(BaseBatchImportAdmin):
     
     def batch_import_view(self, request, *args, **kwargs):
         """批量导入单词配套资源视图"""
-        return self.process_batch_import(request)
+        return self.process_batch_import(request, 'admin/words/batch_import.html')
 
     def perform_import(self, request, reader):
         """执行单词配套资源导入"""

@@ -203,7 +203,7 @@
         <div class="api-info">
             <h3>📋 API 信息</h3>
             <p><strong>登录接口:</strong> <span class="code">POST http://127.0.0.1:8003/accounts/api/auth/login/</span></p>
-            <p><strong>前端地址:</strong> <span class="code">http://localhost:3001</span></p>
+            <p><strong>前端地址:</strong> <span class="code">http://localhost:3004</span></p>
             <p><strong>后端地址:</strong> <span class="code">http://127.0.0.1:8003</span></p>
             <p><strong>Token存储:</strong> localStorage.token</p>
         </div>
@@ -288,7 +288,7 @@
                     
                     // 直接跳转到前端应用，跳过点击步骤
                     setTimeout(() => {
-                        window.open('http://localhost:3001', '_blank');
+                        window.open('http://localhost:3004', '_blank');
                     }, 1000);
                 } else {
                     statusDiv.className = 'status error';
@@ -319,7 +319,7 @@
                 
                 // 直接跳转到前端应用，跳过点击步骤
                 setTimeout(() => {
-                    window.open('http://localhost:3001', '_blank');
+                    window.open('http://localhost:3004', '_blank');
                 }, 1000);
             }
         };

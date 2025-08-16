@@ -19,6 +19,9 @@
 
     <!-- 右侧操作按钮 -->
     <div class="nav-right">
+      <!-- 插槽：右侧菜单 -->
+      <slot name="right-menu"></slot>
+      
       <!-- 首页按钮 -->
       <div 
         class="nav-btn home-btn" 
@@ -38,6 +41,283 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+.top-nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  transition: all 0.3s ease;
+}
+
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 100px;
+}
+
+.nav-left {
+  justify-content: flex-start;
+}
+
+.nav-right {
+  justify-content: flex-end;
+}
+
+.nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  text-align: center;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+}
+
+.nav-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: translateY(-1px);
+}
+
+.nav-btn .icon {
+  font-size: 16px;
+}
+
+.nav-btn .text {
+  font-size: 14px;
+}
+
+.nav-brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #667eea;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-brand:hover {
+  color: #5a67d8;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-link:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.nav-link.active {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.15);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.nav-button.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.nav-button.secondary {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.nav-button.secondary:hover {
+  background: rgba(102, 126, 234, 0.2);
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #4b5563;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .top-nav {
+    padding: 0 16px;
+  }
+  
+  .nav-menu {
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: block;
+  }
+  
+  .nav-actions {
+    gap: 8px;
+  }
+  
+  .nav-button {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav-brand {
+    font-size: 1.25rem;
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* 下拉菜单样式 */
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 8px 0;
+  min-width: 180px;
+  z-index: 950;
+}
+
+.dropdown-item {
+  display: block;
+  padding: 8px 16px;
+  color: #4b5563;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 4px 0;
+}
+</style>
 
 <script>
 export default {
@@ -71,7 +351,10 @@ export default {
     showTopNav() {
       // 在有TabBar的页面显示顶部导航
       const tabBarPages = [
+        '/',
         '/dashboard',
+        '/learning-modes',
+        '/learning-mode',
         '/word-reading', 
         '/word-challenge',
         '/word-selection',
@@ -126,129 +409,3 @@ export default {
 }
 </script>
 
-<style scoped>
-.top-nav-bar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 44px;
-  background: #fff;
-  border-bottom: 1px solid #e5e5e5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  z-index: 9997;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.nav-left,
-.nav-right {
-  display: flex;
-  align-items: center;
-  min-width: 60px;
-}
-
-.nav-left {
-  justify-content: flex-start;
-}
-
-.nav-right {
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.nav-center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.nav-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-  text-align: center;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  user-select: none;
-}
-
-.nav-btn:hover {
-  background-color: #f5f5f5;
-}
-
-.nav-btn:active {
-  background-color: #e5e5e5;
-}
-
-.nav-btn .icon {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.nav-btn .text {
-  font-size: 14px;
-  color: #333;
-}
-
-.back-btn .icon {
-  font-size: 18px;
-  font-weight: bold;
-}
-
-/* 深色模式适配 */
-@media (prefers-color-scheme: dark) {
-  .top-nav-bar {
-    background: #1a1a1a;
-    border-bottom-color: #333;
-  }
-  
-  .nav-title {
-    color: #fff;
-  }
-  
-  .nav-btn .text {
-    color: #fff;
-  }
-  
-  .nav-btn:hover {
-    background-color: #333;
-  }
-  
-  .nav-btn:active {
-    background-color: #444;
-  }
-}
-
-/* 小程序适配 */
-/* #ifdef MP */
-.top-nav-bar {
-  padding-top: var(--status-bar-height, 0);
-  height: calc(44px + var(--status-bar-height, 0));
-}
-/* #endif */
-
-/* iOS安全区域适配 */
-/* #ifdef APP-PLUS */
-.top-nav-bar {
-  padding-top: var(--status-bar-height, 0);
-  height: calc(44px + var(--status-bar-height, 0));
-}
-/* #endif */
-</style>

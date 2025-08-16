@@ -61,6 +61,7 @@
 
 <script>
 import { userAPI } from '../utils/api.js'
+import { buildApiUrl, buildPageUrl, API_ENDPOINTS } from '../config/apiConfig.js'
 
 export default {
   name: 'UserLearningGoalWidget',
@@ -118,7 +119,7 @@ export default {
         if (!token) return
 
         // 调用学习目标API
-        const response = await fetch('http://127.0.0.1:8001/teaching/api/learning-goals/', {
+        const response = await fetch(buildApiUrl(API_ENDPOINTS.TEACHING.LEARNING_GOALS), {
           headers: {
             'Authorization': `Token ${token}`,
             'Content-Type': 'application/json'
@@ -168,12 +169,12 @@ export default {
 
     goToLearningDashboard() {
       // 跳转到后端学习看板页面
-      window.open('http://127.0.0.1:8001/teaching/learning-dashboard/', '_blank')
+      window.open(buildPageUrl(API_ENDPOINTS.TEACHING.LEARNING_DASHBOARD), '_blank')
     },
 
     goToGoalManagement() {
       // 跳转到后端学习目标管理页面
-      window.open('http://127.0.0.1:8001/teaching/goals/', '_blank')
+      window.open(buildPageUrl(API_ENDPOINTS.TEACHING.GOALS_MANAGEMENT), '_blank')
     },
 
     createLearningGoal() {
@@ -184,191 +185,3 @@ export default {
 }
 </script>
 
-<style scoped>
-.user-learning-goal-widget {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  padding: 16px;
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin: 12px;
-  min-height: 200px;
-}
-
-.user-info-section {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  overflow: hidden;
-  margin-right: 12px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.user-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.default-avatar {
-  width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: bold;
-  color: white;
-}
-
-.user-details {
-  flex: 1;
-}
-
-.username {
-  margin: 0 0 4px 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.user-role {
-  margin: 0;
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.learning-goal-section {
-  margin-top: 16px;
-}
-
-.goal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.goal-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.goal-status {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-excellent {
-  background: rgba(76, 175, 80, 0.3);
-  color: #4CAF50;
-}
-
-.status-good {
-  background: rgba(255, 193, 7, 0.3);
-  color: #FFC107;
-}
-
-.status-normal {
-  background: rgba(33, 150, 243, 0.3);
-  color: #2196F3;
-}
-
-.status-need-effort {
-  background: rgba(244, 67, 54, 0.3);
-  color: #F44336;
-}
-
-.goal-progress {
-  margin-bottom: 16px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4CAF50, #8BC34A);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.progress-text {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  opacity: 0.9;
-}
-
-.goal-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  flex: 1;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.action-btn.primary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-}
-
-.action-btn.secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-}
-
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
-}
-
-.no-goal-section {
-  text-align: center;
-  padding: 20px;
-}
-
-.no-goal-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-}
-
-.no-goal-text {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  opacity: 0.9;
-}
-
-.icon {
-  font-size: 14px;
-}
-</style>

@@ -1,100 +1,105 @@
-// 全局样式变量文件
+// 设计系统变量
 
-// 颜色系统
+// 主色调
 $primary-color: #667eea;
+$primary-dark: #5a67d8;
+$primary-light: #7c8aed;
 $secondary-color: #764ba2;
-$success-color: #4caf50;
-$warning-color: #ff9800;
-$error-color: #f44336;
-$info-color: #2196f3;
+$secondary-dark: #6b4190;
+$secondary-light: #8659b5;
 
 // 中性色
 $white: #ffffff;
 $black: #000000;
-$gray-50: #fafafa;
-$gray-100: #f5f5f5;
-$gray-200: #eeeeee;
-$gray-300: #e0e0e0;
-$gray-400: #bdbdbd;
-$gray-500: #9e9e9e;
-$gray-600: #757575;
-$gray-700: #616161;
-$gray-800: #424242;
-$gray-900: #212121;
+$gray-50: #f9fafb;
+$gray-100: #f3f4f6;
+$gray-200: #e5e7eb;
+$gray-300: #d1d5db;
+$gray-400: #9ca3af;
+$gray-500: #6b7280;
+$gray-600: #4b5563;
+$gray-700: #374151;
+$gray-800: #1f2937;
+$gray-900: #111827;
 
-// 文字颜色
-$text-primary: #333333;
-$text-secondary: #666666;
-$text-disabled: #999999;
-$text-white: #ffffff;
+// 功能色
+$success-color: #10b981;
+$warning-color: #f59e0b;
+$error-color: #ef4444;
+$info-color: #3b82f6;
 
-// 背景色
-$bg-primary: #ffffff;
-$bg-secondary: #f8f9fa;
-$bg-dark: #1a1a1a;
-$bg-overlay: rgba(0, 0, 0, 0.5);
+// 背景渐变
+$primary-gradient: linear-gradient(135deg, #{$primary-color} 0%, #{$secondary-color} 100%);
+$light-gradient: linear-gradient(135deg, #{$gray-50} 0%, #{$white} 100%);
+$dark-gradient: linear-gradient(135deg, #{$gray-800} 0%, #{$gray-900} 100%);
 
-// 边框
-$border-color: #e0e0e0;
-$border-radius: 8px;
-$border-radius-sm: 4px;
-$border-radius-lg: 12px;
-$border-radius-xl: 16px;
+// 字体
+$font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+$font-family-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 
-// 间距系统
-$spacing-xs: 4px;
-$spacing-sm: 8px;
-$spacing-md: 16px;
-$spacing-lg: 24px;
-$spacing-xl: 32px;
-$spacing-xxl: 48px;
+// 字体大小
+$font-size-xs: 0.75rem;   // 12px
+$font-size-sm: 0.875rem;  // 14px
+$font-size-base: 1rem;    // 16px
+$font-size-lg: 1.125rem;  // 18px
+$font-size-xl: 1.25rem;   // 20px
+$font-size-2xl: 1.5rem;   // 24px
+$font-size-3xl: 1.875rem; // 30px
+$font-size-4xl: 2.25rem;  // 36px
 
-// 字体系统
-//$font-family-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-$font-family-base: 'SimSun', '宋体', serif;
-$font-family-mono: 'Courier New', monospace;
-
-$font-size-xs: 12px;
-$font-size-sm: 14px;
-$font-size-base: 16px;
-$font-size-lg: 18px;
-$font-size-xl: 20px;
-$font-size-xxl: 24px;
-$font-size-xxxl: 32px;
-
+// 字体粗细
 $font-weight-light: 300;
 $font-weight-normal: 400;
 $font-weight-medium: 500;
 $font-weight-semibold: 600;
 $font-weight-bold: 700;
 
-$line-height-tight: 1.2;
+// 行高
+$line-height-tight: 1.25;
 $line-height-normal: 1.5;
-$line-height-relaxed: 1.8;
+$line-height-relaxed: 1.75;
 
-// 阴影系统
-$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
-$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-$shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+// 间距
+$spacing-xs: 0.25rem;  // 4px
+$spacing-sm: 0.5rem;   // 8px
+$spacing-md: 1rem;     // 16px
+$spacing-lg: 1.5rem;   // 24px
+$spacing-xl: 2rem;     // 32px
+$spacing-2xl: 3rem;    // 48px
+$spacing-3xl: 4rem;    // 64px
 
-// 动画
-$transition-fast: 0.15s ease;
-$transition-normal: 0.3s ease;
-$transition-slow: 0.5s ease;
+// 圆角
+$border-radius-sm: 0.25rem;  // 4px
+$border-radius-md: 0.5rem;   // 8px
+$border-radius-lg: 0.75rem;  // 12px
+$border-radius-xl: 1rem;     // 16px
+$border-radius-full: 50%;
 
-$easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-$easing-ease-out: cubic-bezier(0, 0, 0.2, 1);
-$easing-ease-in: cubic-bezier(0.4, 0, 1, 1);
+// 阴影
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+$shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
-// 断点系统
-$breakpoint-xs: 480px;
-$breakpoint-sm: 768px;
-$breakpoint-md: 1024px;
-$breakpoint-lg: 1280px;
-$breakpoint-xl: 1536px;
+// 边框
+$border-width: 1px;
+$border-color: $gray-200;
+$border-color-dark: $gray-700;
 
-// Z-index 层级
+// 过渡动画
+$transition-fast: 0.15s ease-out;
+$transition-normal: 0.3s ease-out;
+$transition-slow: 0.5s ease-out;
+
+// 断点
+$breakpoint-sm: 640px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
+
+// Z-index层级
 $z-index-dropdown: 1000;
 $z-index-sticky: 1020;
 $z-index-fixed: 1030;
@@ -105,130 +110,82 @@ $z-index-tooltip: 1070;
 $z-index-toast: 1080;
 
 // 组件特定变量
-$header-height: 60px;
-$sidebar-width: 280px;
-$footer-height: 80px;
-
-// 按钮变量
-$btn-padding-y: 12px;
-$btn-padding-x: 24px;
-$btn-padding-sm-y: 8px;
-$btn-padding-sm-x: 16px;
-$btn-padding-lg-y: 16px;
-$btn-padding-lg-x: 32px;
-
-// 表单变量
-$input-height: 48px;
-$input-padding-y: 12px;
-$input-padding-x: 16px;
-$input-border-width: 1px;
-$input-focus-border-color: $primary-color;
-
-// 卡片变量
+$navbar-height: 60px;
+$sidebar-width: 250px;
 $card-padding: $spacing-lg;
-$card-border-radius: $border-radius-lg;
-$card-shadow: $shadow-md;
+$button-padding-y: $spacing-sm;
+$button-padding-x: $spacing-md;
+$input-padding-y: $spacing-sm;
+$input-padding-x: $spacing-md;
 
-// 响应式混合器
-@mixin respond-to($breakpoint) {
-  @if $breakpoint == xs {
-    @media (max-width: #{$breakpoint-xs - 1px}) {
-      @content;
-    }
+// 毛玻璃效果
+$glass-background: rgba(255, 255, 255, 0.95);
+$glass-border: rgba(255, 255, 255, 0.2);
+$glass-backdrop-filter: blur(10px);
+
+// 深色模式变量
+$dark-bg: $gray-900;
+$dark-surface: $gray-800;
+$dark-text: $gray-100;
+$dark-text-secondary: $gray-400;
+
+// Mixins
+@mixin glass-effect {
+  background: $glass-background;
+  backdrop-filter: $glass-backdrop-filter;
+  border: 1px solid $glass-border;
+}
+
+@mixin button-base {
+  padding: $button-padding-y $button-padding-x;
+  border: none;
+  border-radius: $border-radius-md;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-normal;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+@mixin card-base {
+  @include glass-effect;
+  border-radius: $border-radius-lg;
+  padding: $card-padding;
+  box-shadow: $shadow-lg;
+}
+
+@mixin input-base {
+  width: 100%;
+  padding: $input-padding-y $input-padding-x;
+  border: $border-width solid $border-color;
+  border-radius: $border-radius-md;
+  font-size: $font-size-base;
+  background: rgba(255, 255, 255, 0.9);
+  transition: all $transition-normal;
+  
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
   }
+}
+
+@mixin responsive($breakpoint) {
   @if $breakpoint == sm {
-    @media (min-width: #{$breakpoint-sm}) {
-      @content;
-    }
+    @media (min-width: $breakpoint-sm) { @content; }
   }
   @if $breakpoint == md {
-    @media (min-width: #{$breakpoint-md}) {
-      @content;
-    }
+    @media (min-width: $breakpoint-md) { @content; }
   }
   @if $breakpoint == lg {
-    @media (min-width: #{$breakpoint-lg}) {
-      @content;
-    }
+    @media (min-width: $breakpoint-lg) { @content; }
   }
   @if $breakpoint == xl {
-    @media (min-width: #{$breakpoint-xl}) {
-      @content;
-    }
+    @media (min-width: $breakpoint-xl) { @content; }
   }
-}
-
-// 工具混合器
-@mixin flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@mixin flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-@mixin text-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@mixin clearfix {
-  &::after {
-    content: '';
-    display: table;
-    clear: both;
-  }
-}
-
-// 动画混合器
-@mixin fade-in($duration: $transition-normal) {
-  animation: fadeIn $duration $easing-ease-out;
-}
-
-@mixin slide-up($duration: $transition-normal) {
-  animation: slideUp $duration $easing-ease-out;
-}
-
-// 关键帧动画
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
+  @if $breakpoint == 2xl {
+    @media (min-width: $breakpoint-2xl) { @content; }
   }
 }

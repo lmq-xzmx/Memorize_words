@@ -95,8 +95,11 @@
 </template>
 
 <script>
+import permissionMixin from '../mixins/permissionMixin.js';
+
 export default {
   name: 'Listening',
+  mixins: [permissionMixin],
   data() {
     return {
       stats: {
@@ -149,12 +152,48 @@ export default {
   },
   methods: {
     startMode(mode) {
+      // 检查不同模式的权限
+      const modePermissions = {
+        'listening': 'practice_listening',
+        'speaking': 'practice_speaking',
+        'conversation': 'practice_conversation'
+      }
+      
+      const requiredPermission = modePermissions[mode]
+      if (requiredPermission && !this.$hasPermission(requiredPermission)) {
+        this.$showError(`您没有权限使用${this.getModeDisplayName(mode)}功能`)
+        return
+      }
+      
       console.log('Starting mode:', mode)
       this.$router.push(`/listening/${mode}`)
     },
+    
     startContent(content) {
+      // 检查内容访问权限
+      const contentPermissions = {
+        'listening': 'practice_listening',
+        'speaking': 'practice_speaking',
+        'conversation': 'practice_conversation'
+      }
+      
+      const requiredPermission = contentPermissions[content.type]
+      if (requiredPermission && !this.$hasPermission(requiredPermission)) {
+        this.$showError(`您没有权限访问${content.title}`)
+        return
+      }
+      
       console.log('Starting content:', content)
       this.$router.push(`/listening/content/${content.id}`)
+    },
+    
+    getModeDisplayName(mode) {
+      const modeNames = {
+        'listening': '听力训练',
+        'speaking': '口语练习',
+        'conversation': '对话练习'
+      }
+      return modeNames[mode] || mode
     },
     getContentIcon(type) {
       const iconMap = {
@@ -172,6 +211,40 @@ export default {
       }
       return levelMap[level] || '未知'
     }
+  },
+  
+  async created() {
+    // 确保权限系统已初始化
+    await this.$nextTick()
+    
+    // 检查页面访问权限
+    if (!this.$hasPermission('view_listening_training')) {
+      this.$showError('您没有权限访问听说训练中心')
+      this.$router.push('/')
+      return
+    }
+    
+    // 检查统计数据查看权限
+    if (!this.$hasPermission('view_learning_stats')) {
+      // 如果没有统计权限，隐藏统计数据
+      this.stats = {
+        totalMinutes: 0,
+        listeningAccuracy: 0,
+        speakingScore: 0,
+        todayMinutes: 0
+      }
+    }
+    
+    // 根据权限过滤推荐内容
+    this.recommendedContent = this.recommendedContent.filter(content => {
+      const contentPermissions = {
+        'listening': 'practice_listening',
+        'speaking': 'practice_speaking',
+        'conversation': 'practice_conversation'
+      }
+      const requiredPermission = contentPermissions[content.type]
+      return !requiredPermission || this.$hasPermission(requiredPermission)
+    })
   }
 }
 </script>
@@ -179,158 +252,161 @@ export default {
 <style scoped>
 .listening-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
-  padding-bottom: 80px;
+  padding-bottom: 100px; /* 为底部导航留出空间 */
 }
 
 .page-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
   color: white;
 }
 
 .page-header h1 {
-  font-size: 32px;
+  font-size: 2.5rem;
   font-weight: 700;
-  margin-bottom: 10px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 0 0 8px 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .page-header p {
-  font-size: 16px;
+  font-size: 1.1rem;
   opacity: 0.9;
+  margin: 0;
 }
 
 .content-grid {
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  gap: 30px;
+  gap: 24px;
 }
 
-.mode-section,
-.stats-section,
-.recommended-section,
-.recent-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 25px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-}
-
+/* 训练模式选择 */
 .mode-section h2,
 .stats-section h2,
 .recommended-section h2,
 .recent-section h2 {
-  margin-bottom: 20px;
-  color: #2d3748;
-  font-size: 20px;
-  font-weight: 700;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .mode-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .mode-card {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 15px;
-  padding: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 24px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .mode-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 1);
 }
 
 .mode-icon {
-  font-size: 40px;
-  margin-bottom: 15px;
+  font-size: 3rem;
+  margin-bottom: 12px;
+  display: block;
 }
 
 .mode-card h3 {
-  margin-bottom: 10px;
-  color: #2d3748;
+  font-size: 1.25rem;
   font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #333;
 }
 
 .mode-card p {
-  color: #718096;
-  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
 }
 
+/* 统计数据 */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .stat-item {
-  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
   padding: 20px;
-  background: rgba(168, 237, 234, 0.2);
-  border-radius: 15px;
-  border: 1px solid rgba(168, 237, 234, 0.3);
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .stat-number {
-  font-size: 28px;
+  font-size: 2rem;
   font-weight: 700;
-  color: #319795;
-  margin-bottom: 5px;
+  color: #667eea;
+  margin-bottom: 4px;
 }
 
 .stat-label {
-  color: #718096;
-  font-size: 12px;
+  color: #666;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
-.content-list,
-.recent-list {
+/* 推荐内容 */
+.content-list {
   display: grid;
-  gap: 15px;
+  gap: 12px;
 }
 
 .content-item {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   align-items: center;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 15px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  gap: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .content-item:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transform: translateX(4px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 1);
 }
 
 .content-thumbnail {
-  width: 60px;
-  height: 60px;
-  background: rgba(168, 237, 234, 0.3);
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px;
+  flex-shrink: 0;
 }
 
 .content-type-icon {
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .content-info {
@@ -338,86 +414,89 @@ export default {
 }
 
 .content-title {
-  font-size: 16px;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 5px;
+  color: #333;
+  margin-bottom: 4px;
 }
 
 .content-description {
-  color: #718096;
-  font-size: 14px;
+  color: #666;
+  font-size: 0.9rem;
   margin-bottom: 8px;
+  line-height: 1.4;
 }
 
 .content-meta {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   align-items: center;
 }
 
 .content-duration {
-  color: #718096;
-  font-size: 12px;
+  color: #888;
+  font-size: 0.85rem;
 }
 
 .content-level {
-  padding: 4px 8px;
+  padding: 2px 8px;
   border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
 .content-level.beginner {
-  background: #c6f6d5;
-  color: #22543d;
+  background: #e8f5e8;
+  color: #2d7d32;
 }
 
 .content-level.intermediate {
-  background: #feebc8;
-  color: #7b341e;
+  background: #fff3e0;
+  color: #f57c00;
 }
 
 .content-level.advanced {
-  background: #fed7d7;
-  color: #742a2a;
+  background: #ffebee;
+  color: #c62828;
 }
 
 .content-action {
-  margin-left: 15px;
+  flex-shrink: 0;
 }
 
 .play-btn {
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-  color: #2d3748;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
   border: none;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .play-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* 最近练习 */
+.recent-list {
+  display: grid;
+  gap: 12px;
 }
 
 .recent-item {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-}
-
-.recent-item:hover {
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateX(5px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .recent-info {
@@ -425,34 +504,45 @@ export default {
 }
 
 .recent-title {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 5px;
+  color: #333;
+  margin-bottom: 4px;
 }
 
 .recent-time {
-  color: #718096;
-  font-size: 14px;
+  color: #888;
+  font-size: 0.85rem;
 }
 
 .recent-score {
   text-align: center;
+  flex-shrink: 0;
 }
 
 .score-value {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #319795;
+  color: #667eea;
   margin-bottom: 2px;
 }
 
 .score-label {
-  color: #718096;
-  font-size: 12px;
+  color: #666;
+  font-size: 0.75rem;
 }
 
+/* 响应式设计 */
 @media (max-width: 768px) {
+  .listening-container {
+    padding: 16px;
+    padding-bottom: 100px;
+  }
+  
+  .page-header h1 {
+    font-size: 2rem;
+  }
+  
   .mode-cards {
     grid-template-columns: 1fr;
   }
@@ -463,21 +553,25 @@ export default {
   
   .content-item {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+    text-align: center;
+    gap: 12px;
   }
   
-  .content-thumbnail {
-    margin-right: 0;
+  .content-meta {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
   }
   
-  .content-action {
-    margin-left: 0;
-    align-self: stretch;
-  }
-  
-  .play-btn {
-    width: 100%;
+  .recent-item {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
   }
 }
 </style>
+

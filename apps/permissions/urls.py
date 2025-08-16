@@ -3,7 +3,9 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from .api_views import (
     MenuModuleConfigViewSet, RoleMenuPermissionViewSet, GroupViewSet,
-    PermissionViewSet, RoleGroupMappingViewSet, PermissionSyncLogViewSet
+    PermissionViewSet, RoleGroupMappingViewSet, PermissionSyncLogViewSet,
+    get_user_permissions, get_role_permissions_config,
+    sync_frontend_menus, get_frontend_menu_config
 )
 from .api.menu_api import (
     get_user_menu_permissions, check_menu_permission, 
@@ -33,6 +35,14 @@ urlpatterns = [
     path('api/check-menu-permission/', check_menu_permission, name='check_menu_permission'),
     path('api/role-display-name/', get_role_display_name, name='role_display_name'),
     path('api/menu-hierarchy/', get_menu_hierarchy, name='menu_hierarchy'),
+    
+    # 前后端权限同步API
+    path('user-permissions/', get_user_permissions, name='get_user_permissions'),
+    path('role-permissions-config/', get_role_permissions_config, name='get_role_permissions_config'),
+    
+    # 前后端菜单同步API
+    path('sync-frontend-menus/', sync_frontend_menus, name='sync_frontend_menus'),
+    path('frontend-menu-config/', get_frontend_menu_config, name='get_frontend_menu_config'),
     
     # 权限管理主页
     path('', views.PermissionIndexView.as_view(), name='index'),

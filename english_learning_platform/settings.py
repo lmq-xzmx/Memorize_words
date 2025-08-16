@@ -91,6 +91,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'english_learning_platform.wsgi.application'
+ASGI_APPLICATION = 'english_learning_platform.asgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -235,12 +236,55 @@ os.makedirs(BASE_DIR / 'logs', exist_ok=True)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Cache settings
+# 开发环境使用本地内存缓存，生产环境可切换到Redis
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
+        'TIMEOUT': 300,
+    },
+    'permissions': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'permissions-cache',
+        'TIMEOUT': 600,
+    },
+    'sessions': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'sessions-cache',
+        'TIMEOUT': 86400,
     }
 }
+
+# Redis缓存配置（生产环境使用）
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/1',
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         },
+#         'KEY_PREFIX': 'english_learning',
+#         'TIMEOUT': 300,
+#     },
+#     'permissions': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/2',
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         },
+#         'KEY_PREFIX': 'permissions',
+#         'TIMEOUT': 600,
+#     },
+#     'sessions': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379/3',
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#         },
+#         'KEY_PREFIX': 'sessions',
+#         'TIMEOUT': 86400,
+#     }
+# }
 
 # Security settings for production
 if not DEBUG:
@@ -333,3 +377,44 @@ ARTICLE_FACTORY_CONFIG = {
     'CACHE_PARSED_RESULTS': True,
     'CACHE_TIMEOUT': 3600,  # 缓存超时时间（秒）
 }
+
+# WebSocket配置
+# 开发环境使用内存Channel Layer，生产环境可切换到Redis
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
+
+# Redis Channel Layer配置（生产环境使用）
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             'hosts': [('127.0.0.1', 6379)],
+#             'capacity': 1500,
+#             'expiry': 60,
+#         },
+#     },
+# }
+
+# 权限系统配置
+PERMISSION_SYSTEM_CONFIG = {
+    'ENABLE_OBJECT_PERMISSIONS': True,
+    'ENABLE_ROLE_HIERARCHY': True,
+    'ENABLE_PERMISSION_CACHING': True,
+    'CACHE_TIMEOUT': 600,
+    'ENABLE_AUDIT_LOG': True,
+    'AUDIT_LOG_RETENTION_DAYS': 90,
+    'ENABLE_WEBSOCKET_NOTIFICATIONS': True,
+    'BATCH_OPERATION_CHUNK_SIZE': 1000,
+    'PERFORMANCE_MONITORING': True,
+}
+
+# Session配置
+# 开发环境使用数据库存储，生产环境可切换到Redis
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+# Redis Session配置（生产环境使用）
+# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+# SESSION_CACHE_ALIAS = 'sessions'

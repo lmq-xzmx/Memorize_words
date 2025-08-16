@@ -1,0 +1,278 @@
+/* 菜单设计系统 - CSS变量定义 */
+/* Natural English 英语学习平台统一菜单样式变量 */
+
+:root {
+  /* ===== 颜色系统 ===== */
+  /* 主色调 */
+  --menu-color-primary: #4A90E2;
+  --menu-color-primary-light: #6BB6FF;
+  --menu-color-primary-dark: #357ABD;
+  
+  /* 辅助色 */
+  --menu-color-secondary: #f8f9fa;
+  --menu-color-success: #4CAF50;
+  --menu-color-warning: #FF9800;
+  --menu-color-danger: #F44336;
+  
+  /* 文字颜色 */
+  --menu-color-text-primary: #333333;
+  --menu-color-text-secondary: rgba(51, 51, 51, 0.7);
+  --menu-color-text-muted: rgba(51, 51, 51, 0.5);
+  --menu-color-text-white: #ffffff;
+  
+  /* 边框和分割线 */
+  --menu-color-border: rgba(0, 0, 0, 0.1);
+  --menu-color-border-light: rgba(0, 0, 0, 0.05);
+  --menu-color-divider: rgba(0, 0, 0, 0.08);
+  
+  /* 阴影颜色 */
+  --menu-color-shadow: rgba(0, 0, 0, 0.1);
+  --menu-color-shadow-dark: rgba(0, 0, 0, 0.15);
+  --menu-color-shadow-light: rgba(0, 0, 0, 0.05);
+  
+  /* ===== 背景系统 ===== */
+  /* 主背景 */
+  --menu-bg-primary: rgba(255, 255, 255, 0.9);
+  --menu-bg-secondary: rgba(255, 255, 255, 0.1);
+  --menu-bg-tertiary: rgba(255, 255, 255, 0.05);
+  
+  /* 交互状态背景 */
+  --menu-bg-hover: rgba(74, 144, 226, 0.1);
+  --menu-bg-active: rgba(74, 144, 226, 0.2);
+  --menu-bg-selected: rgba(74, 144, 226, 0.15);
+  --menu-bg-disabled: rgba(0, 0, 0, 0.05);
+  
+  /* 渐变背景 */
+  --menu-bg-gradient-primary: linear-gradient(135deg, #4A90E2 0%, #6BB6FF 100%);
+  --menu-bg-gradient-secondary: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  
+  /* ===== 尺寸系统 ===== */
+  /* 圆角 */
+  --menu-radius-xs: 4px;
+  --menu-radius-sm: 8px;
+  --menu-radius-md: 12px;
+  --menu-radius-lg: 16px;
+  --menu-radius-xl: 20px;
+  
+  /* 间距 */
+  --menu-spacing-xs: 4px;
+  --menu-spacing-sm: 8px;
+  --menu-spacing-md: 12px;
+  --menu-spacing-lg: 16px;
+  --menu-spacing-xl: 20px;
+  --menu-spacing-xxl: 24px;
+  
+  /* 字体大小 */
+  --menu-font-size-xs: 10px;
+  --menu-font-size-sm: 12px;
+  --menu-font-size-md: 14px;
+  --menu-font-size-lg: 16px;
+  --menu-font-size-xl: 18px;
+  
+  /* 字体粗细 */
+  --menu-font-weight-normal: 400;
+  --menu-font-weight-medium: 500;
+  --menu-font-weight-semibold: 600;
+  --menu-font-weight-bold: 700;
+  
+  /* 行高 */
+  --menu-line-height-tight: 1.2;
+  --menu-line-height-normal: 1.4;
+  --menu-line-height-relaxed: 1.6;
+  
+  /* ===== 动画系统 ===== */
+  /* 过渡时间 */
+  --menu-transition-fast: 0.15s ease-out;
+  --menu-transition-normal: 0.3s ease-in-out;
+  --menu-transition-slow: 0.5s ease-in-out;
+  
+  /* 缓动函数 */
+  --menu-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --menu-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --menu-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* 特效 */
+  --menu-blur: blur(20px);
+  --menu-blur-light: blur(10px);
+  --menu-blur-heavy: blur(30px);
+  
+  /* ===== 阴影系统 ===== */
+  --menu-shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --menu-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --menu-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.1);
+  --menu-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.15);
+  --menu-shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.2);
+  
+  /* 内阴影 */
+  --menu-shadow-inset: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  
+  /* ===== Z-Index 层级系统 ===== */
+  /* 基础层级 */
+  --menu-z-base: 100;
+  --menu-z-content: 500;
+  
+  /* 导航层级 */
+  --menu-z-nav: 900;
+  --menu-z-nav-dropdown: 950;
+  
+  /* 菜单层级 */
+  --menu-z-overlay: 1000;
+  --menu-z-dropdown: 1000;
+  --menu-z-popup: 1010;
+  --menu-z-modal: 1020;
+  --menu-z-tooltip: 1030;
+  
+  /* 最高层级 */
+  --menu-z-notification: 1040;
+  --menu-z-emergency: 9999;
+  
+  /* ===== 组件特定变量 ===== */
+  /* BaseMenu */
+  --base-menu-min-width: 200px;
+  --base-menu-max-width: 320px;
+  --base-menu-max-height: 400px;
+  --base-menu-padding: var(--menu-spacing-md);
+  --base-menu-dropdown-min-width: 180px;
+  --base-menu-sidebar-width: 280px;
+  --base-menu-small-min-width: 160px;
+  --base-menu-small-max-width: 240px;
+  --base-menu-medium-min-width: 200px;
+  --base-menu-medium-max-width: 300px;
+  --base-menu-large-min-width: 280px;
+  --base-menu-large-max-width: 400px;
+  --base-menu-mobile-min-width: 280px;
+  
+  /* MenuItem */
+  --menu-item-height: 44px;
+  --menu-item-icon-size: 20px;
+  --menu-item-gap: var(--menu-spacing-md);
+  
+  /* ToolsMenu */
+  --tools-menu-width: 280px;
+  --tools-menu-item-height: 56px;
+  --menu-tools-min-width: 260px;
+  --menu-tools-max-width: 320px;
+  --menu-tools-min-width-mobile: 240px;
+  
+  /* BottomNavBar */
+  --bottom-nav-height: 60px;
+  --bottom-nav-icon-size: 24px;
+  
+  /* Z-index 层级 */
+  --menu-z-index-fixed: 1000;
+  --menu-z-sidebar: 900;
+  
+  /* 边框颜色别名 */
+  --menu-border-light: var(--menu-color-border-light);
+  --menu-border-primary: var(--menu-color-border);
+  --menu-border-focus: var(--menu-color-primary);
+  --menu-border-danger: var(--menu-color-danger);
+  
+  /* 文字颜色别名 */
+  --menu-text-primary: var(--menu-color-text-primary);
+  --menu-text-secondary: var(--menu-color-text-secondary);
+  --menu-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  
+  /* 强调色别名 */
+  --menu-accent-primary: var(--menu-color-primary);
+  --menu-accent-color: var(--menu-color-primary);
+  --menu-color-accent: var(--menu-color-primary);
+  
+  /* 图标尺寸 */
+  --menu-icon-size-sm: 16px;
+  --menu-icon-size-md: 20px;
+  
+  /* 背景色别名 */
+  --menu-bg-badge: var(--menu-bg-secondary);
+  --menu-bg-success: var(--menu-color-success);
+  --menu-bg-primary-hover: var(--menu-bg-hover);
+  --menu-bg-danger: var(--menu-color-danger);
+  --menu-bg-danger-hover: rgba(244, 67, 54, 0.8);
+  
+  /* 阴影别名 */
+  --menu-shadow-primary: var(--menu-shadow-md);
+  --menu-shadow-danger: var(--menu-shadow-md);
+  --menu-shadow-subtle: var(--menu-shadow-sm);
+  --menu-shadow-glow: 0 0 20px rgba(74, 144, 226, 0.3);
+  
+  /* DevCenterMenu 特定变量 */
+  --menu-text-color-inverse: var(--menu-color-text-white);
+  --menu-border-radius-large: var(--menu-radius-lg);
+  --menu-border-radius-medium: var(--menu-radius-md);
+  --menu-border-radius-small: var(--menu-radius-sm);
+  --menu-border-radius-tiny: var(--menu-radius-xs);
+  --menu-border-radius-full: 50px;
+  --menu-padding-large: var(--menu-spacing-lg);
+  --menu-padding-horizontal: var(--menu-spacing-md);
+  --menu-spacing-medium: var(--menu-spacing-md);
+  --menu-spacing-small: var(--menu-spacing-sm);
+  --menu-text-size-large: var(--menu-font-size-lg);
+  --menu-text-size-medium: var(--menu-font-size-md);
+  --menu-text-size-small: var(--menu-font-size-sm);
+  --menu-text-size-tiny: var(--menu-font-size-xs);
+  --menu-text-size-base: var(--menu-font-size-md);
+  --menu-text-weight-bold: var(--menu-font-weight-bold);
+  --menu-text-weight-medium: var(--menu-font-weight-medium);
+  --menu-text-weight-semibold: var(--menu-font-weight-semibold);
+  --menu-text-opacity-muted: 0.7;
+  --menu-item-bg-transparent: transparent;
+  --menu-item-bg-hover-transparent: rgba(255, 255, 255, 0.1);
+  --menu-item-bg-active: var(--menu-bg-active);
+  --menu-item-bg-variant: var(--menu-bg-tertiary);
+  --menu-border-color-light: var(--menu-color-border-light);
+  --menu-border-color-transparent: transparent;
+  --menu-border-color-variant: var(--menu-color-border);
+  --menu-item-padding-vertical: var(--menu-spacing-sm);
+  --menu-item-padding-horizontal: var(--menu-spacing-md);
+  --menu-item-transform-hover: translateY(-1px);
+  --menu-transition-base: var(--menu-transition-fast);
+  --menu-accent-gradient: var(--menu-bg-gradient-primary);
+  --menu-bg-dark: rgba(0, 0, 0, 0.8);
+  --menu-backdrop-filter: var(--menu-blur);
+  --menu-transition-reduced: none;
+}
+
+/* ===== 深色模式变量 ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 文字颜色调整 */
+    --menu-color-text-primary: #ffffff;
+    --menu-color-text-secondary: rgba(255, 255, 255, 0.7);
+    --menu-color-text-muted: rgba(255, 255, 255, 0.5);
+    
+    /* 边框颜色调整 */
+    --menu-color-border: rgba(255, 255, 255, 0.1);
+    --menu-color-border-light: rgba(255, 255, 255, 0.05);
+    --menu-color-divider: rgba(255, 255, 255, 0.08);
+    
+    /* 背景颜色调整 */
+    --menu-bg-primary: rgba(30, 30, 30, 0.9);
+    --menu-bg-secondary: rgba(255, 255, 255, 0.05);
+    --menu-bg-tertiary: rgba(255, 255, 255, 0.02);
+    
+    /* 阴影颜色调整 */
+    --menu-color-shadow: rgba(0, 0, 0, 0.3);
+    --menu-color-shadow-dark: rgba(0, 0, 0, 0.4);
+    --menu-color-shadow-light: rgba(0, 0, 0, 0.2);
+    
+    /* 渐变背景调整 */
+    --menu-bg-gradient-secondary: linear-gradient(135deg, rgba(30, 30, 30, 0.9) 0%, rgba(30, 30, 30, 0.7) 100%);
+  }
+}
+
+/* ===== 高对比度模式变量 ===== */
+@media (prefers-contrast: high) {
+  :root {
+    --menu-color-border: var(--menu-color-text-primary);
+    --menu-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* ===== 减少动画模式变量 ===== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --menu-transition-fast: none;
+    --menu-transition-normal: none;
+    --menu-transition-slow: none;
+  }
+}

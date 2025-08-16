@@ -9,24 +9,108 @@
     </div>
     
     <!-- 底部菜单栏，只在特定页面显示 -->
-    <BottomNavigation 
+    <BottomNavBar 
       v-if="showTabBar" 
       :current-path="$route.path"
     />
+    
+    <!-- WebSocket调试面板 -->
+    <WebSocketDebugPanel />
   </div>
 </template>
 
+<style scoped>
+/* 移除有害的position-reset.css引用 */
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #f5f5f5;
+}
+
+.main-content {
+  flex: 1;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.main-content.has-top-nav {
+  padding-top: 70px;
+}
+
+.main-content.has-bottom-nav {
+  padding-bottom: 80px;
+}
+
+/* 登录和注册页面特殊样式 */
+.auth-page .main-content {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* 确保正常的布局流 */
+.main-content > * {
+  position: relative;
+}
+</style>
+
+<style>
+/* 全局样式重置 */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #f5f5f5;
+  line-height: 1.6;
+}
+
+html {
+  height: 100%;
+}
+
+/* 确保路由视图正常显示 */
+.router-view {
+  width: 100%;
+  min-height: 100%;
+}
+</style>
+
 <script>
-import BottomNavigation from './components/BottomNavigation.vue'
+import BottomNavBar from './components/navigation/BottomNavBar.vue'
 import TopNavBar from './components/TopNavBar.vue'
 import elementPositionReset from './mixins/elementPositionReset.js'
+import './assets/css/style-fixes.css'
+import styleConflictResolver from './utils/styleConflictResolver.js'
+import { websocketDiagnostics } from './utils/websocketDiagnostics.js'
+import WebSocketDebugPanel from './components/WebSocketDebugPanel.vue'
 
 export default {
   name: 'App',
-  mixins: [elementPositionReset],
   components: {
-    BottomNavigation,
+    WebSocketDebugPanel,
+    BottomNavBar,
     TopNavBar
+  },
+  mixins: [elementPositionReset],
+  mounted() {
+    // 启动样式冲突解决器
+    styleConflictResolver.startAutoFix()
+    console.log('样式冲突解决器已启动')
+    
+    // 启动WebSocket诊断工具
+     websocketDiagnostics.init()
+     window.websocketDiagnostics = websocketDiagnostics
+     console.log('WebSocket诊断工具已启动')
   },
   computed: {
     showTabBar() {
@@ -50,58 +134,3 @@ export default {
   }
 }
 </script>
-
-<style>
-@import './assets/css/position-reset.css';
-
-#app {
-  min-height: 100vh;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 主内容区域 */
-.main-content {
-  flex: 1;
-  position: relative;
-  min-height: 100vh;
-}
-
-/* 有顶部导航时的内容区域 */
-.main-content.has-top-nav {
-  padding-top: 44px;
-  min-height: calc(100vh - 44px);
-}
-
-/* 有底部导航时的内容区域 */
-.main-content.has-bottom-nav {
-  padding-bottom: 60px;
-  min-height: calc(100vh - 60px);
-}
-
-/* 同时有顶部和底部导航时的内容区域 */
-.main-content.has-top-nav.has-bottom-nav {
-  padding-top: 44px;
-  padding-bottom: 60px;
-  min-height: calc(100vh - 104px);
-}
-
-/* 登录注册页面不需要间距 */
-.login-container,
-.register-container {
-  padding: 0 !important;
-}
-
-/* 全局样式重置 */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  background-color: #f5f5f5;
-}
-</style>

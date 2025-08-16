@@ -43,7 +43,7 @@ export default {
     async testRoles() {
       this.loading = true
       try {
-        const response = await fetch('http://127.0.0.1:8001/accounts/api/auth/roles/')
+        const response = await fetch('http://127.0.0.1:8000/accounts/api/auth/roles/')
         const data = await response.json()
         this.rolesResult = data
         console.log('角色API结果:', data)
@@ -62,7 +62,7 @@ export default {
       }
       
       try {
-        const response = await fetch(`http://127.0.0.1:8001/accounts/api/auth/role-extensions/?role=${this.selectedRole}`)
+        const response = await fetch(`http://127.0.0.1:8000/accounts/api/auth/role-extensions/?role=${this.selectedRole}`)
         const data = await response.json()
         this.extensionsResult = data
         console.log(`${this.selectedRole} 角色增项结果:`, data)
@@ -75,51 +75,3 @@ export default {
 }
 </script>
 
-<style scoped>
-.test-container {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-}
-
-.test-section {
-  margin-bottom: 30px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.result {
-  margin-top: 15px;
-  padding: 15px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-}
-
-pre {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-size: 12px;
-}
-
-button {
-  padding: 8px 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-select {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-right: 10px;
-}
-</style>
