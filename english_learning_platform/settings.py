@@ -34,6 +34,7 @@ THIRD_PARTY_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'guardian',  # django-guardian for object-level permissions
+    'channels',  # WebSocket support
 ]
 
 LOCAL_APPS = [

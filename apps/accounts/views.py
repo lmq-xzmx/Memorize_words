@@ -30,7 +30,7 @@ class CustomLoginView(LoginView):
         
         # 统一重定向到前端应用，避免跳转到后台管理页面
         # 前端应用会根据用户角色和权限进行相应的页面展示
-        return 'http://localhost:3004/'
+        return 'http://localhost:3000/'
     
     def form_valid(self, form):
         """表单验证成功"""

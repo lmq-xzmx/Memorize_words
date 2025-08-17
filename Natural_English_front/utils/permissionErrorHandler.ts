@@ -541,7 +541,7 @@ class PermissionErrorHandler {
   /**
    * 检查默认权限
    */
-  private checkDefaultPermission(permissions: string[], resource: string, action: string): boolean {
+  private checkDefaultPermission(permissions: string[], _resource: string, action: string): boolean {
     // 基本权限检查逻辑
     if (permissions.includes('admin')) {
       return true;
@@ -561,7 +561,7 @@ class PermissionErrorHandler {
   /**
    * 获取离线默认权限
    */
-  private getOfflineDefaultPermission(userId: string, resource: string, action: string): boolean {
+  private getOfflineDefaultPermission(userId: string, _resource: string, action: string): boolean {
     // 离线模式下的保守权限策略
     const userType = this.getUserType(userId);
     
@@ -581,7 +581,7 @@ class PermissionErrorHandler {
   /**
    * 获取有限权限
    */
-  private getLimitedPermissions(userId: string, resource: string): string[] {
+  private getLimitedPermissions(userId: string, _resource: string): string[] {
     const userType = this.getUserType(userId);
     
     const limitedPermissions: Record<string, string[]> = {
@@ -604,7 +604,7 @@ class PermissionErrorHandler {
   /**
    * 获取用户类型
    */
-  private getUserType(userId: string): string {
+  private getUserType(_userId: string): string {
     // 从缓存或本地存储获取用户信息
     try {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -617,7 +617,7 @@ class PermissionErrorHandler {
   /**
    * 获取默认结果
    */
-  private getDefaultResult(context: ErrorContext): PermissionResult {
+  private getDefaultResult(_context: ErrorContext): PermissionResult {
     return {
       success: false,
       permission: false,

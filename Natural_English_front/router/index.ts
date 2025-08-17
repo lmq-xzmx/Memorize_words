@@ -301,7 +301,7 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to: any, from: any, savedPosition: any) {
+  scrollBehavior(_to, _from, savedPosition) {
     if (savedPosition) {
       return savedPosition
     } else {
@@ -318,20 +318,83 @@ router.beforeEach(async (to, from, next) => {
   }
   
   try {
-    // 简单的认证检查
-    if (to.meta?.requiresAuth && !await isAuthenticated()) {
-      next('/login')
+    // 如果不需要认证，直接通过（包括首页、登录页、注册页等）
+    if (!to.meta?.requiresAuth) {
+      console.log(`路由 ${to.path} 不需要认证，直接通过`)
+      next()
       return
     }
-    next()
+    
+    console.log(`路由 ${to.path} 需要认证，开始检查登录状态`)
+    
+    // 检查本地存储中的登录状态
+    const token = localStorage.getItem('token')
+    const user = localStorage.getItem('user')
+    
+    // 如果本地有完整的登录信息，直接通过
+    if (token && user) {
+      try {
+        JSON.parse(user) // 验证用户信息格式
+        console.log('本地登录信息有效，允许访问')
+        next()
+        return
+      } catch (e) {
+        // 用户信息格式错误，清除并重新登录
+        console.warn('本地用户信息格式错误，清除缓存')
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
+    }
+    
+    // 如果来源是登录页面，给一点时间让认证状态同步
+    if (from.path === '/login') {
+      console.log('来自登录页，等待认证状态同步')
+      // 等待200ms让登录状态同步完成
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // 重新检查本地存储
+      const newToken = localStorage.getItem('token')
+      const newUser = localStorage.getItem('user')
+      
+      if (newToken && newUser) {
+        try {
+          JSON.parse(newUser)
+          console.log('登录后认证状态同步成功')
+          next()
+          return
+        } catch (e) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+        }
+      }
+    }
+    
+    // 最后尝试后端认证检查（仅对需要认证的页面）
+    console.log('尝试后端认证检查')
+    const authenticated = await isAuthenticated()
+    if (authenticated) {
+      console.log('后端认证通过')
+      next()
+    } else {
+      console.log('认证失败，重定向到登录页')
+      // 避免无限重定向
+      if (to.path !== '/login') {
+        next('/login')
+      } else {
+        next()
+      }
+    }
+    
   } catch (error) {
     console.error('路由权限检查失败:', error)
+    
     // 发生错误时的安全处理
-    const authenticated = await isAuthenticated()
-    if (!authenticated) {
-      next('/login')
+    if (to.path === '/login' || !to.meta?.requiresAuth) {
+      // 如果目标是登录页或不需要认证的页面，直接通过
+      next()
     } else {
-      next('/dashboard')
+      // 否则重定向到登录页
+      next('/login')
     }
   }
 })

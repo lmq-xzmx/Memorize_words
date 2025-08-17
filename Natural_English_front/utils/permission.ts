@@ -106,7 +106,7 @@ let permissionCacheStatus: PermissionCacheStatus = {
 // 权限同步配置
 const PERMISSION_SYNC_CONFIG: PermissionSyncConfig = {
   apiEndpoint: '/api/permissions/sync',
-  websocketEndpoint: 'ws://localhost:8001/ws/permissions/',
+  websocketEndpoint: 'ws://localhost:8000/ws/permissions/',
   syncInterval: 30 * 1000, // 30秒同步间隔
   retryAttempts: 5,
   retryDelay: 2000,
@@ -115,7 +115,7 @@ const PERMISSION_SYNC_CONFIG: PermissionSyncConfig = {
 
 // 旧版页面权限映射（向后兼容）
 const PAGE_PERMISSIONS_LEGACY: Record<string, string> = {
-  '/': 'view_word_learning',
+  // '/': 'view_word_learning', // 首页不需要权限，允许所有用户访问
   '/dashboard': 'view_dashboard',
   '/profile': 'view_own_profile',
   '/settings': 'change_own_settings',
@@ -381,7 +381,7 @@ export function getAccessibleMenus(userRole: string | string[], menuItems?: Menu
  * 获取当前用户信息
  * @returns 用户信息对象
  */
-export function getCurrentUser(): User | null {
+export async function getCurrentUser(): Promise<User | null> {
   try {
     const userStr = localStorage.getItem('user');
     if (!userStr) return null;
@@ -397,18 +397,18 @@ export function getCurrentUser(): User | null {
     const user = JSON.parse(userStr);
     // 验证用户对象的有效性
     if (user && typeof user === 'object' && !Array.isArray(user) && user.role) {
-      return user;
+      return Promise.resolve(user);
     }
     
     console.warn('用户数据格式无效，清除数据');
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    return null;
+    return Promise.resolve(null);
   } catch (error) {
     console.error('解析用户信息失败:', error);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
-    return null;
+    return Promise.resolve(null);
   }
 }
 
@@ -428,7 +428,7 @@ const AUTH_CACHE_DURATION = 5 * 60 * 1000;
  */
 export async function isAuthenticated(): Promise<boolean> {
   const token = localStorage.getItem('token');
-  const user = getCurrentUser();
+  const user = await getCurrentUser();
   
   // 如果前端有完整的登录信息，直接返回true
   if (token && user) {
@@ -523,8 +523,8 @@ export function requirePermission(permissions: string | string[], mode: 'any' | 
   return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
     
-    descriptor.value = function(...args: any[]) {
-      const user = getCurrentUser();
+    descriptor.value = async function(...args: any[]) {
+      const user = await getCurrentUser();
       if (!user) {
         console.warn('用户未登录');
         return;

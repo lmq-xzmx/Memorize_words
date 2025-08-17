@@ -71,7 +71,7 @@ export function useMenuManager(): MenuManagerReturn {
   const updateUserState = async () => {
     try {
       userInfo.value = getCurrentUser()
-      userAuthState.value = isAuthenticated()
+      userAuthState.value = await isAuthenticated()
       
       if (userInfo.value && userAuthState.value) {
         await loadDynamicMenuPermissions()

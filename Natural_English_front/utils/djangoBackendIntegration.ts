@@ -88,7 +88,7 @@ interface UserData {
 
 // Django后台API配置
 const DJANGO_CONFIG: DjangoConfig = {
-  baseURL: importMeta.env.VITE_DJANGO_ADMIN_URL || 'http://localhost:8001/admin',
+  baseURL: importMeta.env.VITE_DJANGO_ADMIN_URL || 'http://localhost:8000/admin',
   apiEndpoints: {
     permissions: '/api/permissions/',
     roles: '/api/roles/',
@@ -325,7 +325,7 @@ class DjangoBackendIntegration {
    * 设置WebSocket连接
    */
   setupWebSocket(): void {
-    const wsURL = importMeta.env.VITE_DJANGO_WS_URL || 'ws://127.0.0.1:8001/ws/permissions/';
+    const wsURL = importMeta.env.VITE_DJANGO_WS_URL || 'ws://127.0.0.1:8000/ws/permissions/';
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     

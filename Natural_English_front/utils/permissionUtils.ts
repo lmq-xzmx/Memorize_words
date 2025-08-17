@@ -3,8 +3,7 @@
  * 实现权限缓存机制，提高权限检查性能
  */
 
-import { ROLES } from './roleDefinitions'
-import { ALL_PERMISSIONS } from './unifiedPermissionConstants'
+// import { ROLES, ALL_PERMISSIONS } from './unifiedPermissionConstants'
 
 // 权限缓存相关类型定义
 interface CacheEntry {
@@ -268,13 +267,13 @@ class PermissionChecker {
   private user: User
   private userRole: string
   private userId: string
-  private userCache: Map<string, any>
+  private _userCache: Map<string, any> = new Map()
 
   constructor(user: User) {
     this.user = user
     this.userRole = user?.role || 'guest'
     this.userId = user?.id || ''
-    this.userCache = new Map()
+    this._userCache = new Map()
   }
 
   /**
@@ -337,7 +336,7 @@ class PermissionChecker {
   /**
    * 检查基础权限
    */
-  private _checkBasicPermission(permission: string, rolePermissions: RolePermissions, context: PermissionContext): boolean {
+  private _checkBasicPermission(permission: string, rolePermissions: RolePermissions, _context: PermissionContext): boolean {
     return rolePermissions.permissions && 
            (rolePermissions.permissions.includes('*') || 
             rolePermissions.permissions.includes(permission))
@@ -346,7 +345,7 @@ class PermissionChecker {
   /**
    * 检查菜单权限
    */
-  private _checkMenuPermission(menuId: string, rolePermissions: RolePermissions, context: PermissionContext): boolean {
+  private _checkMenuPermission(menuId: string, rolePermissions: RolePermissions, _context: PermissionContext): boolean {
     return rolePermissions.menus.includes(menuId) || rolePermissions.menus.includes('*')
   }
 
@@ -462,6 +461,7 @@ class PermissionChecker {
    * 清除用户权限缓存
    */
   clearUserCache(): void {
+    this._userCache.clear()
     for (const key of permissionCache.keys()) {
       if (key.startsWith(`${this.userId}_`)) {
         permissionCache.delete(key)

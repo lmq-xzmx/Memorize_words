@@ -1,8 +1,13 @@
 from django.contrib.auth.models import Permission
 from guardian.shortcuts import get_perms, get_objects_for_user
-from .models import RoleManagement
 from typing import Optional, Union
 import logging
+
+try:
+    from .models import RoleManagement, RoleGroupMapping
+except ImportError:
+    RoleManagement = None
+    RoleGroupMapping = None
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +23,12 @@ class RolePermissionChecker:
         self._permissions_cache = None
     
     @property
-    def role_management(self) -> Optional[RoleManagement]:
+    def role_management(self):
         """获取用户的角色管理对象（缓存）"""
-        if self._role_cache is None:
+        if self._role_cache is None and RoleManagement:
             try:
-                self._role_cache = RoleManagement.objects.get(role=self.user.role)
-            except RoleManagement.DoesNotExist:
+                self._role_cache = RoleManagement.objects.get(role=getattr(self.user, 'role', None))
+            except (RoleManagement.DoesNotExist, AttributeError):
                 self._role_cache = None
         return self._role_cache
     
@@ -116,11 +121,11 @@ class RolePermissionChecker:
         
         while current:
             hierarchy.append({
-                'role': current.role,
-                'display_name': current.display_name,
-                'level': current.get_hierarchy_level()
+                'role': getattr(current, 'role', ''),
+                'display_name': getattr(current, 'display_name', ''),
+                'level': getattr(current, 'get_hierarchy_level', lambda: 0)()
             })
-            current = current.parent
+            current = getattr(current, 'parent', None)
         
         return hierarchy
 
@@ -133,25 +138,27 @@ class PermissionUtils:
     @staticmethod
     def sync_role_permissions(role_management):
         """同步角色权限到Django组"""
-        from .models import RoleGroupMapping
         
+        if not RoleGroupMapping or not role_management:
+            return False
+            
         try:
             # 获取对应的Django组
-            mapping = RoleGroupMapping.objects.get(role=role_management.role)
+            mapping = RoleGroupMapping.objects.get(role=getattr(role_management, 'role', None))
             group = mapping.group
             
             # 清除现有权限
             group.permissions.clear()
             
             # 添加所有权限（包括继承的）
-            all_permissions = role_management.get_all_permissions()
+            all_permissions = getattr(role_management, 'get_all_permissions', lambda: [])()
             group.permissions.set(all_permissions)
             
-            logger.info(f"Synced {len(all_permissions)} permissions for role {role_management.role}")
+            logger.info(f"Synced {len(all_permissions)} permissions for role {getattr(role_management, 'role', 'unknown')}")
             return True
             
-        except RoleGroupMapping.DoesNotExist:
-            logger.warning(f"No group mapping found for role {role_management.role}")
+        except (RoleGroupMapping.DoesNotExist, AttributeError):
+            logger.warning(f"No group mapping found for role {getattr(role_management, 'role', 'unknown')}")
             return False
     
     @staticmethod
@@ -175,3 +182,19 @@ class PermissionUtils:
         """移除用户的对象级权限"""
         from guardian.shortcuts import remove_perm
         remove_perm(permission, user, obj)
+
+
+def get_user_permissions(user):
+    """获取用户的所有权限"""
+    if user.is_superuser:
+        return Permission.objects.all()
+    
+    checker = RolePermissionChecker(user)
+    return checker.all_permissions
+
+
+def get_user_role(user):
+    """获取用户的角色"""
+    if hasattr(user, 'role'):
+        return user.role
+    return None

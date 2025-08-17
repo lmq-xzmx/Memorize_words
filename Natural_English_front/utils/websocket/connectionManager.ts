@@ -6,8 +6,8 @@
 import { getWebSocketUrl } from '../../config/apiConfig';
 import globalErrorHandler from '../globalErrorHandler';
 
-// 声明performanceMonitor为any类型以处理JS模块导入问题
-const performanceMonitor: any = {} as any;
+// 性能监控器（暂时未使用）
+// const performanceMonitor: any = {} as any;
 
 // 接口定义
 interface ConnectionStatus {
@@ -31,6 +31,7 @@ export class ConnectionManager {
   public isConnected: boolean = false;
   private connectionListeners: ConnectionListener[] = [];
   public isOnline: boolean;
+  private token?: string;
   
   // 回调函数
   public onMessageReceived?: MessageHandler;
@@ -98,11 +99,18 @@ export class ConnectionManager {
   }
 
   /**
+   * 设置认证token
+   */
+  public setToken(token: string): void {
+    this.token = token;
+  }
+
+  /**
    * 获取WebSocket URL
    */
   private getWebSocketUrl(): string {
     try {
-      return getWebSocketUrl();
+      return getWebSocketUrl(this.token);
     } catch (error) {
       console.error('[WebSocket] 获取WebSocket URL失败:', error);
       throw error;
@@ -112,7 +120,7 @@ export class ConnectionManager {
   /**
    * 处理连接打开事件
    */
-  private handleOpen(event: Event): void {
+  private handleOpen(_event: Event): void {
     console.log('[WebSocket] 连接已建立');
     this.isConnected = true;
     

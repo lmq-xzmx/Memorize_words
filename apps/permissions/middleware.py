@@ -42,6 +42,10 @@ class EnhancedRBACMiddleware:
         }
     
     def __call__(self, request):
+        # 跳过WebSocket请求 - WebSocket请求由ASGI处理，不应该被HTTP中间件拦截
+        if hasattr(request, 'META') and request.META.get('HTTP_UPGRADE') == 'websocket':
+            return self.get_response(request)
+        
         # 检查是否需要权限验证
         if self.should_exempt(request):
             return self.get_response(request)
@@ -57,7 +61,7 @@ class EnhancedRBACMiddleware:
         # 执行权限检查
         if not self.check_permissions(request):
             logger.warning(f"Access denied for user {request.user.username} to {request.path}")
-            return HttpResponseForbidden("您没有访问此页面的权限")
+            return HttpResponseForbidden("您没有访问此页面的权限".encode('utf-8'))
         
         response = self.get_response(request)
         return response
@@ -205,3 +209,97 @@ class ObjectPermissionChecker:
             return klass.objects.all()
         
         return get_objects_for_user(self.user, perm, klass)
+
+
+# WebSocket认证中间件
+from urllib.parse import parse_qs
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+try:
+    from channels.middleware import BaseMiddleware
+    from channels.db import database_sync_to_async
+    from rest_framework_simplejwt.tokens import UntypedToken
+    from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+    import jwt
+    WEBSOCKET_AVAILABLE = True
+except ImportError:
+    WEBSOCKET_AVAILABLE = False
+    BaseMiddleware = object
+    database_sync_to_async = lambda f: f
+
+from django.conf import settings
+
+User = get_user_model()
+
+
+if WEBSOCKET_AVAILABLE:
+    class TokenAuthMiddleware:
+        """
+        WebSocket Token认证中间件
+        从URL查询参数中获取token并验证用户身份
+        """
+        
+        def __init__(self, inner):
+            super().__init__(inner)
+        
+        async def __call__(self, scope, receive, send):
+            # 只处理WebSocket连接
+            if scope['type'] == 'websocket':
+                # 从查询字符串中获取token
+                query_string = scope.get('query_string', b'').decode()
+                query_params = parse_qs(query_string)
+                token = query_params.get('token', [None])[0]
+                
+                if token:
+                    user = await self.get_user_from_token(token)
+                    scope['user'] = user
+                else:
+                    scope['user'] = self.get_anonymous_user()
+            
+            return await self.inner(scope, receive, send)
+        
+        def get_anonymous_user(self):
+            from django.contrib.auth.models import AnonymousUser
+            return AnonymousUser()
+        
+        @database_sync_to_async
+        def get_user_from_token(self, token):
+            """
+            从token获取用户
+            """
+            try:
+                # 简单的token验证
+                import jwt
+                from django.conf import settings
+                
+                # 解码token
+                payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+                user_id = payload.get('user_id')
+                
+                if user_id:
+                    user = User.objects.get(id=user_id)
+                    if user.is_active:
+                        logger.info(f"WebSocket token认证成功: 用户 {user.username}")
+                        return user
+                    else:
+                        logger.warning(f"WebSocket token认证失败: 用户 {user.username} 已被禁用")
+                
+            except Exception as e:
+                logger.warning(f"WebSocket token认证失败: {e}")
+            
+            from django.contrib.auth.models import AnonymousUser
+            return AnonymousUser()
+else:
+    class TokenAuthMiddleware:
+        def __init__(self, inner):
+            self.inner = inner
+        
+        def __call__(self, scope, receive, send):
+            return self.inner(scope, receive, send)
+
+
+def TokenAuthMiddlewareStack(inner):
+    """
+    Token认证中间件栈
+    """
+    return TokenAuthMiddleware(inner)

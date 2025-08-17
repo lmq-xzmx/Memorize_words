@@ -110,7 +110,7 @@ interface WordSearchParams {
 
 // 创建 axios 实例
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.MODE === 'production' ? '/api' : 'http://127.0.0.1:8001/api',
+  baseURL: import.meta.env.MODE === 'production' ? '/api' : 'http://127.0.0.1:8000/api',
   timeout: 15000, // 增加超时时间
   headers: {
     'Content-Type': 'application/json',

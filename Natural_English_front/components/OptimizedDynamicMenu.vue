@@ -82,13 +82,13 @@
           <span>开发工具</span>
         </div>
         <nav class="dev-menu">
-          <dev-tool-item
+          <menu-item
             v-for="tool in devToolMenus"
             :key="tool.id"
-            :tool="tool"
-            :enabled="isDevToolEnabled(tool.id)"
+            :menu="tool"
+            :active="activeMenu === tool.id"
             :collapsed="isCollapsed"
-            @toggle="handleDevToolToggle"
+            :compact="true"
             @click="handleMenuClick"
           />
         </nav>

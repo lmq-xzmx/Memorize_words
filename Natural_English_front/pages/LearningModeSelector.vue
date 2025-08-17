@@ -1024,14 +1024,9 @@ export default {
       if (success) {
         this.selectedHomepage = mode
         
-        // 显示设置成功提示并跳转
+        // 只显示设置成功提示，不自动跳转
         this.$nextTick(() => {
-          this.$showSuccess(`已将"${homepageManager.getModeName(mode)}"设置为首页，正在跳转...`)
-          
-          // 延迟跳转，让用户看到成功提示
-          setTimeout(() => {
-            this.navigateToMode(mode)
-          }, 1000)
+          this.$showSuccess(`已将"${homepageManager.getModeName(mode)}"设置为首页`)
         })
       } else {
         this.$showError('设置首页失败，请重试')
@@ -1081,20 +1076,9 @@ export default {
       }
     })
     
-    // 检查是否禁用重定向
-    const noRedirect = this.$route.query['no-redirect'] === 'true'
-    
-    // 只有在根路径（/）或首页相关路径时才执行重定向
-    // 避免在学习模式页面中触发不必要的重定向
-    const shouldCheckRedirect = ['/', '/index', '/dashboard', '/home'].includes(this.$route.path)
-    
-    // 如果没有禁用重定向且在合适的路径下，则检查并执行首页重定向
-    if (!noRedirect && shouldCheckRedirect) {
-      const redirected = homepageManager.performHomepageRedirect(this.$router, this.$route)
-      if (redirected) {
-        return
-      }
-    }
+    // 暂时禁用自动重定向功能
+    // 这样可以避免登录后立即跳转的问题
+    console.log('LearningModeSelector: 已禁用自动重定向，用户可手动选择学习模式')
   }
 }
 </script>

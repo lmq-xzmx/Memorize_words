@@ -6,19 +6,21 @@
 
 import type { App, DirectiveBinding } from 'vue'
 
-// 声明require函数
-declare const require: any
+// 导入权限常量和角色定义
+import unifiedPermissionConstants from '../utils/unifiedPermissionConstants'
+import * as roleDefinitions from '../utils/roleDefinitions'
 
-// 临时使用any类型避免模块声明问题
+// 解构权限常量
 const {
   MANAGEMENT_PERMISSIONS,
   SYSTEM_PERMISSIONS
-} = require('../utils/unifiedPermissionConstants') as any
+} = unifiedPermissionConstants
 
+// 解构角色定义函数
 const {
   getRolePermissions,
   roleHasPermission
-} = require('../utils/roleDefinitions') as any
+} = roleDefinitions
 
 // 用户信息接口
 interface UserInfo {

@@ -100,7 +100,9 @@ export interface Roles {
   TEACHER: string
   PARENT: string
   ACADEMIC_DIRECTOR: string
+  ACADEMIC_SUPERVISOR: string
   RESEARCH_LEADER: string
+  RESEARCH_MANAGER: string
   DEAN: string
   ADMIN: string
 }
@@ -287,7 +289,9 @@ export const ROLES: Roles = {
   TEACHER: 'teacher',                    // 自由老师
   PARENT: 'parent',                      // 家长
   ACADEMIC_DIRECTOR: 'academic_director', // 教务主任
+  ACADEMIC_SUPERVISOR: 'academic_supervisor', // 学术监督
   RESEARCH_LEADER: 'research_leader',    // 教研组长
+  RESEARCH_MANAGER: 'research_manager',  // 研究管理员
   DEAN: 'dean',                         // 教导主任
   ADMIN: 'admin'                        // 管理员
 }
@@ -298,7 +302,9 @@ export const ROLE_DISPLAY_NAMES: RoleDisplayNames = {
   [ROLES.TEACHER]: '自由老师',
   [ROLES.PARENT]: '家长',
   [ROLES.ACADEMIC_DIRECTOR]: '教务主任',
+  [ROLES.ACADEMIC_SUPERVISOR]: '学术监督',
   [ROLES.RESEARCH_LEADER]: '教研组长',
+  [ROLES.RESEARCH_MANAGER]: '研究管理员',
   [ROLES.DEAN]: '教导主任',
   [ROLES.ADMIN]: '管理员'
 }
@@ -309,7 +315,9 @@ export const ROLE_HIERARCHY: RoleHierarchy = {
   [ROLES.PARENT]: 1,
   [ROLES.TEACHER]: 2,
   [ROLES.ACADEMIC_DIRECTOR]: 3,
+  [ROLES.ACADEMIC_SUPERVISOR]: 3,
   [ROLES.RESEARCH_LEADER]: 4,
+  [ROLES.RESEARCH_MANAGER]: 4,
   [ROLES.DEAN]: 5,
   [ROLES.ADMIN]: 6
 }
@@ -318,7 +326,9 @@ export const ROLE_HIERARCHY: RoleHierarchy = {
 export const ROLE_INHERITANCE: RoleInheritance = {
   [ROLES.TEACHER]: [ROLES.STUDENT],
   [ROLES.ACADEMIC_DIRECTOR]: [ROLES.TEACHER],
+  [ROLES.ACADEMIC_SUPERVISOR]: [ROLES.TEACHER],
   [ROLES.RESEARCH_LEADER]: [ROLES.TEACHER],
+  [ROLES.RESEARCH_MANAGER]: [ROLES.TEACHER],
   [ROLES.DEAN]: [ROLES.ACADEMIC_DIRECTOR, ROLES.RESEARCH_LEADER],
   [ROLES.ADMIN]: [ROLES.DEAN]
 }
@@ -757,7 +767,7 @@ export function getAccessibleLearningModes(userPermissions: string[]): Accessibl
  */
 export function getAllAccessiblePages(userPermissions: string[]): AccessiblePage[] {
   return Object.entries(PAGE_PERMISSIONS)
-    .filter(([path, config]) => canAccessPage(userPermissions, path))
+    .filter(([path, _config]) => canAccessPage(userPermissions, path))
     .map(([path, config]) => ({
       path,
       ...config

@@ -2,6 +2,7 @@ from django.core.cache import cache
 from django.db.models import Q
 from typing import List, Dict, Tuple, Optional
 from apps.accounts.models import UserRole
+from asgiref.sync import sync_to_async
 
 # 动态导入，避免循环导入
 try:
@@ -30,17 +31,9 @@ class RoleService:
             # 1. 添加预定义角色
             predefined_roles = {choice[0]: choice[1] for choice in UserRole.choices}
             
-            # 2. 获取角色管理中的所有角色
-            if RoleManagement:
-                query = RoleManagement.objects.all()
-                if not include_inactive:
-                    query = query.filter(is_active=True)
-                
-                role_management_data = query.values(
-                    'role', 'display_name', 'description', 'is_active', 'sort_order'
-                ).order_by('sort_order', 'role')
-            else:
-                role_management_data = []
+            # 2. 获取角色管理数据（暂时禁用以避免异步上下文问题）
+            role_management_data = []
+            # TODO: 重新启用RoleManagement查询，需要解决异步上下文问题
             
             # 3. 合并角色数据
             processed_roles = set()
@@ -106,26 +99,10 @@ class RoleService:
         if hierarchy is None:
             hierarchy = {}
             
-            # 从RoleManagement获取父子关系
-            if RoleManagement:
-                try:
-                    role_relations = RoleManagement.objects.filter(
-                        is_active=True,
-                        parent__isnull=False
-                    ).values('role', 'parent__role')
-                    
-                    for relation in role_relations:
-                        parent = relation['parent__role']
-                        child = relation['role']
-                        
-                        if parent not in hierarchy:
-                            hierarchy[parent] = []
-                        hierarchy[parent].append(child)
-                except Exception as e:
-                    # 如果RoleManagement没有parent字段，使用默认层级
-                    hierarchy = cls._get_default_hierarchy()
-            else:
-                hierarchy = cls._get_default_hierarchy()
+            # 从RoleManagement获取父子关系（暂时禁用以避免异步上下文问题）
+            # TODO: 重新启用RoleManagement层级查询，需要解决异步上下文问题
+            # 使用默认层级结构
+            hierarchy = cls._get_default_hierarchy()
             
             cache.set(cls.CACHE_KEY_ROLE_HIERARCHY, hierarchy, cls.CACHE_TIMEOUT)
         

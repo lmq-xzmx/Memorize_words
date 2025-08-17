@@ -29,11 +29,6 @@ declare global {
 }
 
 // 模块声明
-declare module './router' {
-  import type { Router } from 'vue-router'
-  const router: Router
-  export default router
-}
 
 declare module './store' {
   import type { Store } from 'vuex'
@@ -42,13 +37,7 @@ declare module './store' {
 }
 
 // 工具模块声明
-declare module './utils/styleConflictResolver' {
-  const styleConflictResolver: {
-    resolveAllConflicts: () => void
-    startAutoFix: () => void
-  }
-  export default styleConflictResolver
-}
+
 
 declare module './utils/authSync' {
   export const initAuthSync: () => Promise<any>

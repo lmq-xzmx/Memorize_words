@@ -133,10 +133,17 @@ export function buildPageUrl(path: string): string {
 }
 
 // 获取WebSocket URL
-export function getWebSocketUrl(): string {
+export function getWebSocketUrl(token?: string): string {
   const protocol = (import.meta as any).env.MODE === 'production' ? 'wss:' : 'ws:'
-  const host = (import.meta as any).env.MODE === 'production' ? window.location.host : '127.0.0.1:8001'
-  return `${protocol}//${host}/ws/`
+  const host = (import.meta as any).env.MODE === 'production' ? window.location.host : '127.0.0.1:8000'
+  const baseUrl = `${protocol}//${host}/ws/permissions/`
+  
+  // 如果提供了token，添加到查询参数中
+  if (token) {
+    return `${baseUrl}?token=${encodeURIComponent(token)}`
+  }
+  
+  return baseUrl
 }
 
 // API配置对象

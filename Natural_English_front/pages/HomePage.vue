@@ -6,8 +6,16 @@
       <p>正在跳转到您的首页...</p>
     </div>
     
-    <!-- 如果没有设置首页，显示学习模式选择器 -->
-    <LearningModeSelector v-else />
+    <div v-else>
+      <!-- 调试工具 - 仅在开发环境显示 -->
+      <div v-if="isDevelopment" class="debug-tools" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-size: 12px;">
+        <div>当前首页设置: {{ currentHomepage || '无' }}</div>
+        <button @click="clearHomepageSettings" style="margin-top: 5px; padding: 5px 10px; background: #ff4444; color: white; border: none; border-radius: 3px; cursor: pointer;">清除首页设置</button>
+        <button @click="forceShowSelector" style="margin-top: 5px; margin-left: 5px; padding: 5px 10px; background: #4444ff; color: white; border: none; border-radius: 3px; cursor: pointer;">强制显示选择器</button>
+      </div>
+      <!-- 如果没有设置首页，显示学习模式选择器 -->
+      <LearningModeSelector />
+    </div>
   </div>
 </template>
 
@@ -322,50 +330,60 @@ export default {
   },
   data() {
     return {
-      isLoading: true
+      isLoading: true,
+      isDevelopment: process.env.NODE_ENV === 'development',
+      currentHomepage: null
     }
   },
   mounted() {
+    this.currentHomepage = homepageManager.getHomepage()
     this.handleHomepageRedirect()
   },
   methods: {
-    handleHomepageRedirect() {
+    async handleHomepageRedirect() {
       try {
-        // 检查用户是否已登录
-        if (!isAuthenticated()) {
-          console.log('用户未登录，显示学习模式选择器')
+        console.log('HomePage: 开始处理首页逻辑')
+        
+        // 调试：检查当前路径和查询参数
+        console.log('当前路径:', this.$route.path)
+        console.log('查询参数:', this.$route.query)
+        
+        // 如果URL包含 force=true 参数，清除首页设置并显示选择器
+        if (this.$route.query && this.$route.query.force === 'true') {
+          console.log('检测到force参数，清除首页设置')
+          homepageManager.clearHomepage()
           this.isLoading = false
           return
         }
         
-        const user = getCurrentUser()
-        console.log('当前用户:', user)
+        // 检查是否有设置的首页
+        const currentHomepage = homepageManager.getHomepage()
+        console.log('当前设置的首页:', currentHomepage)
+        this.currentHomepage = currentHomepage
         
-        // 检查用户信息是否完整
-        if (!user || !user.role) {
-          console.log('用户信息不完整，显示学习模式选择器')
-          this.isLoading = false
-          return
-        }
-        
-        // 检查是否有设置的首页（带权限验证）
-        const redirectInfo = homepageManager.checkHomepageRedirect(
-          this.$route, 
-          (permission) => hasPermission(user.role, permission)
-        )
-        
-        if (redirectInfo) {
-          console.log(`重定向到设置的首页: ${redirectInfo.name} (${redirectInfo.route})`)
-          this.$router.push(redirectInfo.route)
-          return
-        }
-        
-        // 如果没有设置首页或路由无效，显示学习模式选择器
+        // 暂时禁用自动重定向，让用户手动选择
+        // 这样可以避免登录后立即跳转的问题
+        console.log('首页加载完成，显示学习模式选择器')
         this.isLoading = false
+        
       } catch (error) {
-        console.error('首页重定向失败:', error)
+        console.error('首页处理失败:', error)
         this.isLoading = false
       }
+    },
+    
+    clearHomepageSettings() {
+      homepageManager.clearHomepage()
+      this.currentHomepage = null
+      console.log('首页设置已清除')
+      // 刷新页面以重新显示选择器
+      this.$forceUpdate()
+    },
+    
+    forceShowSelector() {
+      this.isLoading = false
+      this.currentHomepage = null
+      console.log('强制显示学习模式选择器')
     }
   }
 }

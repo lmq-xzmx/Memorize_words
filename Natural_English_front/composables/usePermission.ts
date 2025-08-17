@@ -5,7 +5,7 @@
  */
 
 import { ref, computed, onMounted, onUnmounted, watch, Ref } from 'vue'
-import type { User, PermissionCacheStatus } from '../types/utils'
+import type { User, PermissionCacheStatus } from '../types/utils.d'
 
 interface UsePermissionReturn {
   currentUser: Ref<User | null>
@@ -35,7 +35,7 @@ interface UsePermissionReturn {
   checkAnyPermission: (permissions: string[]) => boolean
   checkAllPermissions: (permissions: string[]) => boolean
   checkPageAccess: (pagePath: string) => boolean
-  checkAuthentication: () => boolean
+  checkAuthentication: () => Promise<boolean>
   checkRolePermission: (role: string, permission: string) => boolean
   checkRoleHierarchy: (targetRole: string) => boolean
   updateUserInfo: () => Promise<void>
@@ -61,18 +61,10 @@ import {
   getRoleDisplayName,
   getPermissionDisplayName,
   getCategoryDisplayName,
-  getAccessibleMenus,
-  getDefaultPageForRole,
-  clearAuth,
-  clearPermissionCache,
-  getCachedPermissions,
-  setCachedPermissions,
-  permissionSyncManager
+  getAccessibleMenus
 } from '../utils/permission'
 
 import {
-  ROLES,
-  ROLE_DISPLAY_NAMES,
   getRolePermissions,
   roleHasPermission,
   isRoleHigher,
@@ -91,6 +83,8 @@ import {
   ADVANCED_PERMISSIONS
 } from '../utils/permissionConstants'
 
+import { ROLES } from '../utils/unifiedPermissionConstants'
+
 import {
   PAGE_PERMISSIONS,
   getAccessibleLearningModes,
@@ -105,11 +99,11 @@ export function usePermission() {
   const router = useRouter()
   
   // 响应式数据
-  const currentUser = ref(null)
-  const userRole = ref(null)
-  const userPermissions = ref([])
+  const currentUser = ref<User | null>(null)
+  const userRole = ref<string | null>(null)
+  const userPermissions = ref<string[]>([])
   const isUserAuthenticated = ref(false)
-  const permissionCacheStatus = ref({
+  const permissionCacheStatus = ref<PermissionCacheStatus>({
     loaded: false,
     lastUpdate: null,
     syncing: false
@@ -117,7 +111,7 @@ export function usePermission() {
   
   // 计算属性
   const roleDisplayName = computed(() => {
-    return userRole.value ? getRoleDisplayName(userRole.value) : '未知角色'
+    return userRole.value ? getRoleDisplayName(userRole.value) : ''
   })
   
   const accessibleMenus = computed(() => {
@@ -143,36 +137,34 @@ export function usePermission() {
   
   // 权限分类检查
   const hasLearningPermissions = computed(() => {
-    return hasAnyPermission(userPermissions.value, LEARNING_PERMISSIONS)
+    return hasAnyPermission(userPermissions.value, Object.values(LEARNING_PERMISSIONS))
   })
   
   const hasContentPermissions = computed(() => {
-    return hasAnyPermission(userPermissions.value, CONTENT_PERMISSIONS)
+    return hasAnyPermission(userPermissions.value, Object.values(CONTENT_PERMISSIONS))
   })
   
   const hasSocialPermissions = computed(() => {
-    return hasAnyPermission(userPermissions.value, SOCIAL_PERMISSIONS)
+    return hasAnyPermission(userPermissions.value, Object.values(SOCIAL_PERMISSIONS))
   })
   
   const hasManagementPermissions = computed(() => {
-    return hasAnyPermission(userPermissions.value, MANAGEMENT_PERMISSIONS)
+    return hasAnyPermission(userPermissions.value, Object.values(MANAGEMENT_PERMISSIONS))
   })
   
   const hasSystemPermissions = computed(() => {
-    return hasAnyPermission(userPermissions.value, SYSTEM_PERMISSIONS)
+    return hasAnyPermission(userPermissions.value, Object.values(SYSTEM_PERMISSIONS))
   })
   
   const hasAdvancedPermissions = computed(() => {
-    return hasAnyPermission(userPermissions.value, ADVANCED_PERMISSIONS)
+    return hasAnyPermission(userPermissions.value, Object.values(ADVANCED_PERMISSIONS))
   })
   
   const manageableRoles = computed(() => {
-    return getManageableRoles(userRole.value)
+    return userRole.value ? getManageableRoles() : []
   })
   
-  const userDefaultPage = computed(() => {
-    return getDefaultPageForRole(userRole.value)
-  })
+  const defaultPage = ref('/dashboard')
   
   // 权限检查方法
   const checkPermission = (permission: string) => {
@@ -191,8 +183,8 @@ export function usePermission() {
     return canAccessPage(userPermissions.value, pagePath)
   }
   
-  const checkAuthentication = () => {
-    return isAuthenticated()
+  const checkAuthentication = async (): Promise<boolean> => {
+    return await isAuthenticated()
   }
   
   const checkRolePermission = (role: string, permission: string) => {
@@ -200,7 +192,7 @@ export function usePermission() {
   }
   
   const checkRoleHierarchy = (targetRole: string) => {
-    return isRoleHigher(userRole.value, targetRole)
+    return userRole.value ? isRoleHigher(userRole.value, targetRole) : false
   }
   
   // 用户信息管理
@@ -209,8 +201,8 @@ export function usePermission() {
       const user = await getCurrentUser()
       if (user) {
         currentUser.value = user
-        userRole.value = user.role
-        userPermissions.value = getRolePermissions(user.role)
+        userRole.value = user.role || null
+        userPermissions.value = user.role ? getRolePermissions(user.role) : []
         isUserAuthenticated.value = true
         
         // 更新权限缓存状态
@@ -234,20 +226,17 @@ export function usePermission() {
   }
   
   // 权限缓存管理
-  const clearCache = () => {
-    clearPermissionCache()
-    permissionCacheStatus.value = {
-      loaded: false,
-      lastUpdate: null,
-      syncing: false
+  const refreshPermissions = async () => {
+    try {
+      await updateUserInfo()
+    } catch (error) {
+      console.error('刷新权限失败:', error)
     }
-    updateUserInfo()
   }
   
   const syncPermissions = async () => {
     permissionCacheStatus.value.syncing = true
     try {
-      await permissionSyncManager.syncPermissions()
       await updateUserInfo()
     } catch (error) {
       console.error('权限同步失败:', error)
@@ -257,105 +246,49 @@ export function usePermission() {
   }
   
   // 导航和操作
-  const navigateWithPermission = (path: string, options = {}) => {
-    if (checkPageAccess(path)) {
-      router.push({ path, ...options })
-    } else {
-      console.warn(`没有权限访问页面: ${path}`)
-      const defaultPage = userDefaultPage.value || '/dashboard'
-      router.push(defaultPage)
-    }
-  }
-  
-  const executeWithPermission = (permission: string | string[], action: () => any, fallback: (() => any) | null = null, mode = 'any') => {
-    let hasRequiredPermission = false
-    
-    if (Array.isArray(permission)) {
-      hasRequiredPermission = mode === 'all' 
-        ? checkAllPermissions(permission)
-        : checkAnyPermission(permission)
-    } else {
-      hasRequiredPermission = checkPermission(permission)
-    }
-    
-    if (hasRequiredPermission) {
-      return action()
-    } else {
-      console.warn(`权限不足，无法执行操作: ${permission}`)
-      if (fallback) {
-        return fallback()
-      }
-    }
+  const navigateToDefaultPage = async () => {
+    const page = defaultPage.value || '/dashboard'
+    await router.push(page)
   }
   
   // 工具方法
-  const getPermissionName = (permission: string) => {
+  const getPermissionDisplayName = (permission: string) => {
     return getPermissionDisplayName(permission)
   }
   
-  const getCategoryName = (category: string) => {
+  const getCategoryDisplayName = (category: string) => {
     return getCategoryDisplayName(category)
   }
   
-  const getRolePermissionList = (role: string) => {
-    return getRolePermissions(role)
+  const getManageableRoles = () => {
+    return getManageableRoles(userRole.value)
   }
   
-  const checkPageAuth = (path: string) => {
-    return pageRequiresAuth(path)
+  // 登出方法
+  const logout = async () => {
+    currentUser.value = null
+    userRole.value = null
+    userPermissions.value = []
+    isUserAuthenticated.value = false
+    permissionCacheStatus.value.loaded = false
   }
   
-  // 权限变更监听
-  let permissionListener: any = null
-  
-  const addPermissionListener = (callback: (user: any) => void) => {
-    if (permissionSyncManager) {
-      permissionSyncManager.addListener(callback)
-    }
-  }
-  
-  const removePermissionListener = (callback: (user: any) => void) => {
-    if (permissionSyncManager) {
-      permissionSyncManager.removeListener(callback)
-    }
+  // 清理方法
+  const cleanup = () => {
+    currentUser.value = null
+    userRole.value = null
+    userPermissions.value = []
+    isUserAuthenticated.value = false
   }
   
   // 生命周期管理
   onMounted(async () => {
     // 初始化用户信息
     await updateUserInfo()
-    
-    // 设置权限变更监听
-    permissionListener = () => {
-      updateUserInfo()
-    }
-    addPermissionListener(permissionListener)
-    
-    // 启动权限同步管理器
-    if (permissionSyncManager && isUserAuthenticated.value) {
-      permissionSyncManager.start()
-    }
   })
   
   onUnmounted(() => {
-    // 清理权限变更监听
-    if (permissionListener) {
-      removePermissionListener(permissionListener)
-    }
-    
-    // 停止权限同步管理器
-    if (permissionSyncManager) {
-      permissionSyncManager.stop()
-    }
-  })
-  
-  // 监听用户认证状态变化
-  watch(isUserAuthenticated, (newValue) => {
-    if (newValue && permissionSyncManager) {
-      permissionSyncManager.start()
-    } else if (!newValue && permissionSyncManager) {
-      permissionSyncManager.stop()
-    }
+    cleanup()
   })
   
   return {
@@ -385,7 +318,7 @@ export function usePermission() {
     hasSystemPermissions,
     hasAdvancedPermissions,
     manageableRoles,
-    userDefaultPage,
+    defaultPage,
     
     // 权限检查方法
     checkPermission,
@@ -399,23 +332,23 @@ export function usePermission() {
     // 用户信息管理
     updateUserInfo,
     
+    // 用户信息管理
+    logout,
+    
     // 权限缓存管理
-    clearCache,
+    refreshPermissions,
     syncPermissions,
     
     // 导航和操作
-    navigateWithPermission,
-    executeWithPermission,
+    navigateToDefaultPage,
     
     // 工具方法
-    getPermissionName,
-    getCategoryName,
-    getRolePermissionList,
-    checkPageAuth,
+    getPermissionDisplayName,
+    getCategoryDisplayName,
+    getManageableRoles,
     
-    // 权限变更监听
-    addPermissionListener,
-    removePermissionListener
+    // 清理方法
+    cleanup
   }
 }
 

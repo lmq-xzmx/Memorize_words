@@ -25,7 +25,7 @@ declare module '*/utils/authSync' {
 // 权限指令类型声明
 declare module '*/directives/permission' {
   import type { App } from 'vue'
-  export function installPermissionDirectives(app: App): void
+  // 权限指令相关类型已在实际模块中定义
 }
 
 // 全局错误处理器类型声明

@@ -83,10 +83,10 @@ class MenuStateManager {
   }
   
   // 更新用户状态
-  public updateUserState(): void {
+  public async updateUserState(): Promise<void> {
     try {
       this.state.currentUser = getCurrentUser()
-      this.state.isAuthenticated = isAuthenticated()
+      this.state.isAuthenticated = await isAuthenticated()
     } catch (error) {
       console.error('更新用户状态失败:', error)
       this.state.currentUser = null

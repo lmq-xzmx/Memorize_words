@@ -103,7 +103,6 @@ class PermissionPerformanceMonitor {
   private metrics: PerformanceMetrics;
   private performanceThresholds: PerformanceThresholds;
   private startTime: number;
-  private isMonitoring: boolean;
   private monitoringInterval: NodeJS.Timeout | null;
 
   constructor() {
@@ -127,7 +126,6 @@ class PermissionPerformanceMonitor {
     };
     
     this.startTime = Date.now();
-    this.isMonitoring = false;
     this.monitoringInterval = null;
   }
 
@@ -135,7 +133,6 @@ class PermissionPerformanceMonitor {
    * 开始性能监控
    */
   startMonitoring(): void {
-    this.isMonitoring = true;
     this.startTime = Date.now();
     
     // 定期收集性能指标
@@ -150,8 +147,6 @@ class PermissionPerformanceMonitor {
    * 停止性能监控
    */
   stopMonitoring(): void {
-    this.isMonitoring = false;
-    
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
@@ -684,7 +679,7 @@ class PermissionPerformanceOptimizer {
   /**
    * 直接权限检查
    */
-  async directPermissionCheck(permission: string): Promise<boolean> {
+  async directPermissionCheck(_permission: string): Promise<boolean> {
     // 这里应该调用实际的权限检查逻辑
     return false;
   }

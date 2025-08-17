@@ -359,7 +359,7 @@ class PermissionPerformanceMonitor {
     /**
      * 记录缓存操作
      */
-    recordCacheOperation(operation: 'hit' | 'miss' | 'eviction', details: Record<string, any> = {}): void {
+    recordCacheOperation(operation: 'hit' | 'miss' | 'eviction', _details: Record<string, any> = {}): void {
         if (!this.isMonitoring) return;
         
         switch (operation) {
@@ -482,7 +482,7 @@ class PermissionPerformanceMonitor {
     /**
      * 检查API性能警告
      */
-    private checkApiPerformanceAlerts(requestData: any): void {
+    private checkApiPerformanceAlerts(_requestData: any): void {
         const errorRate = this.metrics.api.errors / this.metrics.api.requests;
         
         if (errorRate > this.performanceThresholds.apiErrorRateWarning) {

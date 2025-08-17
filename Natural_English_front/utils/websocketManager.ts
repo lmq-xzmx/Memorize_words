@@ -1,14 +1,12 @@
 /**
- * WebSocket连接管理器 - 重构版本
- * 提供稳定的WebSocket连接、自动重连机制和权限变更通知
+ * WebSocket连接管理器 - 简化版本
+ * 提供基本的WebSocket连接和消息处理功能
  */
 
-import { ConnectionManager, ConnectionStatus, ConnectionListener, MessageHandler as CMMessageHandler } from './websocket/connectionManager.ts'
-import { HeartbeatManager } from './websocket/heartbeatManager.ts'
-import { ReconnectManager } from './websocket/reconnectManager.ts'
-import { PermissionHandler } from './websocket/permissionHandler.ts';
-
 // 类型定义
+type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
+type ConnectionListener = (status: ConnectionStatus) => void
+
 interface WebSocketMessage {
     type: string;
     data?: any;
@@ -42,181 +40,158 @@ interface WebSocketStatus {
 type MessageHandler = (data: WebSocketMessage) => void;
 
 class WebSocketManager {
-    private connectionManager: ConnectionManager;
-    private heartbeatManager: HeartbeatManager;
-    private reconnectManager: ReconnectManager;
-    private permissionHandler: PermissionHandler;
+    private ws: WebSocket | null = null;
     private messageHandlers: Map<string, MessageHandler>;
+    private connectionListeners: Set<ConnectionListener> = new Set();
+    private reconnectAttempts = 0;
+    private maxReconnectAttempts = 5;
+    private reconnectDelay = 1000;
+    private isReconnecting = false;
+    private url = '';
 
     constructor() {
-        // 初始化各个管理模块
-        this.connectionManager = new ConnectionManager();
-        this.heartbeatManager = new HeartbeatManager(this.connectionManager);
-        this.reconnectManager = new ReconnectManager(this.connectionManager);
-        this.permissionHandler = new PermissionHandler(this.connectionManager);
-        
-        // 消息处理器
         this.messageHandlers = new Map();
-        
-        // 设置模块间的回调
-        this.setupModuleCallbacks();
     }
 
-    /**
-     * 设置模块间的回调关系
-     */
-    private setupModuleCallbacks(): void {
-        // 连接管理器回调
-        this.connectionManager.onMessageReceived = (data: WebSocketMessage) => {
-            this.handleMessage(data);
+    // 连接WebSocket
+    connect(url?: string): void {
+        if (url) this.url = url;
+        if (!this.url) return;
+
+        try {
+            this.ws = new WebSocket(this.url);
+            this.setupEventListeners();
+            this.notifyConnectionListeners('connecting');
+        } catch (error) {
+            console.error('WebSocket连接失败:', error);
+            this.notifyConnectionListeners('error');
+        }
+    }
+
+    // 设置事件监听器
+    private setupEventListeners(): void {
+        if (!this.ws) return;
+
+        this.ws.onopen = () => {
+            this.reconnectAttempts = 0;
+            this.isReconnecting = false;
+            this.notifyConnectionListeners('connected');
         };
-        
-        this.connectionManager.onReconnectNeeded = () => {
-            this.reconnectManager.scheduleReconnect();
-        };
-        
-        // 连接状态监听
-        this.connectionManager.onConnection((status: string, data?: any) => {
-            if (status === 'connected') {
-                this.reconnectManager.reset();
-                this.heartbeatManager.start();
-                this.permissionHandler.authenticate();
-            } else if (status === 'disconnected') {
-                this.heartbeatManager.stop();
+
+        this.ws.onmessage = (event) => {
+            try {
+                const message: WebSocketMessage = JSON.parse(event.data);
+                this.handleMessage(message);
+            } catch (error) {
+                console.error('消息解析失败:', error);
             }
-        });
+        };
+
+        this.ws.onclose = () => {
+            this.notifyConnectionListeners('disconnected');
+            this.attemptReconnect();
+        };
+
+        this.ws.onerror = (error) => {
+            console.error('WebSocket错误:', error);
+            this.notifyConnectionListeners('error');
+        };
     }
 
-    /**
-     * 建立WebSocket连接
-     */
-    connect(): void {
-        this.connectionManager.connect();
-    }
-
-    /**
-     * 处理接收到的消息
-     */
-    private handleMessage(data: WebSocketMessage): void {
-        const { type } = data;
-        
-        // 处理特殊消息类型
-        switch (type) {
-            case 'pong':
-                this.heartbeatManager.handlePong(data);
-                break;
-            case 'permission_change':
-                this.permissionHandler.handlePermissionChange(data.data || data);
-                break;
-            default:
-                // 调用注册的消息处理器
-                if (this.messageHandlers.has(type)) {
-                    const handler = this.messageHandlers.get(type);
-                    try {
-                        if (handler) {
-                            handler(data);
-                        }
-                    } catch (error) {
-                        console.error(`[WebSocket] 消息处理器执行失败 (${type}):`, error);
-                    }
-                }
-                break;
+    // 处理消息
+    private handleMessage(message: WebSocketMessage): void {
+        const handler = this.messageHandlers.get(message.type);
+        if (handler) {
+            handler(message);
         }
     }
 
-    /**
-     * 发送消息
-     */
+    // 发送消息
     send(data: WebSocketMessage): boolean {
-        return this.connectionManager.send(data);
-    }
-
-    /**
-     * 注册消息处理器
-     */
-    onMessage(type: string, handler: MessageHandler): void {
-        if (typeof handler === 'function') {
-            this.messageHandlers.set(type, handler);
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify(data));
+            return true;
         }
+        return false;
     }
 
-    /**
-     * 移除消息处理器
-     */
+    // 注册消息处理器
+    onMessage(type: string, handler: MessageHandler): void {
+        this.messageHandlers.set(type, handler);
+    }
+
+    // 移除消息处理器
     offMessage(type: string): void {
         this.messageHandlers.delete(type);
     }
 
-    /**
-     * 添加连接状态监听器
-     */
+    // 注册连接状态监听器
     onConnection(listener: ConnectionListener): void {
-        this.connectionManager.onConnection(listener);
+        this.connectionListeners.add(listener);
     }
 
-    /**
-     * 移除连接状态监听器
-     */
+    // 移除连接状态监听器
     offConnection(listener: ConnectionListener): void {
-        this.connectionManager.offConnection(listener);
+        this.connectionListeners.delete(listener);
     }
 
-    /**
-     * 断开连接
-     */
+    // 通知连接状态变化
+    private notifyConnectionListeners(status: ConnectionStatus): void {
+        this.connectionListeners.forEach(listener => listener(status));
+    }
+
+    // 尝试重连
+    private attemptReconnect(): void {
+        if (this.isReconnecting || this.reconnectAttempts >= this.maxReconnectAttempts) {
+            return;
+        }
+
+        this.isReconnecting = true;
+        this.reconnectAttempts++;
+
+        setTimeout(() => {
+            this.connect();
+        }, this.reconnectDelay * this.reconnectAttempts);
+    }
+
+    // 断开连接
     disconnect(): void {
-        this.heartbeatManager.stop();
-        this.reconnectManager.stop();
-        this.connectionManager.disconnect();
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
+        this.isReconnecting = false;
+        this.reconnectAttempts = 0;
     }
 
-    /**
-     * 获取连接状态
-     */
+    // 获取连接状态
     getConnectionStatus(): WebSocketStatus {
-        const connectionStatus = this.connectionManager.getConnectionStatus();
-        const reconnectStatus = this.reconnectManager.getReconnectStatus();
-        const connectionQuality = this.heartbeatManager.getConnectionQuality();
-        
         return {
-            ...connectionStatus,
-            reconnect: reconnectStatus,
-            connectionQuality
+            isConnected: this.ws?.readyState === WebSocket.OPEN,
+            url: this.url,
+            readyState: this.ws?.readyState,
+            reconnect: {
+                isReconnecting: this.isReconnecting,
+                attempts: this.reconnectAttempts,
+                maxAttempts: this.maxReconnectAttempts
+            },
+            connectionQuality: {
+                latency: 0,
+                isStable: this.ws?.readyState === WebSocket.OPEN
+            }
         };
     }
 
-    /**
-     * 添加监听器（兼容旧API）
-     */
-    addListener(type: string, handler: MessageHandler): void {
-        this.onMessage(type, handler);
-    }
-
-    /**
-     * 移除监听器（兼容旧API）
-     */
-    removeListener(type: string): void {
-        this.offMessage(type);
-    }
-
-    /**
-     * 清理资源
-     */
+    // 销毁实例
     destroy(): void {
-        this.heartbeatManager.destroy();
-        this.reconnectManager.destroy();
-        this.permissionHandler.destroy();
-        this.connectionManager.destroy();
-        
-        // 清理消息处理器
+        this.disconnect();
         this.messageHandlers.clear();
+        this.connectionListeners.clear();
     }
 }
 
 // 创建单例实例
 const webSocketManager = new WebSocketManager();
-
-// 兼容旧的导出名称
 const websocketManager = webSocketManager;
 
 export { webSocketManager, websocketManager, WebSocketManager };
@@ -228,8 +203,7 @@ export type {
     ReconnectStatus,
     ConnectionQuality,
     WebSocketStatus,
-    MessageHandler
+    MessageHandler,
+    ConnectionStatus,
+    ConnectionListener
 };
-
-// 重新导出从connectionManager导入的类型
-export type { ConnectionStatus, ConnectionListener } from './websocket/connectionManager.ts';

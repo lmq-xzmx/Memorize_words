@@ -4,7 +4,7 @@
  */
 
 import { webSocketManager } from './websocketManager';
-import { PermissionCache } from './permissionCache';
+import permissionCacheManager from './permissionCache';
 
 // 类型定义
 interface NotificationData {
@@ -94,7 +94,7 @@ interface NotificationStats {
 type NotificationListener = (event: string, data: any) => void;
 
 class PermissionNotificationManager {
-    private notifications: Map<string, Notification>;
+
     private notificationHistory: Notification[];
     private maxHistorySize: number;
     private listeners: Set<NotificationListener>;
@@ -107,7 +107,7 @@ class PermissionNotificationManager {
     private soundCache: Map<string, HTMLAudioElement>;
 
     constructor() {
-        this.notifications = new Map();
+
         this.notificationHistory = [];
         this.maxHistorySize = 200;
         this.listeners = new Set();
@@ -175,20 +175,20 @@ class PermissionNotificationManager {
      * 设置WebSocket监听器
      */
     setupWebSocketListeners(): void {
-        webSocketManager.addListener('permissionChanged', (data: NotificationData) => {
-            this.handlePermissionChange(data);
+        webSocketManager.onMessage('permissionChanged', (message) => {
+            this.handlePermissionChange(message.data);
         });
         
-        webSocketManager.addListener('roleUpdated', (data: NotificationData) => {
-            this.handleRoleUpdate(data);
+        webSocketManager.onMessage('roleUpdated', (message) => {
+            this.handleRoleUpdate(message.data);
         });
         
-        webSocketManager.addListener('menuAccessChanged', (data: NotificationData) => {
-            this.handleMenuAccessChange(data);
+        webSocketManager.onMessage('menuAccessChanged', (message) => {
+            this.handleMenuAccessChange(message.data);
         });
         
-        webSocketManager.addListener('systemNotification', (data: NotificationData) => {
-            this.handleSystemNotification(data);
+        webSocketManager.onMessage('systemNotification', (message) => {
+            this.handleSystemNotification(message.data);
         });
     }
 
@@ -449,7 +449,7 @@ class PermissionNotificationManager {
     /**
      * 显示徽章通知
      */
-    async showBadgeNotification(notification: Notification): Promise<void> {
+    async showBadgeNotification(_notification: Notification): Promise<void> {
         // 更新通知徽章计数
         const unreadCount = this.getUnreadCount();
         
@@ -652,7 +652,7 @@ class PermissionNotificationManager {
             critical: '/sounds/notification-critical.mp3'
         };
         
-        Object.entries(soundFiles).forEach(([priority, file]) => {
+        Object.entries(soundFiles).forEach(([_priority, file]) => {
             const audio = new Audio(file);
             audio.preload = 'auto';
             this.soundCache.set(file, audio);
@@ -836,16 +836,14 @@ class PermissionNotificationManager {
      * 清除相关缓存
      */
     clearRelatedCache(resource: string): void {
-        const cache = new PermissionCache();
-        cache.clearByPattern(resource);
+        permissionCacheManager.clearUserCache(resource);
     }
 
     /**
      * 清除所有权限缓存
      */
     clearAllPermissionCache(): void {
-        const cache = new PermissionCache();
-        cache.clear();
+        permissionCacheManager.clearAllCache();
     }
 
     /**

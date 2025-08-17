@@ -50,18 +50,19 @@
           <div 
             v-for="(result, index) in diagnosticResults" 
             :key="index"
-            :class="['diagnostic-item', result.type]"
+            :class="['diagnostic-item', result?.type || 'unknown']"
+            v-if="result"
           >
             <div class="diagnostic-header">
-              <span class="diagnostic-name">{{ result.category }}</span>
-              <span :class="['diagnostic-status', result.type]">
-                {{ result.type === 'success' ? '✓' : result.type === 'warning' ? '⚠' : result.type === 'info' ? 'ℹ' : '✗' }}
+              <span class="diagnostic-name">{{ result?.category || '未知' }}</span>
+              <span :class="['diagnostic-status', result?.type || 'unknown']">
+                {{ result?.type === 'success' ? '✓' : result?.type === 'warning' ? '⚠' : result?.type === 'info' ? 'ℹ' : '✗' }}
               </span>
             </div>
-            <div v-if="result.message" class="diagnostic-message">
+            <div v-if="result?.message" class="diagnostic-message">
               {{ result.message }}
             </div>
-            <div v-if="result.suggestions && result.suggestions.length > 0" class="diagnostic-suggestions">
+            <div v-if="result?.suggestions && result.suggestions.length > 0" class="diagnostic-suggestions">
               <strong>建议:</strong>
               <ul>
                 <li v-for="suggestion in result.suggestions" :key="suggestion">
@@ -127,38 +128,46 @@ export default {
     },
     
     updateStatus() {
-      if (permissionSyncManager) {
-        const status = permissionSyncManager.getConnectionStatus()
-        this.connectionStatus = status.status || 'unknown'
-        this.retryCount = status.retryCount || 0
-        this.lastSyncTime = status.lastSyncTime || null
+      if (permissionSyncManager && typeof permissionSyncManager.getConnectionStatus === 'function') {
+        try {
+          const status = permissionSyncManager.getConnectionStatus() || {}
+          this.connectionStatus = status.status || 'unknown'
+          this.retryCount = status.retryCount || 0
+          this.lastSyncTime = status.lastSyncTime || null
+        } catch (error) {
+          console.error('获取连接状态失败:', error)
+          this.connectionStatus = 'error'
+        }
       }
     },
     
     async runDiagnostic() {
       if (!window.websocketDiagnostics) {
-        this.$message.error('诊断工具未初始化')
+        console.error('诊断工具未初始化')
         return
       }
       
       this.isRunningDiagnostic = true
       try {
         const results = await window.websocketDiagnostics.runFullDiagnostic()
-        this.diagnosticResults = results
-        this.$message.success('诊断完成')
+        this.diagnosticResults = results || []
+        console.log('诊断完成')
       } catch (error) {
-        this.$message.error('诊断失败: ' + (error?.message || error || '未知错误'))
+        console.error('诊断过程中发生错误:', error)
+        this.diagnosticResults = []
       } finally {
         this.isRunningDiagnostic = false
       }
     },
     
     reconnectWebSocket() {
-      if (permissionSyncManager) {
+      if (permissionSyncManager && typeof permissionSyncManager.disconnectWebSocket === 'function') {
         permissionSyncManager.disconnectWebSocket()
         setTimeout(() => {
-          permissionSyncManager.connectWebSocket()
-          this.$message.info('正在重新连接...')
+          if (typeof permissionSyncManager.connectWebSocket === 'function') {
+            permissionSyncManager.connectWebSocket()
+            console.log('正在重新连接...')
+          }
         }, 1000)
       }
     },
@@ -166,7 +175,7 @@ export default {
     clearLogs() {
       this.errorLogs = []
       this.diagnosticResults = []
-      this.$message.success('日志已清除')
+      console.log('日志已清除')
     },
     
     setupErrorListener() {

@@ -1,7 +1,7 @@
 // 权限管理器 - 包含路由检查、缓存管理和同步功能
 
 // 导入依赖
-import * as authSync from './authSync';
+
 import * as permissionCache from './permissionCache';
 import * as unifiedPermissionConstants from './unifiedPermissionConstants';
 import * as roleDefinitions from './roleDefinitions';
@@ -68,7 +68,7 @@ let permissionCacheStatus: PermissionCacheStatus = {
 // 权限同步配置
 const PERMISSION_SYNC_CONFIG: PermissionSyncConfig = {
   apiEndpoint: '/api/permissions/sync',
-  websocketEndpoint: 'ws://localhost:8001/ws/permissions/',
+  websocketEndpoint: 'ws://localhost:8000/ws/permissions/',
   syncInterval: 30 * 1000, // 30秒同步间隔
   retryAttempts: 5,
   retryDelay: 2000,
@@ -83,7 +83,7 @@ const PERMISSION_SYNC_CONFIG: PermissionSyncConfig = {
  */
 export async function checkRoutePermission(
   to: RouteObject, 
-  from: RouteObject, 
+  _from: RouteObject, 
   next: (path?: string) => void
 ): Promise<void> {
   // 确保路由对象有 meta 属性
@@ -92,7 +92,7 @@ export async function checkRoutePermission(
   }
   
   const authenticated = await isAuthenticated();
-  const user = getCurrentUser();
+  const user = await getCurrentUser();
   
   // 如果路由需要认证但用户未登录
   if (to.meta.requiresAuth && !authenticated) {
@@ -271,7 +271,7 @@ class PermissionSyncManager {
   private listeners: Array<(event: string, data?: any) => void> = [];
   private connectionStatus: string = 'disconnected';
   private lastSyncTime: number = 0;
-  private isDestroyed: boolean = false;
+
   
   constructor() {
     // 初始化状态
@@ -392,8 +392,8 @@ class PermissionSyncManager {
   /**
    * 建立WebSocket连接进行实时同步
    */
-  connectWebSocket(): void {
-    const user = getCurrentUser();
+  async connectWebSocket(): Promise<void> {
+    const user = await getCurrentUser();
     const token = localStorage.getItem('token');
     if (!user || !token) {
       console.warn('权限WebSocket连接失败：缺少用户信息或令牌');
@@ -509,7 +509,7 @@ class PermissionSyncManager {
       
       // 触发WebSocket诊断
       if (typeof window !== 'undefined' && (window as any).websocketDiagnostics) {
-        (window as any).websocketDiagnostics.handleWebSocketError('WebSocket连接失败', error.toString());
+        (window as any).websocketDiagnostics.handleWebSocketError('WebSocket连接失败', String(error));
       }
       
       this.scheduleReconnect();
@@ -532,9 +532,9 @@ class PermissionSyncManager {
     
     console.log(`${delay / 1000}秒后尝试重连权限WebSocket (第${this.retryCount + 1}次)`);
     
-    setTimeout(() => {
+    setTimeout(async () => {
       this.retryCount++;
-      this.connectWebSocket();
+      await this.connectWebSocket();
     }, delay);
   }
   
@@ -613,9 +613,9 @@ class PermissionSyncManager {
   /**
    * 启动同步管理器
    */
-  start(): void {
+  async start(): Promise<void> {
     this.startPeriodicSync();
-    this.connectWebSocket();
+    await this.connectWebSocket();
   }
 
   /**
@@ -643,9 +643,9 @@ export const permissionWatcher = permissionSyncManager;
 
 // 监听localStorage变化，自动更新权限状态
 if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (event) => {
+  window.addEventListener('storage', async (event) => {
     if (event.key === 'user' || event.key === 'token') {
-      const user = getCurrentUser();
+      const user = await getCurrentUser();
       permissionWatcher.notifyChange(user || undefined);
     }
   });
