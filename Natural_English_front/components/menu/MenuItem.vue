@@ -73,89 +73,134 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 导入菜单设计系统 */
-@import '../../assets/css/menu-variables.css';
-@import '../../assets/css/menu-base.css';
+<style lang="scss" scoped>
+@use '../../assets/scss/index.scss';
 
-/* MenuItem 组件样式 - 使用统一的设计系统 */
 .menu-item {
-  /* 继承菜单项基础样式 - 已在menu-base.css中定义 */
-  /* MenuItem特定样式覆盖 */
-  margin-bottom: var(--menu-spacing-xs);
+  @include flex-between;
+  @include transition;
   position: relative;
+  padding: $spacing-3 $spacing-4;
+  margin-bottom: $spacing-1;
+  border-radius: $border-radius-md;
+  cursor: pointer;
   overflow: hidden;
+  background: $color-white;
+  
+  &:hover {
+    background: $color-gray-50;
+    transform: translateX(4px);
+  }
+  
+  &:active {
+    background: $color-gray-100;
+    transform: translateX(2px);
+  }
+  
+  // BEM 修饰符 - 状态
+  @include bem-modifier('active') {
+    background: $color-primary-50;
+    color: $color-primary-700;
+    border-left: 3px solid var(--color-primary-500);
+  }
+  
+  @include bem-modifier('disabled') {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  
+  @include bem-modifier('expandable') {
+    padding-right: $spacing-8;
+  }
+
+  // BEM 修饰符 - 变体
+  @include bem-modifier('primary') {
+    background: var(--color-primary-500);
+    color: $color-white;
+    
+    &:hover {
+      background: $color-primary-600;
+    }
+  }
+  
+  @include bem-modifier('secondary') {
+    background: $color-gray-100;
+    color: $color-gray-700;
+    
+    &:hover {
+      background: $color-gray-200;
+    }
+  }
+  
+  &--danger {
+    background: $color-red-50;
+    color: $color-red-700;
+    
+    &:hover {
+      background: $color-red-100;
+    }
+  }
+  
+  // BEM 元素
+  .menu-item__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--spacing-6);
+    height: var(--spacing-6);
+    margin-right: var(--spacing-3);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-600);
+  }
+  
+  .menu-item__content {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .menu-item__title {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-900);
+    display: block;
+    line-height: var(--line-height-tight);
+  }
+  
+  .menu-item__desc {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-gray-500);
+    display: block;
+    margin-top: var(--spacing-1);
+    line-height: var(--line-height-tight);
+  }
+  
+  .menu-item__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: $spacing-2;
+  }
+  
+  .menu-item__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    position: absolute;
+    right: var(--spacing-3);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
+    color: var(--color-gray-400);
+    transform: rotate(0deg);
+  }
 }
 
-/* MenuItem状态样式 - 继承基础样式 */
-.menu-item:hover {
-  /* 继承menu-item:hover基础样式 */
+// 展开状态的箭头动画
+.menu-item--expandable .menu-item__arrow {
+  transform: rotate(90deg);
 }
-
-.menu-item:active {
-  /* 继承menu-item:active基础样式 */
-}
-
-.menu-item.is-active {
-  /* 继承menu-item.is-active基础样式 */
-}
-
-.menu-item.is-disabled {
-  /* 继承menu-item.is-disabled基础样式 */
-}
-
-.menu-item.is-expandable {
-  /* 继承menu-item.is-expandable基础样式 */
-}
-
-/* 菜单项变体样式 - 继承基础样式 */
-.menu-item.menu-item--primary {
-  /* 继承menu-item--primary基础样式 */
-}
-
-.menu-item.menu-item--secondary {
-  /* 继承menu-item--secondary基础样式 */
-}
-
-.menu-item.menu-item--danger {
-  /* 继承menu-item--danger基础样式 */
-}
-
-/* 菜单项内部元素样式 - 继承基础样式 */
-.menu-item__icon {
-  /* 继承menu-item__icon基础样式 */
-}
-
-.menu-item__content {
-  /* 继承menu-item__content基础样式 */
-}
-
-.menu-item__title {
-  /* 继承menu-item__title基础样式 */
-}
-
-.menu-item__desc {
-  /* 继承menu-item__desc基础样式 */
-}
-
-.menu-item__actions {
-  /* 继承menu-item__actions基础样式 */
-}
-
-.menu-item__arrow {
-  /* 继承menu-item__arrow基础样式 */
-}
-
-.menu-item.is-expandable .menu-item__arrow {
-  /* 继承基础样式 */
-}
-
-.menu-item.is-expandable.is-expanded .menu-item__arrow {
-  /* 继承基础样式 */
-}
-
-/* MenuItem组件特定样式覆盖 */
-/* 所有基础样式、响应式设计、无障碍支持等都已在menu-base.css中定义 */
-/* 这里只保留组件特定的样式覆盖 */
 </style>
 

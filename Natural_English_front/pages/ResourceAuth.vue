@@ -193,7 +193,7 @@
 </template>
 
 <script>
-import { resourceAuthAPI } from '../utils/api.js'
+import { resourceAuthAPI } from '../utils/api'
 
 export default {
   name: 'ResourceAuth',

@@ -102,6 +102,8 @@ const handleReset = () => {
 }
 </script>
 
-<style scoped>
-/* 菜单错误边界不需要额外样式，继承ErrorBoundary的样式 */
+<style lang="scss" scoped>
+@use '../../assets/scss/index.scss';
+
+// 菜单错误边界不需要额外样式，继承ErrorBoundary的样式
 </style>

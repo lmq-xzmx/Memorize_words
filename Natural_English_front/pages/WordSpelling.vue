@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import { getDefaultPlaceholder, handleImageError, IMAGE_TYPES } from '../utils/imageConfig.js';
+import { getDefaultPlaceholder, handleImageError, IMAGE_TYPES } from '../utils/imageConfig';
 
 export default {
   name: 'WordSpelling',

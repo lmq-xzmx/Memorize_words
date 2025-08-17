@@ -153,8 +153,8 @@
 </template>
 
 <script>
-import { resourceAuthAPI } from '../utils/api.js'
-import permissionMixin from '../mixins/permissionMixin.js'
+import { resourceAuthAPI } from '../utils/api'
+import permissionMixin from '../mixins/permissionMixin'
 
 export default {
   name: 'SubscriptionManagement',

@@ -421,7 +421,7 @@
 </style>
 
 <script>
-import { authAPI } from '../utils/api.js'
+import { authAPI } from '../utils/api'
 
 export default {
   name: 'Login',

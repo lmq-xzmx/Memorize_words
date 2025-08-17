@@ -1,0 +1,604 @@
+// SCSS Mixins 和工具函数
+// 提供BEM命名规范和常用样式模式
+
+@use 'sass:color';
+@use './variables.scss' as *;
+
+// ===== BEM 命名规范 Mixins =====
+
+// 生成 BEM 块 (Block)
+@mixin bem-block($block) {
+  .#{$block} {
+    @content;
+  }
+}
+
+// 生成 BEM 元素 (Element)
+@mixin bem-element($element) {
+  &__#{$element} {
+    @content;
+  }
+}
+
+// 生成 BEM 修饰符 (Modifier)
+@mixin bem-modifier($modifier) {
+  &--#{$modifier} {
+    @content;
+  }
+}
+
+// 组合使用示例:
+// @include bem-block('button') {
+//   @include bem-element('text') { ... }
+//   @include bem-modifier('primary') { ... }
+// }
+
+// ===== 响应式设计 Mixins =====
+
+// 媒体查询断点
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'sm' {
+    @media (min-width: var(--breakpoint-sm)) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'md' {
+    @media (min-width: var(--breakpoint-md)) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'lg' {
+    @media (min-width: var(--breakpoint-lg)) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'xl' {
+    @media (min-width: var(--breakpoint-xl)) {
+      @content;
+    }
+  }
+  @else if $breakpoint == '2xl' {
+    @media (min-width: var(--breakpoint-2xl)) {
+      @content;
+    }
+  }
+}
+
+// 移动优先响应式
+@mixin mobile-first($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+// 桌面优先响应式
+@mixin desktop-first($breakpoint) {
+  @media (max-width: #{$breakpoint - 1px}) {
+    @content;
+  }
+}
+
+// 向下断点响应式 (max-width)
+@mixin media-breakpoint-down($breakpoint) {
+  @if $breakpoint == 'xs' {
+    @media (max-width: #{$breakpoint-sm - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'sm' {
+    @media (max-width: #{$breakpoint-md - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'md' {
+    @media (max-width: #{$breakpoint-lg - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'lg' {
+    @media (max-width: #{$breakpoint-xl - 1px}) {
+      @content;
+    }
+  }
+  @else if $breakpoint == 'xl' {
+    @media (max-width: #{$breakpoint-2xl - 1px}) {
+      @content;
+    }
+  }
+}
+
+// ===== 布局 Mixins =====
+
+// Flexbox 居中
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Flexbox 垂直居中
+@mixin flex-center-vertical {
+  display: flex;
+  align-items: center;
+}
+
+// Flexbox 水平居中
+@mixin flex-center-horizontal {
+  display: flex;
+  justify-content: center;
+}
+
+// Flexbox 两端对齐
+@mixin flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+// Flex 起始对齐
+@mixin flex-start {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+// Flex 列布局
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Flex 行布局
+@mixin flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+// Grid 居中
+@mixin grid-center {
+  display: grid;
+  place-items: center;
+}
+
+// 绝对定位居中
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+// 绝对定位填满
+@mixin absolute-full {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+// 容器最大宽度
+@mixin container($max-width: var(--container-xl)) {
+  width: 100%;
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: 0 var(--spacing-4);
+  
+  @include respond-to('sm') {
+    padding: 0 var(--spacing-6);
+  }
+}
+
+// ===== 文本样式 Mixins =====
+
+// 文本截断
+@mixin text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 多行文本截断
+@mixin text-truncate-lines($lines: 2) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 文本样式预设
+@mixin text-style($type-or-size, $size: null, $weight: null) {
+  // 支持新格式: @include text-style('display', '4xl')
+  // 也支持旧格式: @include text-style('lg', 'bold')
+  
+  $font-size: null;
+  $font-weight: null;
+  $line-height: null;
+  
+  // 判断是否为新格式（两个参数）
+  @if $size != null {
+    // 新格式: text-style('display', '4xl')
+    @if $type-or-size == 'display' {
+      @if $size == 'xs' {
+        $font-size: var(--font-size-3xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == 'sm' {
+        $font-size: var(--font-size-4xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == 'base' {
+        $font-size: var(--font-size-5xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == 'lg' {
+        $font-size: var(--font-size-6xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == 'xl' {
+        $font-size: var(--font-size-7xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == '2xl' {
+        $font-size: var(--font-size-8xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == '3xl' {
+        $font-size: var(--font-size-9xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == '4xl' {
+        $font-size: var(--font-size-9xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == '5xl' {
+        $font-size: var(--font-size-9xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      } @else if $size == '6xl' {
+        $font-size: var(--font-size-9xl);
+        $font-weight: var(--font-weight-extrabold);
+        $line-height: var(--line-height-tight);
+      }
+    } @else if $type-or-size == 'heading' {
+      @if $size == 'xs' {
+        $font-size: var(--font-size-lg);
+        $font-weight: var(--font-weight-semibold);
+        $line-height: var(--line-height-snug);
+      } @else if $size == 'sm' {
+        $font-size: var(--font-size-xl);
+        $font-weight: var(--font-weight-semibold);
+        $line-height: var(--line-height-snug);
+      } @else if $size == 'base' {
+        $font-size: var(--font-size-2xl);
+        $font-weight: var(--font-weight-semibold);
+        $line-height: var(--line-height-snug);
+      } @else if $size == 'lg' {
+        $font-size: var(--font-size-3xl);
+        $font-weight: var(--font-weight-semibold);
+        $line-height: var(--line-height-snug);
+      } @else if $size == 'xl' {
+        $font-size: var(--font-size-4xl);
+        $font-weight: var(--font-weight-semibold);
+        $line-height: var(--line-height-snug);
+      } @else if $size == '2xl' {
+        $font-size: var(--font-size-5xl);
+        $font-weight: var(--font-weight-semibold);
+        $line-height: var(--line-height-snug);
+      }
+    } @else if $type-or-size == 'body' {
+      @if $size == 'xs' {
+        $font-size: var(--font-size-xs);
+        $font-weight: var(--font-weight-normal);
+        $line-height: var(--line-height-normal);
+      } @else if $size == 'sm' {
+        $font-size: var(--font-size-sm);
+        $font-weight: var(--font-weight-normal);
+        $line-height: var(--line-height-normal);
+      } @else if $size == 'base' {
+        $font-size: var(--font-size-base);
+        $font-weight: var(--font-weight-normal);
+        $line-height: var(--line-height-normal);
+      } @else if $size == 'lg' {
+        $font-size: var(--font-size-lg);
+        $font-weight: var(--font-weight-normal);
+        $line-height: var(--line-height-normal);
+      } @else if $size == 'xl' {
+        $font-size: var(--font-size-xl);
+        $font-weight: var(--font-weight-normal);
+        $line-height: var(--line-height-normal);
+      }
+    }
+  } @else {
+    // 旧格式: text-style('lg', 'bold')
+    @if $type-or-size == 'xs' {
+      $font-size: var(--font-size-xs);
+    } @else if $type-or-size == 'sm' {
+      $font-size: var(--font-size-sm);
+    } @else if $type-or-size == 'base' {
+      $font-size: var(--font-size-base);
+    } @else if $type-or-size == 'lg' {
+      $font-size: var(--font-size-lg);
+    } @else if $type-or-size == 'xl' {
+      $font-size: var(--font-size-xl);
+    } @else if $type-or-size == '2xl' {
+      $font-size: var(--font-size-2xl);
+    } @else if $type-or-size == '2xs' {
+      $font-size: var(--font-size-2xs);
+    } @else {
+      $font-size: $type-or-size;
+    }
+    
+    // 处理权重参数（旧格式的第二个参数）
+    @if $size == 'thin' {
+      $font-weight: var(--font-weight-thin);
+    } @else if $size == 'light' {
+      $font-weight: var(--font-weight-light);
+    } @else if $size == 'normal' {
+      $font-weight: var(--font-weight-normal);
+    } @else if $size == 'medium' {
+      $font-weight: var(--font-weight-medium);
+    } @else if $size == 'semibold' {
+      $font-weight: var(--font-weight-semibold);
+    } @else if $size == 'bold' {
+      $font-weight: var(--font-weight-bold);
+    } @else if $size != null {
+      $font-weight: $size;
+    } @else {
+      $font-weight: var(--font-weight-normal);
+    }
+  }
+  
+  // 应用样式
+  @if $font-size {
+    font-size: $font-size;
+  }
+  @if $font-weight {
+    font-weight: $font-weight;
+  }
+  @if $line-height {
+    line-height: $line-height;
+  }
+  
+  // 处理行高（如果有第三个参数）
+  @if $weight == 'tight' {
+    line-height: var(--line-height-tight);
+  } @else if $weight == 'snug' {
+    line-height: var(--line-height-snug);
+  } @else if $weight == 'normal' {
+    line-height: var(--line-height-normal);
+  } @else if $weight == 'relaxed' {
+    line-height: var(--line-height-relaxed);
+  } @else if $weight == 'loose' {
+    line-height: var(--line-height-loose);
+  } @else if $weight != null {
+    line-height: $weight;
+  }
+}
+
+// 标题样式
+@mixin heading($level: 1) {
+  @if $level == 1 {
+    @include text-style(var(--font-size-4xl), var(--font-weight-bold), var(--line-height-tight));
+  }
+  @else if $level == 2 {
+    @include text-style(var(--font-size-3xl), var(--font-weight-bold), var(--line-height-tight));
+  }
+  @else if $level == 3 {
+    @include text-style(var(--font-size-2xl), var(--font-weight-semibold), var(--line-height-snug));
+  }
+  @else if $level == 4 {
+    @include text-style(var(--font-size-xl), var(--font-weight-semibold), var(--line-height-snug));
+  }
+  @else if $level == 5 {
+    @include text-style(var(--font-size-lg), var(--font-weight-medium), var(--line-height-normal));
+  }
+  @else if $level == 6 {
+    @include text-style(var(--font-size-base), var(--font-weight-medium), var(--line-height-normal));
+  }
+}
+
+// ===== 视觉效果 Mixins =====
+
+// 阴影
+@mixin shadow($level: 'base') {
+  @if $level == 'sm' {
+    box-shadow: var(--shadow-sm);
+  }
+  @else if $level == 'base' {
+    box-shadow: var(--shadow-base);
+  }
+  @else if $level == 'md' {
+    box-shadow: var(--shadow-md);
+  }
+  @else if $level == 'lg' {
+    box-shadow: var(--shadow-lg);
+  }
+  @else if $level == 'xl' {
+    box-shadow: var(--shadow-xl);
+  }
+  @else if $level == '2xl' {
+    box-shadow: var(--shadow-2xl);
+  }
+  @else if $level == 'inner' {
+    box-shadow: var(--shadow-inner);
+  }
+  @else if $level == 'none' {
+    box-shadow: var(--shadow-none);
+  }
+}
+
+// 圆角
+@mixin rounded($size: 'base') {
+  @if $size == 'none' {
+    border-radius: var(--border-radius-none);
+  }
+  @else if $size == 'sm' {
+    border-radius: var(--border-radius-sm);
+  }
+  @else if $size == 'base' {
+    border-radius: var(--border-radius-base);
+  }
+  @else if $size == 'md' {
+    border-radius: var(--border-radius-md);
+  }
+  @else if $size == 'lg' {
+    border-radius: var(--border-radius-lg);
+  }
+  @else if $size == 'xl' {
+    border-radius: var(--border-radius-xl);
+  }
+  @else if $size == '2xl' {
+    border-radius: var(--border-radius-2xl);
+  }
+  @else if $size == '3xl' {
+    border-radius: var(--border-radius-3xl);
+  }
+  @else if $size == 'full' {
+    border-radius: var(--border-radius-full);
+  }
+}
+
+// 过渡动画
+@mixin transition($property: all, $duration: var(--transition-duration-200), $timing: var(--transition-timing-ease-in-out)) {
+  transition: $property $duration $timing;
+}
+
+// ===== 交互状态 Mixins =====
+
+// 悬停效果
+@mixin hover-lift {
+  @include transition(transform);
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// 按钮状态
+@mixin button-states($bg-color, $text-color: var(--white)) {
+  background-color: $bg-color;
+  color: $text-color;
+  
+  &:hover {
+    opacity: 0.8;
+  }
+  
+  &:active {
+    opacity: 0.7;
+    transform: translateY(1px);
+  }
+  
+  &:disabled {
+    background-color: var(--gray-300);
+    color: var(--gray-500);
+    cursor: not-allowed;
+    
+    &:hover {
+      background-color: var(--gray-300);
+      transform: none;
+    }
+  }
+}
+
+// 焦点样式
+@mixin focus-ring($color: var(--primary-500)) {
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($color, 0.1);
+  }
+}
+
+// ===== 工具 Mixins =====
+
+// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// 隐藏元素但保持可访问性
+@mixin sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// 重置按钮样式
+@mixin button-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+// 重置列表样式
+@mixin list-reset {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+// 图片响应式
+@mixin img-responsive {
+  max-width: 100%;
+  height: auto;
+}
+
+// ===== 组件特定 Mixins =====
+
+// 卡片样式
+@mixin card($padding: var(--spacing-6)) {
+  background-color: var(--white);
+  @include rounded('lg');
+  @include shadow('base');
+  padding: $padding;
+}
+
+// 输入框样式
+@mixin input-base {
+  width: 100%;
+  padding: var(--spacing-3) var(--spacing-4);
+  border: 1px solid var(--gray-300);
+  @include rounded('md');
+  @include transition(border-color);
+  
+  &:focus {
+    border-color: var(--primary-500);
+    @include focus-ring();
+  }
+  
+  &::placeholder {
+    color: var(--gray-400);
+  }
+}
+
+// 加载状态
+@mixin loading-skeleton {
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

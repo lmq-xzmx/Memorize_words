@@ -898,10 +898,10 @@
 </style>
 
 <script>
-import { UserSettingsManager } from '../utils/userSettings.js'
-import userPersonalizationMixin, { predefinedElementConfigs } from '../mixins/userPersonalization.js'
-import permissionMixin from '../mixins/permissionMixin.js'
-import { homepageManager } from '../utils/homepageManager.js'
+import { UserSettingsManager } from '../utils/userSettings'
+import userPersonalizationMixin, { predefinedElementConfigs } from '../mixins/userPersonalization'
+import permissionMixin from '../mixins/permissionMixin'
+import { homepageManager } from '../utils/homepageManager'
 
 export default {
   name: 'LearningModeSelector',

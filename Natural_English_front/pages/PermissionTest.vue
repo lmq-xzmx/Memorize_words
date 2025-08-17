@@ -111,8 +111,8 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
-import { permissionTestSuite } from '../tests/permissionTestSuite.js';
-import { ROLES } from '../utils/permissionConstants.js';
+import { permissionTestSuite } from '../tests/permissionTestSuite';
+import { ROLES } from '../utils/permissionConstants';
 
 export default {
   name: 'PermissionTest',

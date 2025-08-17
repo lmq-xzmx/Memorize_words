@@ -67,8 +67,8 @@
 </template>
 
 <script>
-import { getDefaultPlaceholder, handleImageError, IMAGE_TYPES } from '../utils/imageConfig.js';
-import permissionMixin from '../mixins/permissionMixin.js';
+import { getDefaultPlaceholder, handleImageError, IMAGE_TYPES } from '../utils/imageConfig';
+import permissionMixin from '../mixins/permissionMixin';
 
 export default {
   name: 'WordLearning',

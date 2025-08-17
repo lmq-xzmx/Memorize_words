@@ -142,35 +142,42 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 导入菜单设计系统 */
-@import '../../assets/css/menu-variables.css';
-@import '../../assets/css/menu-base.css';
+<style lang="scss" scoped>
+@use '../../styles/index.scss';
 
-/* ToolsMenu 组件样式 - 使用统一的设计系统 */
 .tools-menu {
-  /* 继承菜单容器基础样式 - 已在menu-base.css中定义 */
-  /* ToolsMenu特定样式覆盖 */
-  min-width: var(--menu-tools-min-width);
-  max-width: var(--menu-tools-max-width);
-  padding: var(--menu-spacing-lg);
-  transform-origin: center top;
-}
+    @include card;
+    @include transition();
+    
+    min-width: 280px;
+    max-width: 320px;
+    padding: var(--spacing-6);
+    transform-origin: center top;
+    background: var(--color-white);
+     border: 1px solid var(--color-gray-200);
+     border-radius: var(--border-radius-xl);
+     box-shadow: var(--shadow-2xl);
+    
+    @include respond-to(mobile) {
+      min-width: 240px;
+      padding: $spacing-4;
+    }
+  }
 
-/* 菜单过渡动画 */
+// 菜单过渡动画
 .menu-fade-enter-active,
 .menu-fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  @include transition(all, $duration-normal, $easing-smooth);
 }
 
 .menu-fade-enter-from {
   opacity: 0;
-  transform: scale(0.95) translateY(-10px);
+  transform: scale(0.95) translateY(-#{$spacing-3});
 }
 
 .menu-fade-leave-to {
   opacity: 0;
-  transform: scale(0.95) translateY(-10px);
+  transform: scale(0.95) translateY(-#{$spacing-3});
 }
 
 .menu-fade-enter-to,
@@ -179,190 +186,137 @@ export default {
   transform: scale(1) translateY(0);
 }
 
-/* 工具菜单头部 */
-.tools-menu-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--menu-spacing-lg);
-  padding-bottom: var(--menu-spacing-md);
-  border-bottom: 1px solid var(--menu-border-light);
+// 工具菜单头部
+.tools-menu {
+  .tools-menu__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-6);
+    padding-bottom: var(--spacing-4);
+     border-bottom: 1px solid var(--color-gray-200);
+  }
+  
+  .tools-menu__title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gray-900);
+  }
+  
+  .tools-menu__count {
+    background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--border-radius-full);
+    font-weight: var(--font-weight-medium);
+  }
 }
 
-.tools-menu-title {
-  font-size: var(--menu-font-size-md);
-  font-weight: var(--menu-font-weight-semibold);
-  color: var(--menu-color-primary);
-  text-shadow: var(--menu-text-shadow);
+// 启用的工具列表
+.enabled-tools {
+  margin-top: var(--spacing-4);
 }
 
-.tools-count {
-  background: var(--menu-bg-badge);
-  color: var(--menu-color-primary);
-  font-size: var(--menu-font-size-xs);
-  padding: var(--menu-spacing-xs) var(--menu-spacing-sm);
-  border-radius: var(--menu-radius-full);
-  font-weight: var(--menu-font-weight-medium);
-}
-
-/* 工具列表样式 - 使用设计系统 */
-.tools-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--menu-spacing-sm);
+.tools-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+  margin-bottom: var(--spacing-3);
+  padding: 0 var(--spacing-2);
 }
 
 .tool-item {
-  /* 继承菜单项基础样式 - 已在menu-base.css中定义 */
-  /* 工具项特定样式覆盖 */
-  padding: var(--menu-spacing-md);
-}
-
-/* 工具项状态样式 - 继承基础样式 */
-.tool-item:hover {
-  /* 继承menu-item:hover基础样式 */
-}
-
-.tool-item.selected {
-  /* 继承menu-item.is-active基础样式 - 已在menu-base.css中定义 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  
+  padding: $spacing-3;
+  border-radius: $border-radius-md;
+  cursor: pointer;
+  
+  &:hover {
+    background: $color-gray-50;
+  }
+  
+  &.selected {
+    background: $color-primary-50;
+    border-color: $color-primary-200;
+  }
 }
 
 .tool-radio {
-  margin-right: var(--menu-spacing-md);
-  width: var(--menu-icon-size-sm);
-  height: var(--menu-icon-size-sm);
-  accent-color: var(--menu-color-accent);
+  margin-right: $spacing-4;
+  width: $size-4;
+  height: $size-4;
+  accent-color: var(--color-primary-500);
 }
 
 .tool-label {
   flex: 1;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: var(--menu-spacing-xs);
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.tool-icon {
+  font-size: var(--font-size-lg);
+  margin-right: var(--spacing-2);
 }
 
 .tool-name {
-  font-size: var(--menu-font-size-sm);
-  font-weight: var(--menu-font-weight-medium);
-  color: var(--menu-color-primary);
-  text-shadow: var(--menu-text-shadow);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
 }
 
-.tool-description {
-  font-size: var(--menu-font-size-xs);
-  color: var(--menu-color-secondary);
-  line-height: var(--menu-line-height-tight);
-}
-
-.tool-status {
-  display: flex;
-  align-items: center;
-  gap: var(--menu-spacing-xs);
-  margin-left: var(--menu-spacing-sm);
-}
-
-.status-badge {
-  font-size: var(--menu-font-size-xs);
-  padding: 2px var(--menu-spacing-xs);
-  border-radius: var(--menu-radius-md);
-  font-weight: var(--menu-font-weight-medium);
-}
-
-.status-badge.enabled {
-  background: var(--menu-bg-success);
-  color: var(--menu-color-primary);
-}
-
-.status-badge.disabled {
-  background: var(--menu-bg-badge);
-  color: var(--menu-color-secondary);
-}
-
-/* 菜单分隔线 - 使用基础样式 */
+// 菜单分隔线
 .menu-divider {
-  /* 继承menu-divider基础样式 */
-  /* 继承menu-divider基础样式 - 已在menu-base.css中定义 */
+  height: 1px;
+  background: var(--color-gray-200);
+  margin: var(--spacing-4) 0;
+  border: none;
 }
 
-/* 无工具提示 */
+// 无工具提示
+.no-tools-section {
+  margin-top: var(--spacing-4);
+}
+
 .no-tools-tip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--menu-spacing-xl) var(--menu-spacing-lg);
+  @include flex-center;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  
+  padding: var(--spacing-8) var(--spacing-6);
   text-align: center;
-  color: var(--menu-text-secondary);
+  color: var(--color-gray-500);
+  
+  @include respond-to(mobile) {
+    padding: var(--spacing-6) var(--spacing-4);
+  }
 }
 
 .tip-icon {
-  font-size: var(--menu-font-size-xl);
-  margin-right: var(--menu-spacing-sm);
+  font-size: var(--font-size-xl);
+  margin-right: var(--spacing-2);
 }
 
 .tip-text {
-  font-size: var(--menu-font-size-sm);
-  font-weight: var(--menu-font-weight-medium);
+  color: var(--color-gray-600);
 }
 
-/* 开发中心项目样式 */
-.dev-center-item {
-  background: var(--menu-bg-primary);
-  border-color: var(--menu-border-primary);
-  margin-bottom: var(--menu-spacing-sm);
-}
-
-.dev-center-item:hover {
-  background: var(--menu-bg-primary-hover);
-  box-shadow: var(--menu-shadow-primary);
-}
-
-.dev-center-icon {
-  font-size: var(--menu-icon-size-md);
-  margin-right: var(--menu-spacing-md);
-}
-
-.dev-center-title {
-  flex: 1;
-  font-size: var(--menu-font-size-sm);
-  font-weight: var(--menu-font-weight-semibold);
-  color: var(--menu-color-primary);
-}
-
-.dev-center-arrow {
-  font-size: var(--menu-font-size-xs);
-  color: var(--menu-color-secondary);
-  transition: transform var(--menu-transition-normal);
-}
-
-.dev-center-item.expanded .dev-center-arrow {
-  transform: rotate(90deg);
-}
-
-/* 管理员开发项目样式 */
-.admin-dev-item {
-  background: var(--menu-bg-danger);
-  border-color: var(--menu-border-danger);
-}
-
-.admin-dev-item:hover {
-  background: var(--menu-bg-danger-hover);
-  box-shadow: var(--menu-shadow-danger);
-}
-
-/* ToolsMenu组件特定样式覆盖 */
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .tools-menu {
-    min-width: var(--menu-tools-min-width-mobile);
-    padding: var(--menu-spacing-md);
-  }
+// 菜单箭头
+.menu-arrow {
+  @include transition(transform);
+  font-size: $font-size-xs;
+  color: $color-gray-500;
   
-  .no-tools-tip {
-    padding: var(--menu-spacing-lg) var(--menu-spacing-md);
+  .expanded & {
+    transform: rotate(90deg);
   }
 }
-
-/* 所有其他样式（焦点、无障碍、高对比度等）都已在menu-base.css中定义 */
 </style>
 

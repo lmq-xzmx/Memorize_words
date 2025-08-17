@@ -60,8 +60,8 @@
 </template>
 
 <script>
-import { userAPI } from '../utils/api.js'
-import { buildApiUrl, buildPageUrl, API_ENDPOINTS } from '../config/apiConfig.js'
+import { userAPI } from '../utils/api'
+import { buildApiUrl, buildPageUrl, API_ENDPOINTS } from '../config/apiConfig'
 
 export default {
   name: 'UserLearningGoalWidget',

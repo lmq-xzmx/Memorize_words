@@ -217,83 +217,141 @@ defineOptions({
 })
 </script>
 
-<style scoped>
-/* 导入菜单设计系统 */
-@import '../../assets/css/menu-variables.css';
-@import '../../assets/css/menu-base.css';
+<style lang="scss" scoped>
+@use '../../assets/scss/index.scss';
 
-/* BaseMenu 组件样式 - 使用统一的设计系统 */
 .base-menu {
-  /* 继承菜单容器基础样式 - 已在menu-base.css中定义 */
-  /* BaseMenu特定样式覆盖 */
-  border-radius: var(--menu-radius-large);
-  box-shadow: var(--menu-shadow-lg);
-  border: 1px solid var(--menu-border-light);
-  padding: var(--base-menu-padding);
-  transition: all var(--menu-transition-normal) var(--menu-ease-in-out);
+  position: fixed;
+  background: var(--color-white);
+  border-radius: var(--border-radius-xl);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  min-width: 200px;
+  border: 1px solid var(--color-gray-200);
+  padding: var(--spacing-4);
+  transition: all 0.3s ease;
+  
+  .base-menu__header {
+    padding: var(--spacing-4);
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-purple-500));
+  color: var(--color-white);
+    
+    .base-menu__title {
+      font-size: 1.125rem;
+      line-height: 1.75rem;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+  
+  .base-menu__content {
+    padding: var(--spacing-2);
+    max-height: 300px;
+    overflow-y: auto;
+    
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      background: var(--color-gray-100);
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      background: var(--color-gray-300);
+    border-radius: var(--border-radius-full);
+    }
+  }
+  
+  .base-menu__item {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: var(--spacing-3) var(--spacing-4);
+  color: var(--color-gray-700);
+    text-decoration: none;
+    border-radius: var(--border-radius-lg);
+    transition: all 0.2s ease;
+    margin-bottom: var(--spacing-1);
+    
+    &:hover {
+      background: var(--color-gray-50);
+      color: var(--color-primary-600);
+    }
+    
+    &--active {
+      background: var(--color-primary-50);
+      color: var(--color-primary-700);
+      font-weight: 600;
+    }
+    
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &:hover {
+        background: transparent;
+        color: var(--color-gray-700);
+      }
+    }
+  }
+  
+  // BEM 修饰符 - 可见性状态
+  &--visible {
+    pointer-events: auto;
+    opacity: 1;
+  }
+  
+  &--hidden {
+    pointer-events: none;
+    opacity: 0;
+  }
+  
+  // BEM 修饰符 - 菜单类型
+  &--popup {
+    // 弹出菜单特定样式
+  }
+  
+  &--dropdown {
+    min-width: 200px;
+  }
+  
+  &--sidebar {
+    height: 100vh;
+    width: 280px;
+    left: 0;
+    z-index: var(--z-index-sidebar);
+    border-radius: 0;
+    border-right: 1px solid var(--color-gray-200);
+    border-left: none;
+    border-top: none;
+    border-bottom: none;
+  }
+
+  // BEM 修饰符 - 菜单尺寸
+  &--small {
+    min-width: 160px;
+    max-width: 240px;
+    padding: var(--spacing-2);
+  }
+  
+  &--medium {
+    min-width: 200px;
+    max-width: 320px;
+    padding: var(--spacing-3);
+  }
+  
+  &--large {
+    min-width: 280px;
+    max-width: 480px;
+    padding: var(--spacing-4);
+  }
 }
 
-/* 可见性状态 */
-.base-menu--visible {
-  pointer-events: auto;
-  opacity: 1;
-}
-
-.base-menu--hidden {
-  pointer-events: none;
-  opacity: 0;
-}
-
-/* 菜单类型样式 - 使用统一的设计系统类 */
-.base-menu--popup {
-  /* 继承popup容器样式 - 已在menu-base.css中定义 */
-  /* 特定样式覆盖 */
-}
-
-.base-menu--dropdown {
-  /* 继承dropdown容器样式 - 已在menu-base.css中定义 */
-  min-width: var(--base-menu-dropdown-min-width);
-}
-
-.base-menu--sidebar {
-  /* 继承sidebar容器样式 - 已在menu-base.css中定义 */
-  height: 100vh;
-  width: var(--base-menu-sidebar-width);
-  left: 0;
-  z-index: var(--menu-z-sidebar);
-  border-radius: 0;
-  border-right: 1px solid var(--menu-border-light);
-  border-left: none;
-  border-top: none;
-  border-bottom: none;
-}
-
-/* 菜单尺寸样式 - 使用统一的设计系统类 */
-.base-menu--small {
-  /* 继承小尺寸容器样式 - 已在menu-base.css中定义 */
-  min-width: var(--base-menu-small-min-width);
-  max-width: var(--base-menu-small-max-width);
-  padding: var(--menu-spacing-sm);
-}
-
-.base-menu--medium {
-  /* 默认中等尺寸 */
-  min-width: var(--base-menu-medium-min-width);
-  max-width: var(--base-menu-medium-max-width);
-  padding: var(--menu-spacing-md);
-}
-
-.base-menu--large {
-  /* 继承大尺寸容器样式 - 已在menu-base.css中定义 */
-  min-width: var(--base-menu-large-min-width);
-  max-width: var(--base-menu-large-max-width);
-  padding: var(--menu-spacing-lg);
-}
-
-/* 过渡动画 - 使用统一的设计系统动画 */
+// 过渡动画
 .popup-fade-enter-active,
 .popup-fade-leave-active {
-  transition: all var(--menu-transition-normal) var(--menu-ease-in-out);
+  transition: all var(--duration-normal) var(--easing-ease-in-out);
 }
 
 .popup-fade-enter-from {
@@ -308,7 +366,7 @@ defineOptions({
 
 .menu-slide-enter-active,
 .menu-slide-leave-active {
-  transition: all var(--menu-transition-normal) var(--menu-ease-in-out);
+  transition: all var(--duration-normal) var(--easing-ease-in-out);
 }
 
 .menu-slide-enter-from {
@@ -323,7 +381,7 @@ defineOptions({
 
 .menu-fade-enter-active,
 .menu-fade-leave-active {
-  transition: all var(--menu-transition-fast) var(--menu-ease-in-out);
+  transition: all var(--duration-fast) var(--easing-ease-in-out);
 }
 
 .menu-fade-enter-from {
@@ -336,20 +394,25 @@ defineOptions({
   transform: translateY(-8px);
 }
 
-/* 悬停效果 - 使用统一的设计系统 */
+// 悬停效果
 .base-menu:hover {
-  box-shadow: var(--menu-shadow-xl);
+  @include shadow('xl');
   transform: translateY(-2px);
 }
 
-/* 焦点状态 - 使用统一的设计系统 */
+// 焦点状态
 .base-menu:focus-within {
-  outline: 2px solid var(--menu-border-focus);
+  outline: 2px solid var(--color-primary-500);
   outline-offset: 2px;
 }
 
-/* 响应式设计 - 使用统一的设计系统 */
-@media (max-width: 768px) {
+// 响应式设计
+@include respond-to('tablet') {
+  .base-menu {
+    min-width: 240px;
+    padding: var(--spacing-2);
+  }
+  
   .base-menu--sidebar {
     width: 100vw;
     max-width: 100vw;
@@ -357,22 +420,17 @@ defineOptions({
   
   .base-menu--popup,
   .base-menu--dropdown {
-    max-width: calc(100vw - var(--menu-spacing-xl));
-    margin: 0 var(--menu-spacing-md);
+    max-width: calc(100vw - #{var(--spacing-8)});
+    margin: 0 var(--spacing-4);
     min-width: 280px;
-  }
-  
-  .base-menu {
-    min-width: var(--base-menu-mobile-min-width);
-    padding: var(--menu-spacing-sm);
   }
 }
 
-/* 触摸设备优化 - 使用统一的设计系统 */
+// 触摸设备优化
 @media (hover: none) and (pointer: coarse) {
   .base-menu {
     min-height: 48px;
-    padding: var(--menu-spacing-md) var(--menu-spacing-lg);
+    padding: var(--spacing-3) var(--spacing-4);
   }
   
   .base-menu:hover {
@@ -380,7 +438,7 @@ defineOptions({
   }
 }
 
-/* 无障碍支持 - 使用统一的设计系统 */
+// 无障碍支持
 @media (prefers-reduced-motion: reduce) {
   .popup-fade-enter-active,
   .popup-fade-leave-active,
@@ -397,12 +455,12 @@ defineOptions({
   }
 }
 
-/* 高对比度模式 - 使用统一的设计系统 */
+// 高对比度模式
 @media (prefers-contrast: high) {
   .base-menu {
-    border: 2px solid var(--menu-text-primary);
+    border: 2px solid var(--color-gray-900);
     box-shadow: none;
-    background: var(--menu-bg-primary);
+    background: var(--color-white);
   }
 }
 </style>

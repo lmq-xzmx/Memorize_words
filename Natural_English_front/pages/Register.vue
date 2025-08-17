@@ -326,8 +326,8 @@
 </template>
 
 <script>
-import { authAPI } from '../utils/api.js'
-import { buildApiUrl, API_ENDPOINTS } from '../config/apiConfig.js'
+import { authAPI } from '../utils/api'
+import { buildApiUrl, API_ENDPOINTS } from '../config/apiConfig'
 
 export default {
   name: 'Register',

@@ -9,7 +9,7 @@
     </div>
     
     <!-- 底部菜单栏，只在特定页面显示 -->
-    <BottomNavBar 
+    <TabBar 
       v-if="showTabBar" 
       :current-path="$route.path"
     />
@@ -85,52 +85,49 @@ html {
 }
 </style>
 
-<script>
-import BottomNavBar from './components/navigation/BottomNavBar.vue'
+<script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import TabBar from './components/navigation/TabBar.vue'
 import TopNavBar from './components/TopNavBar.vue'
-import elementPositionReset from './mixins/elementPositionReset.js'
+import elementPositionReset from './mixins/elementPositionReset'
 import './assets/css/style-fixes.css'
-import styleConflictResolver from './utils/styleConflictResolver.js'
-import { websocketDiagnostics } from './utils/websocketDiagnostics.js'
+import styleConflictResolver from './utils/styleConflictResolver'
+import { websocketDiagnostics } from './utils/websocketDiagnostics'
 import WebSocketDebugPanel from './components/WebSocketDebugPanel.vue'
 
-export default {
-  name: 'App',
-  components: {
-    WebSocketDebugPanel,
-    BottomNavBar,
-    TopNavBar
-  },
-  mixins: [elementPositionReset],
-  mounted() {
-    // 启动样式冲突解决器
-    styleConflictResolver.startAutoFix()
-    console.log('样式冲突解决器已启动')
-    
-    // 启动WebSocket诊断工具
-     websocketDiagnostics.init()
-     window.websocketDiagnostics = websocketDiagnostics
-     console.log('WebSocket诊断工具已启动')
-  },
-  computed: {
-    showTabBar() {
-      // 定义不需要显示底部菜单栏的页面（登录页和注册页）
-      const excludePages = ['/login', '/register']
-      
-      // 如果当前页面是排除页面，则不显示底部导航
-      return !excludePages.some(page => this.$route.path.startsWith(page))
-    },
-    showTopNav() {
-      // 与showTabBar保持一致
-      return this.showTabBar
-    }
-  },
-  methods: {
-    handleOpenSettings() {
-      // 处理设置按钮点击
-      console.log('打开设置')
-      // 可以在这里添加设置弹窗或跳转逻辑
-    }
-  }
+const route = useRoute()
+
+// 使用mixin的功能
+elementPositionReset.mounted?.()
+
+onMounted(() => {
+  // 启动样式冲突解决器
+  styleConflictResolver.startAutoFix()
+  console.log('样式冲突解决器已启动')
+  
+  // 启动WebSocket诊断工具
+  websocketDiagnostics.init()
+  ;(window as any).websocketDiagnostics = websocketDiagnostics
+  console.log('WebSocket诊断工具已启动')
+})
+
+const showTabBar = computed((): boolean => {
+  // 定义不需要显示底部菜单栏的页面（登录页和注册页）
+  const excludePages = ['/login', '/register']
+  
+  // 如果当前页面是排除页面，则不显示底部导航
+  return !excludePages.some(page => route.path.startsWith(page))
+})
+
+const showTopNav = computed((): boolean => {
+  // 与showTabBar保持一致
+  return showTabBar.value
+})
+
+const handleOpenSettings = (): void => {
+  // 处理设置按钮点击
+  console.log('打开设置')
+  // 可以在这里添加设置弹窗或跳转逻辑
 }
 </script>

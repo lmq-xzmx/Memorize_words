@@ -11,67 +11,67 @@
       <div class="stat-card">
         <div class="stat-icon">📚</div>
         <div class="stat-content">
-          <h3>{{ stats.wordsLearned }}</h3>
-          <p>已学单词</p>
+          <h3 class="stat-content__title">{{ stats.wordsLearned }}</h3>
+          <p class="stat-content__label">已学单词</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">⏰</div>
         <div class="stat-content">
-          <h3>{{ stats.studyTime }}</h3>
-          <p>学习时长</p>
+          <h3 class="stat-content__title">{{ stats.studyTime }}</h3>
+          <p class="stat-content__label">学习时长</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🎯</div>
         <div class="stat-content">
-          <h3>{{ stats.accuracy }}%</h3>
-          <p>正确率</p>
+          <h3 class="stat-content__title">{{ stats.accuracy }}%</h3>
+          <p class="stat-content__label">正确率</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🔥</div>
         <div class="stat-content">
-          <h3>{{ stats.streak }}</h3>
-          <p>连续天数</p>
+          <h3 class="stat-content__title">{{ stats.streak }}</h3>
+          <p class="stat-content__label">连续天数</p>
         </div>
       </div>
     </div>
 
     <!-- 快速操作 -->
     <div class="quick-actions">
-      <h2>快速开始</h2>
+      <h2 class="quick-actions__title">快速开始</h2>
       <div class="action-grid">
         <router-link to="/word-flashcard" class="action-card">
           <div class="action-icon">🃏</div>
-          <h3>单词卡片</h3>
-          <p>通过卡片记忆单词</p>
+          <h3 class="action-card__title">单词卡片</h3>
+          <p class="action-card__description">通过卡片记忆单词</p>
         </router-link>
         <router-link to="/listening" class="action-card">
           <div class="action-icon">🎧</div>
-          <h3>听力练习</h3>
-          <p>提升听力理解能力</p>
+          <h3 class="action-card__title">听力练习</h3>
+          <p class="action-card__description">提升听力理解能力</p>
         </router-link>
         <router-link to="/reading" class="action-card">
           <div class="action-icon">📖</div>
-          <h3>阅读理解</h3>
-          <p>增强阅读技能</p>
+          <h3 class="action-card__title">阅读理解</h3>
+          <p class="action-card__description">增强阅读技能</p>
         </router-link>
         <router-link to="/speaking" class="action-card">
           <div class="action-icon">🗣️</div>
-          <h3>口语练习</h3>
-          <p>提高口语表达</p>
+          <h3 class="action-card__title">口语练习</h3>
+          <p class="action-card__description">提高口语表达</p>
         </router-link>
       </div>
     </div>
 
     <!-- 学习进度 -->
     <div class="progress-section">
-      <h2>学习进度</h2>
+      <h2 class="progress-section__title">学习进度</h2>
       <div class="progress-card">
         <div class="progress-header">
-          <span>今日目标</span>
-          <span>{{ progress.completed }}/{{ progress.target }}</span>
+          <span class="progress-header__label">今日目标</span>
+          <span class="progress-header__count">{{ progress.completed }}/{{ progress.target }}</span>
         </div>
         <div class="progress-bar">
           <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
@@ -82,15 +82,15 @@
 
     <!-- 最近学习 -->
     <div class="recent-section">
-      <h2>最近学习</h2>
+      <h2 class="recent-section__title">最近学习</h2>
       <div class="recent-list">
         <div v-for="item in recentActivities" :key="item.id" class="recent-item">
           <div class="recent-icon">{{ item.icon }}</div>
           <div class="recent-content">
-            <h4>{{ item.title }}</h4>
-            <p>{{ item.description }}</p>
-            <span class="recent-time">{{ item.time }}</span>
+            <h4 class="recent-content__title">{{ item.title }}</h4>
+            <p class="recent-content__description">{{ item.description }}</p>
           </div>
+          <span class="recent-time">{{ item.time }}</span>
         </div>
       </div>
     </div>
@@ -100,7 +100,7 @@
 <script>
 import { mapState } from 'vuex'
 import api from '@/utils/api'
-import permissionMixin from '../mixins/permissionMixin.js'
+import permissionMixin from '../mixins/permissionMixin'
 
 export default {
   name: 'Dashboard',
@@ -210,49 +210,50 @@ export default {
 }
 </script>
 
-<style scoped>
-/* 仪表板主容器 */
-.dashboard {
+<style lang="scss" scoped>
+@use '../styles/index.scss';
+@use '../styles/variables.scss' as *;
+@use '../styles/mixins.scss' as *;
+@include bem-block('dashboard') {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
+  padding: var(--spacing-8);
   position: relative;
   overflow-x: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+    pointer-events: none;
+  }
 }
 
-.dashboard::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-/* 欢迎区域 */
-.welcome-section {
+@include bem-block('welcome-section') {
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: var(--spacing-12);
   position: relative;
   z-index: 1;
 }
 
-.welcome-title {
-  font-size: 2.5rem;
+@include bem-block('welcome-title') {
+  @include text-style('heading', 'xl');
   font-weight: 700;
-  color: white;
-  margin-bottom: 0.5rem;
+  color: var(--color-white);
+  margin-bottom: var(--spacing-2);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   animation: slideInDown 0.8s ease-out;
 }
 
-.welcome-subtitle {
-  font-size: 1.2rem;
+@include bem-block('welcome-subtitle') {
+  @include text-style('body', 'lg');
   color: rgba(255, 255, 255, 0.9);
   margin: 0;
   animation: slideInUp 0.8s ease-out 0.2s both;
@@ -280,55 +281,55 @@ export default {
   }
 }
 
-/* 统计卡片网格 */
-.stats-grid {
+@include bem-block('stats-grid') {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
+  gap: var(--spacing-6);
+  margin-bottom: var(--spacing-12);
   position: relative;
   z-index: 1;
 }
 
-.stat-card {
+@include bem-block('stat-card') {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-8);
+  @include flex-start;
+  gap: var(--spacing-6);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  @include transition;
   animation: fadeInUp 0.6s ease-out;
-}
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+  }
 }
 
 .stat-icon {
-  font-size: 3rem;
+  @include text-style('display', 'sm');
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.stat-content h3 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #333;
-  margin: 0 0 0.5rem 0;
-}
+.stat-content {
+  .stat-content__title {
+    @include text-style('heading', 'lg');
+    font-weight: 700;
+    color: var(--color-slate-800);
+    margin: 0 0 var(--spacing-2) 0;
+  }
 
-.stat-content p {
-  font-size: 1rem;
-  color: #666;
-  margin: 0;
-  font-weight: 500;
+  .stat-content__label {
+    @include text-style('body', 'base');
+    color: var(--color-slate-600);
+    margin: 0;
+    font-weight: 500;
+  }
 }
 
 @keyframes fadeInUp {
@@ -342,151 +343,159 @@ export default {
   }
 }
 
-/* 快速操作区域 */
 .quick-actions {
-  margin-bottom: 3rem;
+  margin-bottom: var(--spacing-12);
   position: relative;
   z-index: 1;
-}
 
-.quick-actions h2 {
-  color: white;
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  .quick-actions__title {
+    color: var(--color-white);
+    @include text-style('heading', 'lg');
+    font-weight: 600;
+    margin-bottom: var(--spacing-6);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .action-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: var(--spacing-6);
 }
 
 .action-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2rem;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-8);
   text-decoration: none;
   color: inherit;
   display: block;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
   overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    @include transition('left', 0.5s);
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+
+    &::before {
+      left: 100%;
+    }
+  }
 }
 
-.action-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
-  transition: left 0.5s ease;
-}
-
-.action-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-}
-
-.action-card:hover::before {
-  left: 100%;
-}
-
-.action-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+@include bem-block('action-icon') {
+  @include text-style('display', 'sm');
+  margin-bottom: var(--spacing-4);
   display: block;
 }
 
-.action-card h3 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 0.5rem 0;
+@include bem-block('action-card') {
+  @include bem-element('title') {
+    @include text-style('heading', 'base');
+    font-weight: 600;
+    color: var(--color-slate-800);
+    margin: 0 0 var(--spacing-2) 0;
+  }
+
+  @include bem-element('description') {
+    color: var(--color-slate-600);
+    margin: 0;
+    @include text-style('body', 'sm');
+    line-height: 1.5;
+  }
 }
 
-.action-card p {
-  color: #666;
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-/* 学习进度区域 */
-.progress-section {
-  margin-bottom: 3rem;
+@include bem-block('progress-section') {
+  margin-bottom: var(--spacing-12);
   position: relative;
   z-index: 1;
+
+  @include bem-element('title') {
+    color: var(--color-white);
+    @include text-style('heading', 'lg');
+    font-weight: 600;
+    margin-bottom: var(--spacing-6);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
 }
 
-.progress-section h2 {
-  color: white;
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.progress-card {
+@include bem-block('progress-card') {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 2rem;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-8);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+@include bem-block('progress-header') {
+  @include flex-between;
+  margin-bottom: var(--spacing-4);
+
+  @include bem-element('label') {
+    color: var(--color-slate-800);
+    @include text-style('heading', 'base');
+    font-weight: 600;
+    margin: 0;
+  }
+
+  @include bem-element('count') {
+    color: var(--color-slate-600);
+    @include text-style('body', 'sm');
+    font-weight: 500;
+  }
 }
 
-.progress-info h3 {
-  color: #333;
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin: 0;
+@include bem-block('progress-text') {
+  color: var(--color-slate-600);
+  @include text-style('body', 'sm');
+  margin-top: var(--spacing-2);
 }
 
-.progress-text {
-  color: #666;
-  font-size: 0.95rem;
-}
-
-.progress-bar {
+@include bem-block('progress-bar') {
   width: 100%;
   height: 12px;
-  background: #e1e5e9;
-  border-radius: 6px;
+  background: var(--color-slate-200);
+  border-radius: var(--border-radius-md);
   overflow: hidden;
   position: relative;
+  margin-bottom: var(--spacing-2);
 }
 
-.progress-fill {
+@include bem-block('progress-fill') {
   height: 100%;
   background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
-  border-radius: 6px;
-  transition: width 1s ease-out;
+  border-radius: var(--border-radius-md);
+  @include transition('width', 1s);
   position: relative;
 }
 
-.progress-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: shimmer 2s infinite;
+@include bem-block('progress-fill') {
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(var(--color-white), 0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
 }
 
 @keyframes shimmer {
@@ -498,172 +507,206 @@ export default {
   }
 }
 
-/* 最近活动区域 */
-.recent-activities {
+@include bem-block('recent-section') {
   position: relative;
   z-index: 1;
+
+  @include bem-element('title') {
+    color: var(--color-white);
+    @include text-style('heading', 'lg');
+    font-weight: 600;
+    margin-bottom: var(--spacing-6);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
 }
 
-.recent-activities h2 {
-  color: white;
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.activity-list {
+@include bem-block('recent-list') {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--spacing-4);
 }
 
-.activity-item {
-  background: rgba(255, 255, 255, 0.95);
+@include bem-block('recent-item') {
+  background: rgba(var(--color-white), 0.95);
   backdrop-filter: blur(20px);
-  border-radius: 15px;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-6);
+  @include flex-start;
+  gap: var(--spacing-4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(var(--color-white), 0.2);
+  @include transition;
+
+  &:hover {
+    transform: translateX(5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
 }
 
-.activity-item:hover {
-  transform: translateX(5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.activity-icon {
-  font-size: 2rem;
+@include bem-block('recent-icon') {
+  @include text-style('heading', 'lg');
   flex-shrink: 0;
 }
 
-.activity-content {
+@include bem-block('recent-content') {
   flex: 1;
+
+  @include bem-element('title') {
+    color: var(--color-slate-800);
+    @include text-style('heading', 'sm');
+    font-weight: 600;
+    margin: 0 0 var(--spacing-1) 0;
+  }
+
+  @include bem-element('description') {
+    color: var(--color-slate-600);
+    @include text-style('body', 'sm');
+    margin: 0;
+    line-height: 1.4;
+  }
 }
 
-.activity-content h4 {
-  color: #333;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin: 0 0 0.3rem 0;
-}
-
-.activity-content p {
-  color: #666;
-  font-size: 0.9rem;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.activity-time {
-  color: #999;
-  font-size: 0.85rem;
+@include bem-block('recent-time') {
+  color: var(--color-slate-500);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
   flex-shrink: 0;
 }
 
-/* 响应式设计 */
+// 响应式设计 - 中等屏幕
 @media (max-width: 768px) {
   .dashboard {
-    padding: 1rem;
+    padding: var(--spacing-4);
   }
   
   .welcome-title {
-    font-size: 2rem;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
   }
   
   .welcome-subtitle {
-    font-size: 1rem;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
   }
   
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
+    gap: var(--spacing-4);
   }
   
   .stat-card {
-    padding: 1.5rem;
+    padding: var(--spacing-6);
+    display: flex;
     flex-direction: column;
     text-align: center;
-    gap: 1rem;
+    gap: var(--spacing-4);
   }
   
   .stat-icon {
-    font-size: 2.5rem;
+    @include text-style('display', 'xs');
   }
   
   .action-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: var(--spacing-4);
   }
   
   .action-card {
-    padding: 1.5rem;
+    padding: var(--spacing-6);
   }
   
-  .activity-item {
-    padding: 1rem;
+  .recent-item {
+    padding: var(--spacing-4);
+    display: flex;
     flex-direction: column;
     text-align: center;
-    gap: 0.8rem;
+    gap: var(--spacing-3);
   }
 }
 
-@media (max-width: 480px) {
+// 响应式设计 - 小屏幕
+@media (max-width: 576px) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
   
   .stat-card {
-    padding: 1rem;
+    padding: var(--spacing-4);
   }
   
-  .stat-content h3 {
-    font-size: 1.5rem;
+  .stat-content__title {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
   }
   
   .action-card {
-    padding: 1rem;
+    padding: var(--spacing-4);
   }
   
   .action-icon {
-    font-size: 2.5rem;
+    @include text-style('display', 'xs');
   }
 }
 
-/* 深色模式支持 */
+// 暗色主题
 @media (prefers-color-scheme: dark) {
-  .stat-card,
-  .action-card,
-  .progress-card,
-  .activity-item {
+  .stat-card {
     background: rgba(30, 30, 30, 0.95);
     color: #e0e0e0;
   }
   
-  .stat-content h3,
-  .action-card h3,
-  .progress-info h3,
-  .activity-content h4 {
+  .action-card {
+    background: rgba(30, 30, 30, 0.95);
+    color: #e0e0e0;
+  }
+  
+  .progress-card {
+    background: rgba(30, 30, 30, 0.95);
+    color: #e0e0e0;
+  }
+  
+  .recent-item {
+    background: rgba(30, 30, 30, 0.95);
+    color: #e0e0e0;
+  }
+  
+  .stat-content__title {
     color: #f0f0f0;
   }
   
-  .stat-content p,
-  .action-card p,
-  .progress-text,
-  .activity-content p {
+  .stat-content__label {
     color: #b0b0b0;
   }
   
-  .activity-time {
+  .action-card__title {
+    color: #f0f0f0;
+  }
+  
+  .action-card__description {
+    color: #b0b0b0;
+  }
+  
+  .progress-header__label {
+    color: #f0f0f0;
+  }
+  
+  .progress-text {
+    color: #b0b0b0;
+  }
+  
+  .recent-content__title {
+    color: #f0f0f0;
+  }
+  
+  .recent-content__description {
+    color: #b0b0b0;
+  }
+  
+  .recent-time {
     color: #888;
   }
 }
 
-/* 无障碍支持 */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -672,47 +715,84 @@ export default {
   }
 }
 
-/* 高对比度模式 */
+// 高对比度主题
 @media (prefers-contrast: high) {
   .dashboard {
     background: #000;
   }
   
-  .stat-card,
-  .action-card,
-  .progress-card,
-  .activity-item {
+  .stat-card {
     background: #fff;
     border: 2px solid #000;
   }
   
-  .welcome-title,
-  .quick-actions h2,
-  .progress-section h2,
-  .recent-activities h2 {
+  .action-card {
+    background: #fff;
+    border: 2px solid #000;
+  }
+  
+  .progress-card {
+    background: #fff;
+    border: 2px solid #000;
+  }
+  
+  .recent-item {
+    background: #fff;
+    border: 2px solid #000;
+  }
+  
+  .welcome-title {
+    color: #fff;
+    text-shadow: 2px 2px 4px #000;
+  }
+  
+  .quick-actions__title {
+    color: #fff;
+    text-shadow: 2px 2px 4px #000;
+  }
+  
+  .progress-section__title {
+    color: #fff;
+    text-shadow: 2px 2px 4px #000;
+  }
+  
+  .recent-section__title {
     color: #fff;
     text-shadow: 2px 2px 4px #000;
   }
 }
 
-/* 焦点状态 */
-.action-card:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
+@include bem-block('action-card') {
+  &:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+  }
 }
 
-/* 触摸设备优化 */
+// 触摸设备优化
 @media (hover: none) and (pointer: coarse) {
-  .stat-card,
-  .action-card,
-  .activity-item {
+  .stat-card {
     min-height: 44px;
+    
+    &:hover {
+      transform: none;
+    }
   }
   
-  .stat-card:hover,
-  .action-card:hover,
-  .activity-item:hover {
-    transform: none;
+  .action-card {
+    min-height: 44px;
+    
+    &:hover {
+      transform: none;
+    }
+  }
+  
+  .recent-item {
+    min-height: 44px;
+    
+    &:hover {
+      transform: none;
+    }
   }
 }
 </style>

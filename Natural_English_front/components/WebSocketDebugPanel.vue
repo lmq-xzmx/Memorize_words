@@ -93,7 +93,7 @@
 </template>
 
 <script>
-import { permissionSyncManager } from '../utils/permission.js'
+import { permissionSyncManager } from '../utils/permission'
 
 export default {
   name: 'WebSocketDebugPanel',

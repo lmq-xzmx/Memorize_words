@@ -1,0 +1,436 @@
+// 组件样式规范
+// 基于BEM命名规范的组件样式库
+
+@use './mixins.scss' as *;
+@use './variables.scss' as *;
+
+// ===== 按钮组件 =====
+.btn {
+  @include button-reset;
+  @include transition();
+  @include focus-ring();
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  font-weight: var(--font-weight-medium);
+  @include rounded('md');
+  cursor: pointer;
+  
+  // 按钮尺寸
+  @include bem-modifier('sm') {
+    padding: var(--spacing-2) var(--spacing-3);
+    font-size: var(--font-size-sm);
+  }
+  
+  @include bem-modifier('lg') {
+    padding: var(--spacing-4) var(--spacing-6);
+    font-size: var(--font-size-lg);
+  }
+  
+  // 按钮变体
+  @include bem-modifier('primary') {
+    @include button-states(var(--primary-500));
+  }
+  
+  @include bem-modifier('secondary') {
+    @include button-states(var(--secondary-500));
+  }
+  
+  @include bem-modifier('success') {
+    @include button-states(var(--success-500));
+  }
+  
+  @include bem-modifier('warning') {
+    @include button-states(var(--warning-500));
+  }
+  
+  @include bem-modifier('error') {
+    @include button-states(var(--error-500));
+  }
+  
+  @include bem-modifier('outline') {
+    background-color: transparent;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-700);
+    
+    &:hover {
+      background-color: var(--gray-50);
+      border-color: var(--gray-400);
+    }
+  }
+  
+  @include bem-modifier('ghost') {
+    background-color: transparent;
+    color: var(--gray-700);
+    
+    &:hover {
+      background-color: var(--gray-100);
+    }
+  }
+  
+  // 按钮图标
+  @include bem-element('icon') {
+    width: 1em;
+    height: 1em;
+    
+    @include bem-modifier('left') {
+      margin-right: var(--spacing-2);
+    }
+    
+    @include bem-modifier('right') {
+      margin-left: var(--spacing-2);
+    }
+  }
+}
+
+// ===== 卡片组件 =====
+.card {
+  @include card();
+  
+  @include bem-element('header') {
+    padding-bottom: var(--spacing-4);
+    border-bottom: 1px solid var(--gray-200);
+    margin-bottom: var(--spacing-4);
+  }
+  
+  @include bem-element('title') {
+    @include heading(3);
+    margin: 0;
+    color: var(--gray-900);
+  }
+  
+  @include bem-element('subtitle') {
+    @include text-style(var(--font-size-sm), var(--font-weight-normal));
+    color: var(--gray-600);
+    margin: var(--spacing-1) 0 0 0;
+  }
+  
+  @include bem-element('body') {
+    color: var(--gray-700);
+    line-height: var(--line-height-relaxed);
+  }
+  
+  @include bem-element('footer') {
+    padding-top: var(--spacing-4);
+    border-top: 1px solid var(--gray-200);
+    margin-top: var(--spacing-4);
+    @include flex-between;
+  }
+  
+  // 卡片变体
+  @include bem-modifier('hover') {
+    @include hover-lift;
+    cursor: pointer;
+  }
+  
+  @include bem-modifier('compact') {
+    padding: var(--spacing-4);
+  }
+}
+
+// ===== 输入框组件 =====
+.input {
+  @include bem-element('wrapper') {
+    position: relative;
+    width: 100%;
+  }
+  
+  @include bem-element('field') {
+    @include input-base;
+    
+    @include bem-modifier('error') {
+      border-color: var(--error-500);
+      
+      &:focus {
+        @include focus-ring(var(--error-500));
+      }
+    }
+    
+    @include bem-modifier('success') {
+      border-color: var(--success-500);
+      
+      &:focus {
+        @include focus-ring(var(--success-500));
+      }
+    }
+  }
+  
+  @include bem-element('label') {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    color: var(--gray-700);
+    margin-bottom: var(--spacing-2);
+  }
+  
+  @include bem-element('help') {
+    font-size: var(--font-size-sm);
+    color: var(--gray-600);
+    margin-top: var(--spacing-1);
+  }
+  
+  @include bem-element('error') {
+    font-size: var(--font-size-sm);
+    color: var(--error-600);
+    margin-top: var(--spacing-1);
+  }
+}
+
+// ===== 菜单组件 =====
+.menu {
+  background-color: var(--white);
+  @include rounded('lg');
+  @include shadow('lg');
+  border: 1px solid var(--gray-200);
+  overflow: hidden;
+  
+  @include bem-element('item') {
+    display: flex;
+    align-items: center;
+    padding: var(--spacing-3) var(--spacing-4);
+    color: var(--gray-700);
+    @include transition();
+    cursor: pointer;
+    
+    &:hover {
+      background-color: var(--gray-50);
+    }
+    
+    @include bem-modifier('active') {
+      background-color: var(--primary-50);
+      color: var(--primary-700);
+    }
+    
+    @include bem-modifier('disabled') {
+      color: var(--gray-400);
+      cursor: not-allowed;
+      
+      &:hover {
+        background-color: transparent;
+      }
+    }
+  }
+  
+  @include bem-element('icon') {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: var(--spacing-3);
+    color: currentColor;
+  }
+  
+  @include bem-element('text') {
+    flex: 1;
+  }
+  
+  @include bem-element('shortcut') {
+    font-size: var(--font-size-sm);
+    color: var(--color-gray-500);
+  }
+  
+  @include bem-element('divider') {
+    height: 1px;
+    background-color: var(--color-gray-200);
+    margin: var(--spacing-2) 0;
+  }
+}
+
+// ===== 标签页组件 =====
+.tab {
+  @include bem-element('list') {
+    display: flex;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  
+  @include bem-element('item') {
+    padding: var(--spacing-3) var(--spacing-4);
+    color: var(--gray-600);
+    @include transition();
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    
+    &:hover {
+      color: var(--gray-900);
+    }
+    
+    @include bem-modifier('active') {
+      color: var(--primary-600);
+      border-bottom-color: var(--primary-600);
+    }
+  }
+  
+  @include bem-element('content') {
+    padding: var(--spacing-6) 0;
+  }
+}
+
+// ===== 模态框组件 =====
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-index-modal);
+  
+  @include bem-element('overlay') {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(var(--black), 0.5);
+    @include flex-center;
+  }
+  
+  @include bem-element('content') {
+    background-color: var(--white);
+    @include rounded('lg');
+    @include shadow('2xl');
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+    
+    @include bem-modifier('sm') {
+      width: 400px;
+    }
+    
+    @include bem-modifier('md') {
+      width: 500px;
+    }
+    
+    @include bem-modifier('lg') {
+      width: 600px;
+    }
+    
+    @include bem-modifier('xl') {
+      width: 800px;
+    }
+  }
+  
+  @include bem-element('header') {
+    padding: var(--spacing-6) var(--spacing-6) var(--spacing-4);
+    border-bottom: 1px solid var(--gray-200);
+    @include flex-between;
+  }
+  
+  @include bem-element('title') {
+    @include heading(3);
+    margin: 0;
+  }
+  
+  @include bem-element('close') {
+    @include button-reset;
+    width: 2rem;
+    height: 2rem;
+    @include flex-center;
+    @include rounded('md');
+    color: var(--gray-500);
+    
+    &:hover {
+      background-color: var(--gray-100);
+      color: var(--gray-700);
+    }
+  }
+  
+  @include bem-element('body') {
+    padding: var(--spacing-6);
+  }
+  
+  @include bem-element('footer') {
+    padding: var(--spacing-4) var(--spacing-6) var(--spacing-6);
+    @include flex-between;
+    gap: var(--spacing-3);
+  }
+}
+
+// ===== 加载状态组件 =====
+.loading {
+  @include bem-element('spinner') {
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid var(--gray-200);
+    border-top-color: var(--primary-500);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @include bem-element('skeleton') {
+    @include loading-skeleton;
+    @include rounded('md');
+    
+    @include bem-modifier('text') {
+      height: 1rem;
+      margin-bottom: var(--spacing-2);
+      
+      &:last-child {
+        width: 60%;
+        margin-bottom: 0;
+      }
+    }
+    
+    @include bem-modifier('avatar') {
+      width: 3rem;
+      height: 3rem;
+      @include rounded('full');
+    }
+    
+    @include bem-modifier('button') {
+      height: 2.5rem;
+      width: 6rem;
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ===== 工具类 =====
+.sr-only {
+  @include sr-only;
+}
+
+.clearfix {
+  @include clearfix;
+}
+
+.img-responsive {
+  @include img-responsive;
+}
+
+// 间距工具类
+@each $key, $value in (
+  '0': var(--spacing-0),
+  '1': var(--spacing-1),
+  '2': var(--spacing-2),
+  '3': var(--spacing-3),
+  '4': var(--spacing-4),
+  '5': var(--spacing-5),
+  '6': var(--spacing-6),
+  '8': var(--spacing-8),
+  '10': var(--spacing-10),
+  '12': var(--spacing-12),
+  '16': var(--spacing-16),
+  '20': var(--spacing-20),
+  '24': var(--spacing-24)
+) {
+  .m-#{$key} { margin: $value; }
+  .mt-#{$key} { margin-top: $value; }
+  .mr-#{$key} { margin-right: $value; }
+  .mb-#{$key} { margin-bottom: $value; }
+  .ml-#{$key} { margin-left: $value; }
+  .mx-#{$key} { margin-left: $value; margin-right: $value; }
+  .my-#{$key} { margin-top: $value; margin-bottom: $value; }
+  
+  .p-#{$key} { padding: $value; }
+  .pt-#{$key} { padding-top: $value; }
+  .pr-#{$key} { padding-right: $value; }
+  .pb-#{$key} { padding-bottom: $value; }
+  .pl-#{$key} { padding-left: $value; }
+  .px-#{$key} { padding-left: $value; padding-right: $value; }
+  .py-#{$key} { padding-top: $value; padding-bottom: $value; }
+}

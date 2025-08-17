@@ -95,31 +95,32 @@ export default {
 }
 </script>
 
-<style scoped>
-.particle-container {
+<style lang="scss" scoped>
+@use '../styles/index.scss';
+@include bem-block('particle-container') {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 9999;
+  z-index: var(--z-index-overlay);
   overflow: hidden;
 }
 
-.particle {
+@include bem-element('particle') {
   position: absolute;
-  font-size: 1.5rem;
-  font-weight: bold;
-  border-radius: 50%;
+  @include text-style('lg', 'bold');
+  border-radius: var(--border-radius-full);
   width: 30px;
   height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   animation: particleFloat linear forwards;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-  text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 10px rgba(var(--color-white), 0.5);
+  text-shadow: 0 0 5px rgba(var(--color-black), 0.3);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 @keyframes particleFloat {
@@ -280,33 +281,28 @@ export default {
   }
 }
 
-/* 响应式设计 */
+// 响应式设计
 @media (max-width: 768px) {
-  .particle {
-    font-size: 1.2rem;
+  @include bem-element('particle') {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
     width: 25px;
     height: 25px;
   }
 }
 
-@media (max-width: 480px) {
-  .particle {
-    font-size: 1rem;
+@media (max-width: 576px) {
+  @include bem-element('particle') {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
     width: 20px;
     height: 20px;
   }
 }
 
-/* 性能优化 */
-.particle {
-  will-change: transform, opacity;
-  backface-visibility: hidden;
-  transform-style: preserve-3d;
-}
-
-/* 减少动画在低性能设备上的影响 */
+// 减少动画在低性能设备上的影响
 @media (prefers-reduced-motion: reduce) {
-  .particle {
+  @include bem-element('particle') {
     animation-duration: 0.5s !important;
   }
   

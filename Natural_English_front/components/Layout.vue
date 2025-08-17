@@ -67,23 +67,23 @@
     </main>
     
     <!-- 底部导航栏（移动端） -->
-    <BottomNavBar v-if="showBottomNav" />
+    <TabBar v-if="showBottomNav" />
   </div>
 </template>
 
 <script>
 import TopNavBar from './TopNavBar.vue'
-import BottomNavBar from './navigation/BottomNavBar.vue'
+import TabBar from './navigation/TabBar.vue'
 import DynamicMenu from './DynamicMenu.vue'
 import OptimizedDynamicMenu from './OptimizedDynamicMenu.vue'
-import permissionMixin from '../mixins/permissionMixin.js'
+import permissionMixin from '../mixins/permissionMixin'
 
 export default {
   name: 'Layout',
   mixins: [permissionMixin],
   components: {
     TopNavBar,
-    BottomNavBar,
+    TabBar,
     DynamicMenu,
     OptimizedDynamicMenu
   },
@@ -235,84 +235,119 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '../styles/index.scss';
+
 .layout {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-blue-100) 100%);
   position: relative;
-  display: flex;
-  flex-direction: column;
+  @include flex-column;
+  animation: fadeIn 0.6s ease-out;
 }
 
-/* 侧边栏样式 */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
   height: 100vh;
   z-index: 1000;
-  background: #ffffff;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  background: var(--color-white);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.2s ease;
+
+  @media (max-width: 768px) {
+    transform: translateX(-100%);
+
+    @include bem-modifier('mobile-open') {
+      transform: translateX(0);
+    }
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--color-primary-500-rgb), 0.3);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(var(--color-primary-500-rgb), 0.5);
+    }
+  }
 }
 
-/* 主内容区域适配侧边栏 */
 .main-content {
   flex: 1;
-  transition: margin-left 0.3s ease;
+  min-height: calc(100vh - 120px);
+  padding: var(--spacing-8);
+  transition: all 0.2s ease;
+
+  @include media-breakpoint-up('md') {
+    margin-left: 280px;
+
+    @include bem-modifier('sidebar-collapsed') {
+      margin-left: 64px;
+    }
+  }
+
+  @include bem-modifier('with-bottom-nav') {
+    padding-bottom: 100px;
+  }
 }
 
-@media (min-width: 768px) {
-  .main-content {
-    margin-left: 280px; /* 默认侧边栏宽度 */
-  }
-  
-  .main-content.sidebar-collapsed {
-    margin-left: 64px; /* 折叠后的侧边栏宽度 */
-  }
-}
-
-/* 顶部菜单容器 */
-.top-menu-container {
+@include bem-element('top-menu-container') {
   position: relative;
   display: inline-block;
 }
 
-.menu-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  border-radius: 25px;
+@include bem-element('menu-toggle') {
+  @include flex-center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-6);
+  background: rgba(var(--color-white-rgb), 0.9);
+  border: 1px solid rgba(var(--color-primary-500-rgb), 0.2);
+  border-radius: var(--border-radius-full);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   backdrop-filter: blur(10px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: $shadow-md;
+
+  &:hover {
+    background: rgba(var(--color-primary-500-rgb), 0.1);
+    border-color: rgba(var(--color-primary-500-rgb), 0.3);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+
+    .menu-icon {
+      transform: rotate(90deg);
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: var(--spacing-2) var(--spacing-4);
+
+    .menu-text {
+      display: none;
+    }
+  }
 }
 
-.menu-toggle:hover {
-  background: rgba(102, 126, 234, 0.1);
-  border-color: rgba(102, 126, 234, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+@include bem-element('menu-icon') {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-primary-500);
+  transition: transform 0.2s ease;
 }
 
-.menu-icon {
-  font-size: 1.2rem;
-  color: #667eea;
-  transition: transform 0.3s ease;
-}
-
-.menu-toggle:hover .menu-icon {
-  transform: rotate(90deg);
-}
-
-.menu-text {
-  font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
+@include bem-element('menu-text') {
+  @include text-style('sm', 'semibold');
+  color: var(--color-gray-900);
 }
 
 /* 下拉菜单 */

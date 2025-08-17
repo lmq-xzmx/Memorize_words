@@ -122,7 +122,7 @@
 </template>
 
 <script>
-import permissionMixin from '../mixins/permissionMixin.js'
+import permissionMixin from '../mixins/permissionMixin'
 import MenuItem from './menu/MenuItem.vue'
 
 export default {
@@ -310,128 +310,141 @@ export default {
 }
 </script>
 
-<style scoped>
-.optimized-dynamic-menu {
-  display: flex;
-  flex-direction: column;
+<style lang="scss" scoped>
+@use '../styles/index.scss';
+@include bem-block('optimized-dynamic-menu') {
+  @include flex-column;
   height: 100%;
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  color: #ffffff;
-  transition: width 0.3s ease;
+  background: linear-gradient(180deg, var(--color-slate-900) 0%, var(--color-slate-800) 100%);
+  color: var(--color-white);
+  transition: all 0.2s ease;
   width: 280px;
   min-width: 280px;
+
+  @include bem-modifier('collapsed') {
+    width: 64px;
+    min-width: 64px;
+  }
 }
 
-.optimized-dynamic-menu.collapsed {
-  width: 64px;
-  min-width: 64px;
-}
-
-/* 菜单头部 */
-.menu-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+@include bem-element('menu-header') {
+  @include flex-between;
+  padding: var(--spacing-4);
+  border-bottom: 1px solid rgba(var(--color-white), 0.1);
   min-height: 80px;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+@include bem-element('user-info') {
+  @include flex-start;
+  gap: var(--spacing-3);
   flex: 1;
   min-width: 0;
 }
 
-.avatar {
+@include bem-element('avatar') {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-full);
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(var(--color-white), 0.2);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.user-details {
+@include bem-element('user-details') {
   flex: 1;
   min-width: 0;
 }
 
-.username {
-  font-weight: 600;
-  font-size: 14px;
-  color: #ffffff;
+@include bem-element('username') {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-white);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.role-badge {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
-  margin-top: 4px;
+@include bem-element('role-badge') {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--border-radius-full);
+  margin-top: var(--spacing-1);
   display: inline-block;
+
+  @include bem-modifier('admin') {
+    background: var(--color-red-500);
+  }
+
+  @include bem-modifier('teacher') {
+    background: var(--color-blue-500);
+  }
+
+  @include bem-modifier('student') {
+    background: var(--color-green-500);
+  }
+
+  @include bem-modifier('parent') {
+    background: var(--color-yellow-500);
+  }
+
+  @include bem-modifier('dean') {
+    background: var(--color-purple-500);
+  }
 }
 
-.role-admin { background: #e53e3e; }
-.role-teacher { background: #3182ce; }
-.role-student { background: #38a169; }
-.role-parent { background: #d69e2e; }
-.role-dean { background: #805ad5; }
-
-.collapse-btn {
+@include bem-element('collapse-btn') {
   width: 32px;
   height: 32px;
   border: none;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border-radius: 6px;
+  background: rgba(var(--color-white), 0.1);
+  color: var(--color-white);
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @include flex-center;
   transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(var(--color-white), 0.2);
+    transform: scale(1.05);
+  }
 }
 
-.collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
-}
-
-/* 菜单内容 */
-.menu-content {
+@include bem-element('menu-content') {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 0;
+  padding: var(--spacing-4) 0;
 }
 
-.menu-loading,
-.menu-error {
-  display: flex;
+@include bem-element('menu-loading') {
+  @include flex-center;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
+  padding: var(--spacing-8) var(--spacing-4);
   text-align: center;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(var(--color-white), 0.7);
 }
 
-.loading-spinner {
+@include bem-element('menu-error') {
+  @include flex-center;
+  flex-direction: column;
+  padding: var(--spacing-8) var(--spacing-4);
+  text-align: center;
+  color: rgba(var(--color-white), 0.7);
+}
+
+@include bem-element('loading-spinner') {
   width: 24px;
   height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid #ffffff;
-  border-radius: 50%;
+  border: 2px solid rgba(var(--color-white), 0.3);
+  border-top: 2px solid var(--color-white);
+  border-radius: var(--border-radius-full);
   animation: spin 1s linear infinite;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-2);
 }
 
 @keyframes spin {
@@ -439,78 +452,82 @@ export default {
   100% { transform: rotate(360deg); }
 }
 
-.retry-btn {
-  margin-top: 8px;
-  padding: 6px 12px;
-  background: #3182ce;
-  color: white;
+@include bem-element('retry-btn') {
+  margin-top: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--color-blue-500);
+  color: var(--color-white);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--color-blue-600);
+  }
 }
 
-.retry-btn:hover {
-  background: #2c5aa0;
+@include bem-element('tool-menu-section') {
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid rgba(var(--color-white), 0.1);
 }
 
-/* 菜单分组 */
-.tool-menu-section,
-.dev-menu-section {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+@include bem-element('dev-menu-section') {
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid rgba(var(--color-white), 0.1);
 }
 
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 16px 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
+@include bem-element('section-title') {
+  @include flex-start;
+  gap: var(--spacing-2);
+  padding: 0 var(--spacing-4) var(--spacing-2);
+  @include text-style('xs', 'semibold');
+  color: rgba(var(--color-white), 0.7);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* 菜单底部 */
-.menu-footer {
-  padding: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+@include bem-element('menu-footer') {
+  padding: var(--spacing-4);
+  border-top: 1px solid rgba(var(--color-white), 0.1);
 }
 
-.quick-actions {
-  display: flex;
-  gap: 8px;
+@include bem-element('quick-actions') {
+  @include flex-start;
+  gap: var(--spacing-2);
 }
 
-.action-btn {
+@include bem-element('action-btn') {
   flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  @include flex-center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: rgba(var(--color-white), 0.1);
+  color: var(--color-white);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
   transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(var(--color-white), 0.2);
+    transform: translateY(-1px);
+  }
+
+  @include bem-modifier('logout') {
+    &:hover {
+      background: var(--color-red-500);
+    }
+  }
 }
 
-.action-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.logout-btn:hover {
-  background: #e53e3e;
-}
-
-/* 图标样式 */
+// 图标样式
 .icon-expand::before { content: '→'; }
 .icon-collapse::before { content: '←'; }
 .icon-error::before { content: '⚠'; }
@@ -519,35 +536,37 @@ export default {
 .icon-settings::before { content: '⚙'; }
 .icon-logout::before { content: '↪'; }
 
-/* 响应式设计 */
+// 响应式设计
 @media (max-width: 768px) {
-  .optimized-dynamic-menu {
+  @include bem-block('optimized-dynamic-menu') {
     width: 100%;
     min-width: 100%;
+    
+    @include bem-modifier('collapsed') {
+      width: 0;
+      min-width: 0;
+      overflow: hidden;
+    }
   }
-  
-  .optimized-dynamic-menu.collapsed {
-    width: 0;
-    min-width: 0;
-    overflow: hidden;
+}
+
+// 滚动条样式
+@include bem-element('menu-content') {
+  &::-webkit-scrollbar {
+    width: 4px;
   }
-}
 
-/* 滚动条样式 */
-.menu-content::-webkit-scrollbar {
-  width: 4px;
-}
+  &::-webkit-scrollbar-track {
+    background: rgba(var(--color-white), 0.1);
+  }
 
-.menu-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-}
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--color-white), 0.3);
+    border-radius: 2px;
 
-.menu-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-}
-
-.menu-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
+    &:hover {
+      background: rgba(var(--color-white), 0.5);
+    }
+  }
 }
 </style>

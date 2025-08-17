@@ -64,7 +64,7 @@
       </button>
     </div>
     
-    <!-- 结果显示 -->>
+    <!-- 结果显示 -->
     <div v-if="showResult" class="result" :class="resultClass">
       <div class="result-icon">{{ resultIcon }}</div>
       <div class="result-text">{{ resultText }}</div>
@@ -309,105 +309,106 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '../styles/index.scss';
+
 .drag-drop-spelling {
   max-width: 600px;
   margin: 0 auto;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  font-family: 'Arial', sans-serif;
-}
+  padding: var(--spacing-8);
+  background: linear-gradient(135deg, var(--color-gray-50) 0%, var(--color-blue-100) 100%);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-family-base);
 
-.word-target {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 15px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
+  @include bem-element('word-target') {
+    text-align: center;
+    margin-bottom: var(--spacing-8);
+    padding: var(--spacing-6);
+    background: rgba(var(--color-white), 0.9);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
 
-.word-target h3 {
-  color: #333;
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
-}
+    h3 {
+      color: var(--color-gray-900);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--spacing-4);
+    }
+  }
 
-.target-word {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #4a90e2;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+  @include bem-element('target-word') {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-primary-500);
+    margin-bottom: var(--spacing-2);
+    text-shadow: 0 2px 4px rgba(var(--color-black), 0.1);
+  }
 
-.phonetic {
-  font-size: 1.2rem;
-  color: #666;
-  font-style: italic;
+  @include bem-element('phonetic') {
+     font-size: var(--font-size-lg);
+     font-weight: var(--font-weight-normal);
+     color: var(--color-gray-600);
+     font-style: italic;
+   }
 }
 
 .drop-zone {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 15px;
+  @include flex-center;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-8);
+  padding: var(--spacing-4);
+  background: rgba(var(--color-white), 0.7);
+  border-radius: var(--border-radius-lg);
   min-height: 80px;
-  align-items: center;
   flex-wrap: wrap;
 }
 
 .letter-slot {
   width: 50px;
   height: 60px;
-  border: 3px dashed #ccc;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.8);
-  transition: all 0.3s ease;
+  border: 3px dashed var(--color-gray-300);
+  border-radius: var(--border-radius-md);
+  @include flex-center;
+  background: rgba(var(--color-white), 0.8);
+  @include transition;
   position: relative;
   overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba($color-white, 0.4), transparent);
+    @include transition('left');
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+
+  @include bem-modifier('filled') {
+     border-color: var(--color-primary-500);
+     background: rgba(var(--color-primary-500), 0.1);
+     border-style: solid;
+   }
 }
 
-.letter-slot::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: left 0.5s ease;
-}
+.letter-slot {
+  @include bem-modifier('correct') {
+    border-color: var(--color-green-500);
+    background: rgba(var(--color-green-500), 0.2);
+    animation: correctPulse 0.6s ease-out;
+  }
 
-.letter-slot:hover::before {
-  left: 100%;
-}
-
-.letter-slot.filled {
-  border-color: #4a90e2;
-  background: rgba(74, 144, 226, 0.1);
-  border-style: solid;
-}
-
-.letter-slot.correct {
-  border-color: #4CAF50;
-  background: rgba(76, 175, 80, 0.2);
-  animation: correctPulse 0.6s ease-out;
-}
-
-.letter-slot.incorrect {
-  border-color: #f44336;
-  background: rgba(244, 67, 54, 0.2);
-  animation: incorrectShake 0.6s ease-out;
+  @include bem-modifier('incorrect') {
+    border-color: var(--color-red-500);
+    background: rgba(var(--color-red-500), 0.2);
+    animation: incorrectShake 0.6s ease-out;
+  }
 }
 
 @keyframes correctPulse {
@@ -436,39 +437,38 @@ export default {
 }
 
 .slot-letter {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #333;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-900);
   position: relative;
   z-index: 1;
 }
 
 .slot-placeholder {
-  font-size: 2rem;
-  color: #ccc;
-  font-weight: bold;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-gray-300);
 }
 
 .letter-bank {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-8);
 }
 
 .bank-title {
   text-align: center;
-  font-size: 1.1rem;
-  color: #666;
-  margin-bottom: 1rem;
-  font-weight: 500;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-600);
+  margin-bottom: var(--spacing-4);
 }
 
 .letters-container {
-  display: flex;
+  @include flex-center;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 15px;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  background: rgba(var(--color-white), 0.7);
+  border-radius: var(--border-radius-lg);
   min-height: 80px;
 }
 
@@ -621,13 +621,13 @@ export default {
   }
 }
 
-.result.correct {
+.result-correct {
   background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
 }
 
-.result.incorrect {
+.result-incorrect {
   background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
   color: white;
   box-shadow: 0 10px 25px rgba(244, 67, 54, 0.3);

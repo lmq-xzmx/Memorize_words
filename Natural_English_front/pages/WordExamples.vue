@@ -155,7 +155,7 @@
 </template>
 
 <script>
-import { wordAPI } from '../utils/api.js'
+import { wordAPI } from '../utils/api'
 
 export default {
   name: 'WordExamples',

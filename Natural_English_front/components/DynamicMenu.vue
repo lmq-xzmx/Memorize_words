@@ -140,94 +140,108 @@ export default {
 }
 </script>
 
-<style scoped>
-.dynamic-menu {
-  display: flex;
-  flex-direction: column;
+<style lang="scss" scoped>
+@use '../styles/index.scss';
+@include bem-block('dynamic-menu') {
+  @include flex-column;
   height: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-purple-600) 100%);
+  border-radius: var(--border-radius-xl);
+  padding: var(--spacing-4);
+  box-shadow: var(--shadow-2xl);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(var(--color-white), 0.1);
+
+  @include bem-modifier('loading') {
+    opacity: 0.7;
+    pointer-events: none;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      border: 2px solid rgba(var(--color-white), 0.3);
+      border-top: 2px solid var(--color-white);
+      border-radius: var(--border-radius-full);
+      transform: translate(-50%, -50%);
+      animation: spin 1s linear infinite;
+    }
+  }
 }
 
-/* 主菜单样式 */
-.main-menu {
+@include bem-element('main-menu') {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  @include flex-column;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-4);
 }
 
-.menu-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+@include bem-element('menu-item') {
+  @include flex-center;
+  padding: var(--spacing-3) var(--spacing-4);
+  border-radius: var(--border-radius-lg);
+  background: rgba(var(--color-white), 0.1);
   backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(var(--color-white), 0.1);
   cursor: pointer;
-  transition: all 0.3s ease;
+  @include transition;
   position: relative;
   overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba($color-white, 0.2), transparent);
+    @include transition('left', 0.5s);
+  }
+
+  &:hover {
+    background: rgba(var(--color-white), 0.2);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  @include bem-modifier('active') {
+    background: rgba($color-white, 0.25);
+    border-color: rgba($color-white, 0.3);
+    box-shadow: 0 0 20px rgba($color-white, 0.3);
+  }
 }
 
-.menu-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.menu-item:hover::before {
-  left: 100%;
-}
-
-.menu-item:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.menu-item.active {
-  background: rgba(255, 255, 255, 0.25);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-}
-
-.menu-icon {
-  font-size: 20px;
-  margin-right: 12px;
+@include bem-element('menu-icon') {
+  @include text-style('lg');
+  margin-right: var(--spacing-3);
   min-width: 24px;
   text-align: center;
 }
 
-.menu-title {
+@include bem-element('menu-title') {
   flex: 1;
-  font-size: 14px;
-  font-weight: 500;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  @include text-style('sm', 'medium');
+  color: var(--color-white);
+  text-shadow: 0 1px 2px rgba(var(--color-black), 0.3);
 }
 
-.menu-badge {
-  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-  color: white;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 12px;
+@include bem-element('menu-badge') {
+  background: linear-gradient(45deg, $color-red-500, $color-orange-600);
+  color: $color-white;
+  @include text-style('xs', 'semibold');
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--border-radius-xl);
   min-width: 16px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  box-shadow: 0 2px 8px rgba($color-red-500, 0.3);
   animation: pulse 2s infinite;
 }
 
@@ -236,226 +250,211 @@ export default {
   50% { transform: scale(1.05); }
 }
 
-/* 角色信息样式 */
-.role-info {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  margin-bottom: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+@include bem-element('role-info') {
+  @include flex-center;
+  padding: var(--spacing-4);
+  background: rgba(var(--color-white), 0.1);
+  border-radius: var(--border-radius-xl);
+  margin-bottom: var(--spacing-4);
+  border: 1px solid rgba(var(--color-white), 0.1);
 }
 
-.user-avatar {
+@include bem-element('user-avatar') {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
-  margin-right: 12px;
+  border-radius: var(--border-radius-full);
+  margin-right: var(--spacing-3);
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(var(--color-white), 0.3);
+  box-shadow: var(--shadow-lg);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 }
 
-.user-avatar img {
+@include bem-element('default-avatar') {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  background: linear-gradient(45deg, var(--color-primary-500), var(--color-purple-600));
+  @include flex-center;
+  color: var(--color-white);
+  @include text-style('lg', 'semibold');
+  text-shadow: 0 1px 2px rgba(var(--color-black), 0.3);
 }
 
-.default-avatar {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.user-details {
+@include bem-element('user-details') {
   flex: 1;
 }
 
-.username {
-  font-size: 16px;
-  font-weight: 600;
-  color: white;
-  margin-bottom: 4px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+@include bem-element('username') {
+  @include text-style('base', 'semibold');
+  color: var(--color-white);
+  margin-bottom: var(--spacing-1);
+  text-shadow: 0 1px 2px rgba(var(--color-black), 0.3);
 }
 
-.user-role {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
-  border-radius: 8px;
+@include bem-element('user-role') {
+  @include text-style('xs');
+  color: rgba(var(--color-white), 0.8);
+  background: rgba(var(--color-white), 0.1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--border-radius-lg);
   display: inline-block;
 }
 
-/* 快速操作按钮样式 */
-.quick-actions {
+@include bem-element('quick-actions') {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-2);
   justify-content: space-between;
 }
 
-.quick-btn {
+@include bem-element('quick-btn') {
   flex: 1;
-  padding: 12px;
+  padding: var(--spacing-3);
   border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-lg);
+  background: rgba(var(--color-white), 0.1);
   backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
-  font-size: 18px;
+  border: 1px solid rgba(var(--color-white), 0.1);
+  color: var(--color-white);
+  @include text-style('lg');
   cursor: pointer;
-  transition: all 0.3s ease;
+  @include transition;
   position: relative;
   overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(var(--color-white), 0.2);
+    border-radius: var(--border-radius-full);
+    transform: translate(-50%, -50%);
+    @include transition;
+  }
+
+  &:hover {
+    background: rgba($color-white, 0.2);
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+
+    &::before {
+      width: 100px;
+      height: 100px;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @include bem-modifier('analytics') {
+    &:hover {
+      background: rgba($color-blue-500, 0.3);
+    }
+  }
+
+  @include bem-modifier('resource') {
+    &:hover {
+      background: rgba($color-green-500, 0.3);
+    }
+  }
+
+  @include bem-modifier('admin') {
+    &:hover {
+      background: rgba($color-red-500, 0.3);
+    }
+  }
 }
 
-.quick-btn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: all 0.3s ease;
-}
-
-.quick-btn:hover::before {
-  width: 100px;
-  height: 100px;
-}
-
-.quick-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.quick-btn:active {
-  transform: translateY(0);
-}
-
-.analytics-btn:hover {
-  background: rgba(52, 152, 219, 0.3);
-}
-
-.resource-btn:hover {
-  background: rgba(46, 204, 113, 0.3);
-}
-
-.admin-btn:hover {
-  background: rgba(231, 76, 60, 0.3);
-}
-
-/* 响应式设计 */
+// 响应式设计
 @media (max-width: 768px) {
   .dynamic-menu {
-    padding: 12px;
+    padding: var(--spacing-3);
   }
   
-  .menu-item {
-    padding: 10px 12px;
+  .dynamic-menu__menu-item {
+    padding: var(--spacing-2) var(--spacing-3);
   }
   
-  .menu-icon {
-    font-size: 18px;
-    margin-right: 10px;
+  .dynamic-menu__menu-icon {
+    @include text-style('base');
+    margin-right: var(--spacing-2);
   }
   
-  .menu-title {
-    font-size: 13px;
+  .dynamic-menu__menu-title {
+    @include text-style('xs', 'medium');
   }
   
-  .role-info {
-    padding: 12px;
+  .dynamic-menu__role-info {
+    padding: var(--spacing-3);
   }
   
-  .user-avatar {
+  .dynamic-menu__user-avatar {
     width: 40px;
     height: 40px;
   }
   
-  .username {
-    font-size: 14px;
+  .dynamic-menu__username {
+    @include text-style('sm', 'semibold');
   }
   
-  .quick-btn {
-    padding: 10px;
-    font-size: 16px;
+  .dynamic-menu__quick-btn {
+    padding: var(--spacing-2);
+    @include text-style('base');
   }
 }
 
-/* 深色模式支持 */
+// 深色模式支持
 @media (prefers-color-scheme: dark) {
   .dynamic-menu {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    background: linear-gradient(135deg, $color-gray-800 0%, $color-gray-700 100%);
   }
   
-  .menu-item {
-    background: rgba(255, 255, 255, 0.05);
+  .dynamic-menu__menu-item {
+    background: rgba(var(--color-white), 0.05);
+
+    &:hover {
+      background: rgba(var(--color-white), 0.1);
+    }
   }
   
-  .menu-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+  .dynamic-menu__role-info {
+    background: rgba($color-white, 0.05);
   }
   
-  .role-info {
-    background: rgba(255, 255, 255, 0.05);
-  }
-  
-  .quick-btn {
-    background: rgba(255, 255, 255, 0.05);
+  .dynamic-menu__quick-btn {
+    background: rgba($color-white, 0.05);
   }
 }
 
-/* 无障碍支持 */
+// 无障碍支持
 @media (prefers-reduced-motion: reduce) {
-  .menu-item,
-  .quick-btn {
+  .dynamic-menu__menu-item {
     transition: none;
+    
+    &::before {
+      display: none;
+    }
   }
   
-  .menu-item::before,
-  .quick-btn::before {
-    display: none;
+  .dynamic-menu__quick-btn {
+    transition: none;
+    
+    &::before {
+      display: none;
+    }
   }
   
-  .menu-badge {
+  .dynamic-menu__menu-badge {
     animation: none;
   }
-}
-
-/* 加载状态 */
-.dynamic-menu.loading {
-  opacity: 0.7;
-  pointer-events: none;
-}
-
-.dynamic-menu.loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {

@@ -95,7 +95,7 @@
 </template>
 
 <script>
-import permissionMixin from '../mixins/permissionMixin.js';
+import permissionMixin from '../mixins/permissionMixin';
 
 export default {
   name: 'Listening',

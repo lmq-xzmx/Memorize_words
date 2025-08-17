@@ -312,7 +312,7 @@
 </template>
 
 <script>
-import { learningAPI, userAPI } from '../utils/api.js'
+import { learningAPI, userAPI } from '../utils/api'
 import LearningGoalConfig from '../components/LearningGoalConfig.vue'
 
 export default {

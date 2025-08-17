@@ -603,7 +603,7 @@ export default {
  }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .tab-bar {
   position: fixed;
   bottom: 0;
@@ -633,7 +633,7 @@ export default {
   padding: 0.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-radius: 12px;
+  border-radius: $spacing-3;
   position: relative;
   min-width: 60px;
 }
@@ -657,7 +657,7 @@ export default {
   width: 30px;
   height: 3px;
   background: linear-gradient(90deg, #4a90e2, #357abd);
-  border-radius: 2px;
+  border-radius: $border-radius-sm;
   animation: slideIn 0.3s ease-out;
 }
 
@@ -698,7 +698,7 @@ export default {
 
 .tab-text {
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: $font-weight-medium;
   color: #666;
   transition: all 0.3s ease;
   text-align: center;
@@ -707,13 +707,13 @@ export default {
 
 .tab-item.active .tab-text {
   color: #4a90e2;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 
 /* 中文图标样式 */
 .chinese-icon {
   font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   font-size: 1.2em;
   color: #666;
   transition: all 0.3s ease;
@@ -766,9 +766,9 @@ export default {
   transform: translateX(-50%);
   width: 0;
   height: 0;
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 8px solid rgba(255, 255, 255, 0.98);
+  border-left: $spacing-2 solid transparent;
+  border-right: $spacing-2 solid transparent;
+  border-top: $spacing-2 solid rgba(255, 255, 255, 0.98);
 }
 
 .menu-header {
@@ -780,7 +780,7 @@ export default {
 
 .menu-title {
   font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   color: #333;
   margin-bottom: 0.3rem;
 }
@@ -801,7 +801,7 @@ export default {
   flex-direction: column;
   align-items: center;
   padding: 1rem 0.5rem;
-  border-radius: 12px;
+  border-radius: $spacing-3;
   cursor: pointer;
   transition: all 0.3s ease;
   background: rgba(0, 0, 0, 0.02);
@@ -858,7 +858,7 @@ export default {
 
 .menu-item-title {
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   color: #333;
   text-align: center;
   margin-bottom: 0.2rem;

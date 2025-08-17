@@ -65,7 +65,7 @@
 </template>
 
 <script>
-import { userPersonalizationMixin, predefinedElementConfigs } from '../mixins/userPersonalization.js'
+import { userPersonalizationMixin, predefinedElementConfigs } from '../mixins/userPersonalization'
 
 export default {
   name: 'ElementMoveDemo',

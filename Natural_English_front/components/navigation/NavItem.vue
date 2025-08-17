@@ -5,11 +5,11 @@
     @mouseenter="$emit('hover', item)"
     @mouseleave="$emit('leave', item)"
   >
-    <div class="nav-icon">
+    <div class="nav-item__icon">
       <span :class="iconClasses">{{ item.icon }}</span>
     </div>
-    <div class="nav-text">{{ item.title }}</div>
-    <div v-if="showBadge" class="nav-badge">{{ badgeText }}</div>
+    <div class="nav-item__text">{{ item.title }}</div>
+    <div v-if="showBadge" class="nav-item__badge">{{ badgeText }}</div>
   </div>
 </template>
 
@@ -50,8 +50,8 @@ export default {
       return [
         'icon',
         {
-          'chinese-icon': this.isChinese(this.item.icon),
-          'emoji-icon': this.isEmoji(this.item.icon)
+          'icon--chinese': this.isChinese(this.item.icon),
+          'icon--emoji': this.isEmoji(this.item.icon)
         }
       ]
     },
@@ -80,218 +80,228 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+// 使用新的 SCSS + BEM 架构
 .nav-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
-  border-radius: 12px;
+  flex-direction: column;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $border-radius-xl;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   position: relative;
   min-width: 60px;
   height: 50px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-purple-500));
+    border-radius: $border-radius-xl;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+  }
+  
+  &:hover::before {
+    opacity: 0.1;
+    transform: scale(1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  // BEM 修饰符
+  &--active {
+    &::before {
+      opacity: 0.2;
+      transform: scale(1);
+    }
+  }
+  
+  &--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+    &:hover::before {
+      opacity: 0;
+    }
+  }
+  
+  &--menu {
+    // 菜单类型特殊样式
+  }
+
+  // BEM 元素 - 导航图标
+  &__icon {
+    font-size: $font-size-2xl;
+    margin-bottom: $spacing-1;
+    position: relative;
+    z-index: var(--z-index-base);
+    transition: all 0.2s ease;
+  }
+  
+  &:hover {
+     .nav-item__icon {
+       transform: scale(1.1);
+     }
+     
+     .nav-item__text {
+       color: $color-gray-900;
+     }
+     
+     .icon--chinese {
+       color: var(--color-primary-500);
+     }
+   }
+   
+   &--active {
+     .nav-item__icon {
+       color: var(--color-primary-500);
+       transform: scale(1.1);
+     }
+     
+     .nav-item__text {
+       color: var(--color-primary-500);
+       font-weight: $font-weight-semibold;
+     }
+     
+     .icon--chinese {
+       color: var(--color-primary-500);
+     }
+   }
+
+  // BEM 元素 - 导航文本
+   &__text {
+     font-size: $font-size-xs;
+     font-weight: $font-weight-medium;
+     color: $color-gray-600;
+     position: relative;
+     z-index: $z-index-base;
+     transition: all 0.2s ease;
+     text-align: center;
+     line-height: $line-height-tight;
+   }
 }
 
-.nav-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 12px;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.3s ease;
-}
-
-.nav-item:hover::before {
-  opacity: 0.1;
-  transform: scale(1);
-}
-
-.nav-item--active::before {
-  opacity: 0.2;
-  transform: scale(1);
-}
-
-.nav-item:active {
-  transform: scale(0.95);
-}
-
-.nav-item--disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.nav-item--disabled:hover::before {
-  opacity: 0;
-}
-
-/* 导航项图标 */
-.nav-icon {
-  font-size: 24px;
-  margin-bottom: 4px;
-  position: relative;
-  z-index: 1;
-  transition: all 0.3s ease;
-}
-
-.nav-item:hover .nav-icon {
-  transform: scale(1.1);
-}
-
-.nav-item--active .nav-icon {
-  color: #667eea;
-  transform: scale(1.1);
-}
-
+// 图标样式
 .icon {
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  
+  &--chinese {
+    font-family: $font-family-chinese;
+    font-weight: $font-weight-semibold;
+    font-size: 1.2em;
+    color: $color-gray-600;
+  }
+  
+  &--emoji {
+    font-family: $font-family-emoji;
+  }
 }
 
-.chinese-icon {
-  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  font-weight: 600;
-  font-size: 1.2em;
-  color: #666;
-}
-
-.nav-item--active .chinese-icon {
-  color: #667eea;
-}
-
-.nav-item:hover .chinese-icon {
-  color: #667eea;
-}
-
-.emoji-icon {
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
-}
-
-/* 导航项文本 */
-.nav-text {
-  font-size: 11px;
-  font-weight: 500;
-  color: #666;
-  position: relative;
-  z-index: 1;
-  transition: all 0.3s ease;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.nav-item:hover .nav-text {
-  color: #333;
-}
-
-.nav-item--active .nav-text {
-  color: #667eea;
-  font-weight: 600;
-}
-
-/* 徽章样式 */
-.nav-badge {
-  position: absolute;
-  top: 2px;
-  right: 8px;
-  background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-  color: white;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 10px;
-  min-width: 16px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-  z-index: 2;
-  animation: pulse 2s infinite;
-}
+.nav-item {
+  
+  // BEM 元素 - 徽章
+  &__badge {
+    position: absolute;
+    top: 2px;
+    right: $spacing-2;
+    background: linear-gradient(45deg, $color-red-500, $color-orange-500);
+    color: $color-white;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    padding: 2px $spacing-1_5;
+    border-radius: $border-radius-full;
+    min-width: 16px;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    z-index: var(--z-index-tooltip);
+    animation: pulse 2s infinite;
+  }
 
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
 }
 
-/* 响应式设计 */
-@media (max-width: 480px) {
-  .nav-item {
+  // 响应式设计
+  @media (max-width: 480px) {
     min-width: 50px;
-    padding: 6px 8px;
+    padding: $spacing-1_5 $spacing-2;
+    
+    .nav-item__icon {
+      font-size: $font-size-xl;
+    }
+    
+    .nav-item__text {
+      font-size: $font-size-2xs;
+    }
   }
   
-  .nav-icon {
-    font-size: 20px;
+  // 深色模式支持
+  @media (prefers-color-scheme: dark) {
+    .nav-item__text {
+      color: $color-gray-300;
+    }
+    
+    &:hover .nav-item__text {
+      color: $color-white;
+    }
+    
+    .icon--chinese {
+      color: $color-gray-300;
+    }
+    
+    &:hover .icon--chinese,
+    &.nav-item--active .icon--chinese {
+      color: var(--color-primary-500);
+    }
   }
   
-  .nav-text {
-    font-size: 10px;
-  }
-}
-
-/* 深色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .nav-text {
-    color: #ccc;
-  }
-  
-  .nav-item:hover .nav-text {
-    color: #fff;
-  }
-  
-  .chinese-icon {
-    color: #ccc;
+  // 无障碍支持
+  @media (prefers-reduced-motion: reduce) {
+    &, .nav-item__icon, .nav-item__text {
+      transition: none;
+    }
+    
+    &::before {
+      display: none;
+    }
+    
+    .nav-item__badge {
+      animation: none;
+    }
   }
   
-  .nav-item:hover .chinese-icon,
-  .nav-item--active .chinese-icon {
-    color: #667eea;
-  }
-}
-
-/* 无障碍支持 */
-@media (prefers-reduced-motion: reduce) {
-  .nav-item,
-  .nav-icon,
-  .nav-text {
-    transition: none;
+  // 焦点状态
+  &:focus {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
   }
   
-  .nav-item::before {
-    display: none;
+  &:focus:not(:focus-visible) {
+    outline: none;
   }
   
-  .nav-badge {
-    animation: none;
-  }
-}
-
-/* 焦点状态 */
-.nav-item:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-}
-
-.nav-item:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* 触摸设备优化 */
-@media (hover: none) and (pointer: coarse) {
-  .nav-item {
-    padding: 10px 12px;
-  }
-  
-  .nav-item:hover {
-    transform: none;
-  }
-  
-  .nav-item:hover .nav-icon {
-    transform: none;
+  // 触摸设备优化
+  @media (hover: none) and (pointer: coarse) {
+    padding: $spacing-2_5 $spacing-3;
+    
+    &:hover {
+      transform: none;
+      
+      .nav-item__icon {
+        transform: none;
+      }
+    }
   }
 }
 </style>

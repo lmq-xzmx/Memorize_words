@@ -202,8 +202,8 @@
 </template>
 
 <script>
-import { authAPI, userAPI } from '../utils/api.js'
-import permissionMixin from '../mixins/permissionMixin.js'
+import { authAPI, userAPI } from '../utils/api'
+import permissionMixin from '../mixins/permissionMixin'
 import UserLearningGoalWidget from '../components/UserLearningGoalWidget.vue'
 
 export default {
@@ -391,4 +391,10 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+@use '../styles/index.scss';
+
+// ComboIndicator组件暂无自定义样式
+</style>
 

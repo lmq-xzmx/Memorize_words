@@ -95,8 +95,8 @@
 </template>
 
 <script>
-import { verifyBackendAuth, fetchUserFromBackend, manualSyncAuth } from '../utils/authSync.js'
-import { getCurrentUser } from '../utils/permission.js'
+import { verifyBackendAuth, fetchUserFromBackend, manualSyncAuth } from '../utils/authSync'
+import { getCurrentUser } from '../utils/permission'
 
 export default {
   name: 'AuthTest',

@@ -131,68 +131,107 @@ defineExpose({
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@use '../../assets/scss/index.scss';
+
 .error-boundary {
   width: 100%;
   height: 100%;
+  
+  // BEM 元素 - 错误回退界面
+  @include bem-element('fallback') {
+    @include flex-center;
+    flex-direction: column;
+    padding: var(--spacing-8);
+    text-align: center;
+    background: rgba(var(--color-red-50), 0.9);
+  border: 1px solid rgba(var(--color-red-200), 0.5);
+  border-radius: var(--border-radius-lg);
+    backdrop-filter: blur(10px);
+    min-height: 200px;
+  }
+  
+  // BEM 元素 - 错误图标
+  @include bem-element('icon') {
+    margin-bottom: var(--spacing-4);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-normal);
+  }
+  
+  // BEM 元素 - 错误标题
+  @include bem-element('title') {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-red-600);
+  margin-bottom: var(--spacing-2);
+  }
+  
+  // BEM 元素 - 错误消息
+  @include bem-element('message') {
+    color: var(--color-red-800);
+  margin-bottom: var(--spacing-6);
+    max-width: 400px;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+  }
+
+  // BEM 元素 - 错误操作
+  @include bem-element('actions') {
+    @include flex-center;
+    gap: var(--spacing-3);
+  margin-bottom: var(--spacing-4);
+  }
 }
 
-.error-fallback {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  text-align: center;
-  background: rgba(254, 242, 242, 0.8);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 0.5rem;
-  backdrop-filter: blur(10px);
-  min-height: 200px;
-}
-
-.error-icon {
-  margin-bottom: 1rem;
-  font-size: 2.25rem;
-}
-
-.error-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #dc2626;
-  margin-bottom: 0.5rem;
-}
-
-.error-message {
-  color: #7f1d1d;
-  margin-bottom: 1.5rem;
-  max-width: 400px;
-}
-
-.error-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.retry-button,
-.reset-button {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: all 0.2s;
+// 重试按钮
+.retry-button {
+  @include flex-center;
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.2s ease;
   border: none;
   cursor: pointer;
+  background: var(--color-red-600);
+    color: var(--color-white);
+  
+  &:hover:not(:disabled) {
+    background: var(--color-red-700);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
+// 重置按钮
+.reset-button {
+  @include flex-center;
+  padding: var(--spacing-2) var(--spacing-4);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: var(--color-gray-100);
+    color: var(--color-gray-700);
+    border: 1px solid var(--color-gray-300);
+  
+  &:hover {
+    background: var(--color-gray-200);
+  }
+}
+
+// 重试图标
 .retry-icon {
-  margin-right: 0.5rem;
-  font-size: 1rem;
-  transition: transform 0.3s ease;
+  margin-right: var(--spacing-2);
+  @include text-style('base', 'normal');
+  @include transition('transform');
 }
 
+// 重试中的旋转动画
 .retry-button:disabled .retry-icon {
   animation: spin 1s linear infinite;
 }
@@ -202,77 +241,59 @@ defineExpose({
   to { transform: rotate(360deg); }
 }
 
-.retry-button {
-  background: #dc2626;
-  color: white;
-}
-
-.retry-button:hover:not(:disabled) {
-  background: #b91c1c;
-}
-
-.retry-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.reset-button {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
-}
-
-.reset-button:hover {
-  background: #e5e7eb;
-}
-
+// 错误详情
 .error-details {
   width: 100%;
   max-width: 600px;
   text-align: left;
+  
+  summary {
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-red-800);
+  margin-bottom: var(--spacing-2);
+  }
 }
 
-.error-details summary {
-  cursor: pointer;
-  font-weight: 500;
-  color: #7f1d1d;
-  margin-bottom: 0.5rem;
-}
-
+// 错误堆栈
 .error-stack {
-  background: #1f2937;
-  color: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
+  background: var(--color-gray-900);
+  color: var(--color-gray-50);
+  padding: var(--spacing-4);
+  border-radius: var(--border-radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
   overflow-x: auto;
   white-space: pre-wrap;
   word-break: break-all;
 }
 
-/* 深色模式支持 */
+// 深色模式支持
 @media (prefers-color-scheme: dark) {
-  .error-fallback {
-    background: rgba(17, 24, 39, 0.9);
-    border-color: rgba(239, 68, 68, 0.3);
-  }
-  
-  .error-title {
-    color: #f87171;
-  }
-  
-  .error-message {
-    color: #fca5a5;
+  .error-boundary {
+    @include bem-element('fallback') {
+      background: rgba(var(--color-gray-900), 0.9);
+    border-color: rgba(var(--color-red-500), 0.3);
+    }
+    
+    @include bem-element('title') {
+      color: var(--color-red-400);
+    }
+    
+    @include bem-element('message') {
+      color: var(--color-red-300);
+    }
   }
   
   .reset-button {
-    background: #374151;
-    color: #f9fafb;
-    border-color: #4b5563;
-  }
-  
-  .reset-button:hover {
-    background: #4b5563;
+    background: var(--color-gray-700);
+      color: var(--color-gray-100);
+      border-color: var(--color-gray-600);
+    
+    &:hover {
+      background: var(--color-gray-600);
+    }
   }
 }
 </style>

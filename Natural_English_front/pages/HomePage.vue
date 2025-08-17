@@ -311,8 +311,8 @@
 </style>
 
 <script>
-import { homepageManager } from '../utils/homepageManager.js'
-import { isAuthenticated, getCurrentUser, hasPermission } from '../utils/permission.js'
+import { homepageManager } from '../utils/homepageManager'
+import { isAuthenticated, getCurrentUser, hasPermission } from '../utils/permission'
 import LearningModeSelector from './LearningModeSelector.vue'
 
 export default {
