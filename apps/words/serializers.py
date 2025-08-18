@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
-    Word, WordResource, VocabularySource, VocabularyList
+    Word, WordEntry, WordResource, VocabularySource, VocabularyList, ImportRecord
 )
 from apps.teaching.models import LearningSession as StudySession
 
@@ -120,28 +120,99 @@ class VocabularySourceSerializer(serializers.ModelSerializer):
         return obj.vocabulary_lists.count()
 
 
+class WordEntrySerializer(serializers.ModelSerializer):
+    """词条序列化器"""
+    word_text = serializers.CharField(source='word.word', read_only=True)
+    vocabulary_list_name = serializers.CharField(source='vocabulary_list.name', read_only=True)
+    import_records_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = WordEntry
+        fields = [
+            'id', 'word', 'word_text', 'vocabulary_list', 'vocabulary_list_name',
+            'textbook_version', 'grade', 'book_volume', 'unit',
+            'phonetic', 'definition', 'part_of_speech', 'note',
+            'import_records_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+    
+    def get_import_records_count(self, obj):
+        """获取导入记录数量"""
+        return obj.import_records.count()
+
+
+class ImportRecordSerializer(serializers.ModelSerializer):
+    """导入记录序列化器"""
+    word_entry_info = serializers.SerializerMethodField()
+    import_source_name = serializers.CharField(source='import_source.name', read_only=True)
+    
+    class Meta:
+        model = ImportRecord
+        fields = [
+            'id', 'word_entry', 'word_entry_info', 'import_type',
+            'import_source', 'import_source_name', 'import_batch_id',
+            'import_metadata', 'created_at'
+        ]
+        read_only_fields = ['created_at']
+    
+    def get_word_entry_info(self, obj):
+        """获取词条基本信息"""
+        if obj.word_entry:
+            return {
+                'id': obj.word_entry.id,
+                'word': obj.word_entry.word.word,
+                'definition': obj.word_entry.definition,
+                'textbook_version': obj.word_entry.textbook_version,
+                'grade': obj.word_entry.grade,
+                'unit': obj.word_entry.unit
+            }
+        return None
+
+
 class VocabularyListSerializer(serializers.ModelSerializer):
     """词库列表序列化器"""
     source_name = serializers.CharField(source='source.name', read_only=True)
-    imported_count = serializers.SerializerMethodField()
-    conflict_count = serializers.SerializerMethodField()
+    word_entries_count = serializers.SerializerMethodField()
+    unique_words_count = serializers.SerializerMethodField()
+    import_records_count = serializers.SerializerMethodField()
+    latest_import_batch = serializers.SerializerMethodField()
     
     class Meta:
         model = VocabularyList
         fields = [
             'id', 'source', 'source_name', 'name', 'description',
-            'is_active', 'word_count', 'imported_count', 'conflict_count',
-            'created_at'
+            'is_active', 'word_count', 'word_entries_count', 'unique_words_count',
+            'import_records_count', 'latest_import_batch', 'created_at'
         ]
         read_only_fields = ['word_count', 'created_at']
     
-    def get_imported_count(self, obj):
-        """获取导入单词数量"""
-        return obj.words.count()
+    def get_word_entries_count(self, obj):
+        """获取词条数量"""
+        return obj.word_entries.count()
     
-    def get_conflict_count(self, obj):
-        """获取冲突单词数量"""
-        return obj.words.filter(has_conflict=True).count()
+    def get_unique_words_count(self, obj):
+        """获取唯一单词数量"""
+        return obj.word_entries.values('word').distinct().count()
+    
+    def get_import_records_count(self, obj):
+        """获取导入记录数量"""
+        return ImportRecord.objects.filter(
+            word_entry__vocabulary_list=obj
+        ).count()
+    
+    def get_latest_import_batch(self, obj):
+        """获取最新导入批次信息"""
+        latest_record = ImportRecord.objects.filter(
+            word_entry__vocabulary_list=obj
+        ).order_by('-created_at').first()
+        
+        if latest_record:
+            return {
+                'batch_id': latest_record.import_batch_id,
+                'import_time': latest_record.created_at,
+                'source_name': latest_record.import_source.name if latest_record.import_source else None
+            }
+        return None
 
 
 # ImportedVocabularySerializer已合并到WordSerializer中

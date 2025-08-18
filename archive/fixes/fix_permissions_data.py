@@ -24,8 +24,9 @@ from django.contrib.contenttypes.models import ContentType
 from apps.accounts.models import CustomUser, UserRole
 from apps.permissions.models import (
     MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, 
-    RoleManagement, PermissionSyncLog
+    RoleManagement
 )
+from apps.permissions.models_optimized import PermissionSyncLog
 from apps.accounts.services.role_service import RoleService
 
 

@@ -8,7 +8,8 @@ from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 import logging
 
-from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, PermissionSyncLog, RoleManagement
+from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, RoleManagement
+from .models_optimized import PermissionSyncLog
 from .serializers import (
     MenuModuleConfigSerializer, RoleMenuPermissionSerializer, GroupSerializer,
     PermissionSerializer, RoleGroupMappingSerializer, PermissionSyncLogSerializer,

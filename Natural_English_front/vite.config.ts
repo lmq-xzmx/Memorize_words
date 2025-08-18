@@ -17,7 +17,7 @@ export default defineConfig({
   // 路径解析
   resolve: {
     alias: {
-      '@': resolve(__dirname, './'),
+      '@': resolve(__dirname, './src'),
       '~': resolve(__dirname, './')
     }
   },
@@ -30,17 +30,22 @@ export default defineConfig({
     cors: true,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8001',
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/accounts': {
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false
       },
       '/ws': {
-        target: 'http://127.0.0.1:8001',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         ws: true
       },
       '/static': {
-        target: 'http://127.0.0.1:8001',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true
       }
     }
@@ -69,7 +74,8 @@ export default defineConfig({
       'vue',
       'vue-router',
       'vuex',
-      'axios'
+      'axios',
+      'element-plus'
     ]
   },
   
@@ -79,13 +85,9 @@ export default defineConfig({
       scss: {
         // 使用现代编译器
         api: 'modern-compiler',
-        silenceDeprecations: ['legacy-js-api']
+        silenceDeprecations: ['legacy-js-api'],
+        additionalData: `@import "@/styles/variables.scss";`
       }
-    },
-    modules: {
-      // CSS Modules 配置（可选使用）
-      localsConvention: 'camelCaseOnly',
-      generateScopedName: '[name]__[local]___[hash:base64:5]'
     }
   },
   

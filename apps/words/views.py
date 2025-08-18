@@ -10,14 +10,14 @@ from datetime import timedelta
 from typing import Type, Union
 
 from .models import (
-    Word, WordResource, VocabularySource, VocabularyList
+    Word, WordEntry, WordResource, VocabularySource, VocabularyList, ImportRecord
 )
 from apps.teaching.models import LearningSession as StudySession
 from .serializers import (
     WordSerializer, WordListSerializer, WordResourceSerializer,
     VocabularySourceSerializer, VocabularyListSerializer,
     StudySessionSerializer, WordStatisticsSerializer,
-    BulkWordOperationSerializer
+    BulkWordOperationSerializer, WordEntrySerializer, ImportRecordSerializer
 )
 
 
@@ -204,6 +204,103 @@ class VocabularySourceViewSet(viewsets.ModelViewSet):
     ordering = ['name']
 
 
+class WordEntryViewSet(viewsets.ModelViewSet):
+    """词条视图集"""
+    queryset = WordEntry.objects.select_related('word', 'vocabulary_list').all()
+    serializer_class = WordEntrySerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['vocabulary_list', 'textbook_version', 'grade', 'book_volume', 'unit', 'part_of_speech']
+    search_fields = ['word__word', 'definition', 'phonetic']
+    ordering_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
+    
+    @action(detail=False, methods=['get'])
+    def by_word(self, request):
+        """根据单词获取所有词条"""
+        word_text = request.query_params.get('word')
+        if not word_text:
+            return Response({'error': '请提供单词参数'}, status=400)
+        
+        entries = self.get_queryset().filter(word__word=word_text)
+        serializer = self.get_serializer(entries, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def versions(self, request):
+        """获取单词的所有版本"""
+        word_text = request.query_params.get('word')
+        if not word_text:
+            return Response({'error': '请提供单词参数'}, status=400)
+        
+        entries = self.get_queryset().filter(word__word=word_text).order_by('-created_at')
+        serializer = self.get_serializer(entries, many=True)
+        return Response({
+            'word': word_text,
+            'total_versions': entries.count(),
+            'versions': serializer.data
+        })
+
+
+class ImportRecordViewSet(viewsets.ReadOnlyModelViewSet):
+    """导入记录视图集（只读）"""
+    queryset = ImportRecord.objects.select_related('word_entry__word', 'import_source').all()
+    serializer_class = ImportRecordSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['import_type', 'import_source', 'import_batch_id']
+    search_fields = ['word_entry__word__word', 'import_batch_id']
+    ordering_fields = ['created_at']
+    ordering = ['-created_at']
+    
+    @action(detail=False, methods=['get'])
+    def by_batch(self, request):
+        """根据批次ID获取导入记录"""
+        batch_id = request.query_params.get('batch_id')
+        if not batch_id:
+            return Response({'error': '请提供批次ID参数'}, status=400)
+        
+        records = self.get_queryset().filter(import_batch_id=batch_id)
+        serializer = self.get_serializer(records, many=True)
+        
+        # 统计信息
+        stats = {
+            'total': records.count(),
+            'new': records.filter(import_type='new').count(),
+            'version': records.filter(import_type='version').count(),
+            'duplicate': records.filter(import_type='duplicate').count(),
+        }
+        
+        return Response({
+            'batch_id': batch_id,
+            'statistics': stats,
+            'records': serializer.data
+        })
+    
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """获取导入统计信息"""
+        queryset = self.get_queryset()
+        
+        # 按导入类型统计
+        type_stats = {
+            'new': queryset.filter(import_type='new').count(),
+            'version': queryset.filter(import_type='version').count(),
+            'duplicate': queryset.filter(import_type='duplicate').count(),
+        }
+        
+        # 按日期统计（最近30天）
+        from datetime import datetime, timedelta
+        thirty_days_ago = datetime.now() - timedelta(days=30)
+        recent_stats = queryset.filter(created_at__gte=thirty_days_ago).count()
+        
+        return Response({
+            'type_statistics': type_stats,
+            'total_records': queryset.count(),
+            'recent_30_days': recent_stats
+        })
+
+
 class VocabularyListViewSet(viewsets.ModelViewSet):
     """词库列表视图集"""
     queryset = VocabularyList.objects.select_related('source')
@@ -224,6 +321,38 @@ class VocabularyListViewSet(viewsets.ModelViewSet):
             'message': f'单词数量已更新为 {count}',
             'word_count': count
         })
+    
+    @action(detail=True, methods=['get'])
+    def entries(self, request, pk=None):
+        """获取词汇表的所有词条"""
+        vocabulary_list = self.get_object()
+        entries = vocabulary_list.word_entries.select_related('word').all()
+        
+        # 分页
+        page = self.paginate_queryset(entries)
+        if page is not None:
+            serializer = WordEntrySerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = WordEntrySerializer(entries, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def import_history(self, request, pk=None):
+        """获取词汇表的导入历史"""
+        vocabulary_list = self.get_object()
+        records = ImportRecord.objects.filter(
+            word_entry__vocabulary_list=vocabulary_list
+        ).select_related('import_source').order_by('-created_at')
+        
+        # 分页
+        page = self.paginate_queryset(records)
+        if page is not None:
+            serializer = ImportRecordSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = ImportRecordSerializer(records, many=True)
+        return Response(serializer.data)
 
 
 # ImportedVocabularyViewSet已合并到WordViewSet中

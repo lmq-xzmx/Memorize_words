@@ -13,7 +13,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
-from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, PermissionSyncLog
+from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping
+from .models_optimized import PermissionSyncLog
 from apps.accounts.models import CustomUser, UserRole
 
 

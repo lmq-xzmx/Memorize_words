@@ -1,8 +1,8 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    WordViewSet, WordResourceViewSet, VocabularySourceViewSet,
-    VocabularyListViewSet, StudySessionViewSet,
+    WordViewSet, WordEntryViewSet, WordResourceViewSet, VocabularySourceViewSet,
+    VocabularyListViewSet, ImportRecordViewSet, StudySessionViewSet,
     word_challenge_view, word_examples_view
 )
 from . import batch_views
@@ -15,9 +15,11 @@ router = DefaultRouter()
 
 # 注册视图集
 router.register(r'words', WordViewSet, basename='word')
+router.register(r'word-entries', WordEntryViewSet, basename='wordentry')
 router.register(r'word-resources', WordResourceViewSet, basename='wordresource')
 router.register(r'vocabulary-sources', VocabularySourceViewSet, basename='vocabularysource')
 router.register(r'vocabulary-lists', VocabularyListViewSet, basename='vocabularylist')
+router.register(r'import-records', ImportRecordViewSet, basename='importrecord')
 # imported-vocabulary已合并到words中
 # user-streaks已移除，因为UserStreak模型不存在
 router.register(r'study-sessions', StudySessionViewSet, basename='studysession')

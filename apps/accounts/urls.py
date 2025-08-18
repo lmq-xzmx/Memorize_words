@@ -28,19 +28,19 @@ router.register(r'role-templates', RoleTemplateViewSet, basename='roletemplate')
 router.register(r'bulk-operations', BulkOperationsViewSet, basename='bulkoperations')
 
 urlpatterns = [
-    # API路由
-    path('api/', include(router.urls)),
-    path('api/auth/login/', CustomAuthToken.as_view(), name='api_login'),
-    path('api/auth/register/', RegisterViewSet.as_view({'post': 'create'}), name='api_register'),
-    path('api/auth/roles/', RegisterViewSet.as_view({'get': 'roles'}), name='api_roles'),
-    path('api/auth/role-extensions/', RegisterViewSet.as_view({'get': 'role_extensions'}), name='api_role_extensions'),
-    path('api/auth/register-with-extensions/', RegisterViewSet.as_view({'post': 'register_with_extensions'}), name='api_register_with_extensions'),
+    # API路由 (注意：根urls.py已包含api/前缀，这里不需要重复)
+    path('', include(router.urls)),
+    path('auth/login/', CustomAuthToken.as_view(), name='api_login'),
+    path('auth/register/', RegisterViewSet.as_view({'post': 'create'}), name='api_register'),
+    path('auth/roles/', RegisterViewSet.as_view({'get': 'roles'}), name='api_roles'),
+    path('auth/role-extensions/', RegisterViewSet.as_view({'get': 'role_extensions'}), name='api_role_extensions'),
+    path('auth/register-with-extensions/', RegisterViewSet.as_view({'post': 'register_with_extensions'}), name='api_register_with_extensions'),
     
     # 登录状态同步API
-    path('api/auth/verify/', AuthVerifyView.as_view(), name='api_auth_verify'),
-    path('api/auth/user/', CurrentUserView.as_view(), name='api_auth_user'),
-    path('api/users/current/', CurrentUserView.as_view(), name='api_current_user'),
-    path('api/auth/sync/', AuthSyncView.as_view(), name='api_auth_sync'),
+    path('auth/verify/', AuthVerifyView.as_view(), name='api_auth_verify'),
+    path('auth/user/', CurrentUserView.as_view(), name='api_auth_user'),
+    path('users/current/', CurrentUserView.as_view(), name='api_current_user'),
+    path('auth/sync/', AuthSyncView.as_view(), name='api_auth_sync'),
     
     # 传统Web视图（保留用于管理后台）
     path('login/', views.CustomLoginView.as_view(), name='login'),

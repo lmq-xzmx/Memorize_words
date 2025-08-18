@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.db.models import Count
+from utils.admin_mixins import AdminDynamicPaginationMixin
 from .models import (
     LearningGoal, GoalWord, LearningSession, WordLearningRecord, LearningPlan,
     DailyStudyRecord, GuidedPracticeSession, GuidedPracticeQuestion, GuidedPracticeAnswer
@@ -50,7 +51,7 @@ class LearningPlanInline(admin.TabularInline):
 
 
 @admin.register(LearningGoal)
-class LearningGoalAdmin(admin.ModelAdmin):
+class LearningGoalAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """学习目标管理"""
     list_display = [
         'name', 'user', 'goal_type', 'target_words_count',
@@ -65,6 +66,7 @@ class LearningGoalAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     ordering = ['-created_at']
     list_per_page = 25
+
     
     fieldsets = (
         ('基本信息', {
@@ -112,7 +114,7 @@ class LearningGoalAdmin(admin.ModelAdmin):
 
 
 @admin.register(GoalWord)
-class GoalWordAdmin(admin.ModelAdmin):
+class GoalWordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """目标单词管理"""
     list_display = ['goal', 'word', 'added_at']
     list_filter = [
@@ -142,7 +144,7 @@ class WordLearningRecordInline(admin.TabularInline):
 
 
 @admin.register(LearningSession)
-class LearningSessionAdmin(admin.ModelAdmin):
+class LearningSessionAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """学习会话管理"""
     list_display = [
         'user', 'goal', 'start_time', 'duration_display',
@@ -211,7 +213,7 @@ class LearningSessionAdmin(admin.ModelAdmin):
 
 
 @admin.register(WordLearningRecord)
-class WordLearningRecordAdmin(admin.ModelAdmin):
+class WordLearningRecordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """单词学习记录管理"""
     list_display = [
         'word', 'user_answer', 'is_correct_display', 'response_time_display',
@@ -226,7 +228,7 @@ class WordLearningRecordAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
     readonly_fields = ['created_at']
     ordering = ['-created_at']
-    list_per_page = 100
+    list_per_page = 25
     
     fieldsets = (
         ('基本信息', {
@@ -274,7 +276,7 @@ class WordLearningRecordAdmin(admin.ModelAdmin):
 
 
 @admin.register(LearningPlan)
-class LearningPlanAdmin(admin.ModelAdmin):
+class LearningPlanAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """学习计划管理"""
     list_display = [
         'goal', 'plan_type_display', 'words_per_day',
@@ -371,7 +373,7 @@ class LearningPlanAdmin(admin.ModelAdmin):
 
 
 @admin.register(DailyStudyRecord)
-class DailyStudyRecordAdmin(admin.ModelAdmin):
+class DailyStudyRecordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """每日学习记录管理"""
     list_display = [
         'user', 'learning_plan', 'study_date', 'target_words', 'completed_words',
@@ -382,7 +384,7 @@ class DailyStudyRecordAdmin(admin.ModelAdmin):
     date_hierarchy = 'study_date'
     readonly_fields = ['created_at', 'completion_rate']
     ordering = ['-study_date']
-    list_per_page = 50
+    list_per_page = 25
     
     fieldsets = (
         ('基本信息', {
@@ -421,7 +423,7 @@ class DailyStudyRecordAdmin(admin.ModelAdmin):
 
 
 @admin.register(GuidedPracticeSession)
-class GuidedPracticeSessionAdmin(admin.ModelAdmin):
+class GuidedPracticeSessionAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """引导练习会话管理"""
     list_display = [
         'user', 'goal', 'session_type', 'total_questions', 'correct_answers',
@@ -461,7 +463,7 @@ class GuidedPracticeSessionAdmin(admin.ModelAdmin):
 
 
 @admin.register(GuidedPracticeQuestion)
-class GuidedPracticeQuestionAdmin(admin.ModelAdmin):
+class GuidedPracticeQuestionAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """引导练习题目管理"""
     list_display = [
         'session', 'question_type', 'question_text_short', 'correct_answer',
@@ -500,7 +502,7 @@ class GuidedPracticeQuestionAdmin(admin.ModelAdmin):
 
 
 @admin.register(GuidedPracticeAnswer)
-class GuidedPracticeAnswerAdmin(admin.ModelAdmin):
+class GuidedPracticeAnswerAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """引导练习答案管理"""
     list_display = [
         'question', 'user_answer', 'is_correct_display', 'response_time_display',
@@ -510,7 +512,7 @@ class GuidedPracticeAnswerAdmin(admin.ModelAdmin):
     search_fields = ['user_answer', 'question__question_text', 'question__session__user__username']
     readonly_fields = ['created_at']
     ordering = ['-created_at']
-    list_per_page = 100
+    list_per_page = 25
     
     fieldsets = (
         ('基本信息', {

@@ -1,10 +1,20 @@
 from django.contrib import admin
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.urls import reverse
 import csv
 import io
+from django.urls import path
 
 class BaseBatchImportAdmin(admin.ModelAdmin):
+    
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('batch_import/', self.admin_site.admin_view(self.process_batch_import), name=f'{self.model._meta.app_label}_{self.model._meta.model_name}_batch_import'),
+        ]
+        return my_urls + urls
+
     def get_batch_import_template(self):
         """
         返回批量导入功能使用的模板。
@@ -18,6 +28,18 @@ class BaseBatchImportAdmin(admin.ModelAdmin):
         子类可以重写此方法以添加自定义上下文。
         """
         return {'opts': self.model._meta}
+    
+    def changelist_view(self, request, extra_context=None):
+        """重写changelist视图以添加批量导入按钮"""
+        extra_context = extra_context or {}
+        
+        # 生成批量导入URL
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+        batch_import_url = reverse(f'admin:{app_label}_{model_name}_batch_import')
+        extra_context['batch_import_url'] = batch_import_url
+        
+        return super().changelist_view(request, extra_context=extra_context)
 
     def process_batch_import(self, request):
         """

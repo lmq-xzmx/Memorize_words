@@ -80,7 +80,7 @@ class WordResource(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return self.name
+        return str(self.name)
     
     def clean(self):
         """验证资源数据"""
@@ -96,45 +96,25 @@ class WordResource(models.Model):
     @property
     def file_size(self):
         """获取文件大小"""
-        if self.file and hasattr(self.file, 'size'):
+        if self.file and self.file.name:
             return self.file.size
         return 0
     
     @property
     def file_extension(self):
         """获取文件扩展名"""
-        if self.file:
-            return os.path.splitext(self.file.name)[1].lower()
+        if self.file and self.file.name:
+            return os.path.splitext(str(self.file.name))[1].lower()
         return ''
 
 
 class Word(models.Model):
-    """统一单词模型 - 支持版本管理"""
+    """单词模型 - 临时保留旧字段以便安全迁移"""
     # 基本信息
     word = models.CharField(_('单词'), max_length=100)
-    phonetic = models.CharField(_('音标'), max_length=100, blank=True)
-    definition = models.TextField(_('释义'), blank=True)
-    part_of_speech = models.CharField(_('词性'), max_length=50, choices=PART_OF_SPEECH_CHOICES, blank=True)
-    example = models.TextField(_('例句'), blank=True)
-    note = models.TextField(_('笔记'), blank=True)
-    
-    # 来源信息
-    vocabulary_list = models.ForeignKey(
-        'VocabularyList', 
-        on_delete=models.CASCADE, 
-        related_name='words', 
-        verbose_name='词库列表',
-        null=True,
-        blank=True
-    )
-    textbook_version = models.CharField('教材版本', max_length=50, blank=True)
-    grade = models.CharField('年级', max_length=20, choices=GRADE_CHOICES, blank=True)
-    book_volume = models.CharField('册别', max_length=20, blank=True, help_text='如：三上、三下、四上等')
-    unit = models.CharField('单元', max_length=20, blank=True, help_text='如：Unit 1、Unit 2等')
     
     # 学习状态相关字段
     learned_at = models.DateTimeField(_('学习时间'), null=True, blank=True)
-    mastery_level = models.IntegerField(_('掌握程度'), default=0, help_text='0-100的掌握程度评分')
     
     # 资源绑定
     resources = models.ManyToManyField(
@@ -146,21 +126,6 @@ class Word(models.Model):
     
     # 分类和标签
     tags = models.CharField(_('标签'), max_length=200, blank=True, help_text='用逗号分隔多个标签')
-    difficulty_level = models.IntegerField(_('难度等级'), default=1, choices=[(i, f'等级{i}') for i in range(1, 6)])
-    
-    # 版本管理 - 替换原有的冲突管理
-    version_number = models.IntegerField('版本号', default=1, help_text='单词的版本号，从1开始')
-    has_multiple_versions = models.BooleanField('是否含有多版本', default=False, help_text='该单词是否有多个版本')
-    parent_word = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        related_name='versions',
-        verbose_name='主单词',
-        null=True,
-        blank=True,
-        help_text='指向主单词，如果为空则表示这是主单词'
-    )
-    version_data = models.JSONField('版本数据', default=dict, blank=True, help_text='存储版本相关的元数据')
     
     # 时间戳
     created_at = models.DateTimeField(_('创建时间'), auto_now_add=True)
@@ -172,176 +137,16 @@ class Word(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['word']),
-            models.Index(fields=['vocabulary_list', 'word']),
-            models.Index(fields=['has_multiple_versions']),
-            models.Index(fields=['version_number']),
-            models.Index(fields=['parent_word']),
-            models.Index(fields=['difficulty_level']),
         ]
     
     def __str__(self):
-        if self.parent_word:
-            return f"{self.word} (版本{self.version_number})"
-        elif self.vocabulary_list:
-            return f"{self.word} ({self.vocabulary_list.name})"
-        return self.word
-    
-    def save(self, *args, **kwargs):
-        """保存时自动处理版本管理"""
-        
-        # 处理单词版本管理
-        if not self.pk:  # 新创建的记录
-            try:
-                self.handle_word_versioning()
-            except Exception as e:
-                # 如果处理失败，记录错误但不阻止保存
-                print(f"单词版本管理处理失败: {e}")
-        
-        super().save(*args, **kwargs)
-    
-    def handle_word_versioning(self):
-        """处理单词版本管理"""
-        try:
-            # 查找已存在的同名单词
-            existing_words = Word.objects.filter(word=self.word).order_by('created_at')
-            
-            if existing_words.exists():
-                # 获取最早创建的单词作为主单词
-                parent_word = existing_words.first()
-                
-                # 检查是否完全相同
-                if self.is_identical_to(parent_word):
-                    # 完全相同，删除当前记录
-                    raise ValidationError("单词完全相同，无需重复导入")
-                
-                # 检查是否有差异，视为不同版本
-                if self.has_differences_from(parent_word):
-                    # 有差异，设置为新版本
-                    self.parent_word = parent_word
-                    if parent_word:
-                        self.version_number = parent_word.get_next_version_number()
-                        self.has_multiple_versions = False  # 版本本身不标记为多版本
-                        
-                        # 更新主单词的多版本标记
-                        parent_word.has_multiple_versions = True
-                        parent_word.save(update_fields=['has_multiple_versions'])
-                        
-                        # 记录版本信息
-                        self.version_data = {
-                            'parent_word_id': parent_word.pk,
-                            'differences': self.get_differences_from(parent_word),
-                            'created_as_version': True,
-                            'import_timestamp': timezone.now().isoformat()
-                        }
-                else:
-                    # 无显著差异，但仍保存为版本
-                    self.parent_word = parent_word
-                    if parent_word:
-                        self.version_number = parent_word.get_next_version_number()
-                        self.has_multiple_versions = False
-                        
-                        # 更新主单词的多版本标记
-                        parent_word.has_multiple_versions = True
-                        parent_word.save(update_fields=['has_multiple_versions'])
-                        
-                        self.version_data = {
-                            'parent_word_id': parent_word.pk,
-                            'duplicate_import': True,
-                            'import_timestamp': timezone.now().isoformat()
-                        }
-            else:
-                # 第一个单词，设置为主单词
-                self.parent_word = None
-                self.version_number = 1
-                self.has_multiple_versions = False
-                
-        except Exception as e:
-            # 如果处理失败，记录错误但不阻止保存
-            print(f"单词版本管理处理失败: {e}")
-    
-    def is_identical_to(self, other):
-        """检查是否与另一个单词完全相同"""
-        try:
-            fields_to_compare = ['phonetic', 'definition', 'part_of_speech', 'example', 'note', 'textbook_version', 'grade']
-            for field in fields_to_compare:
-                if getattr(self, field) != getattr(other, field):
-                    return False
-            return True
-        except Exception as e:
-            print(f"相同性检测失败: {e}")
-            return False
-    
-    def has_differences_from(self, other):
-        """检查是否有差异"""
-        try:
-            fields_to_compare = ['phonetic', 'definition', 'part_of_speech', 'example', 'note']
-            for field in fields_to_compare:
-                if getattr(self, field) and getattr(other, field):
-                    if getattr(self, field) != getattr(other, field):
-                        return True
-            return False
-        except Exception as e:
-            print(f"差异检测失败: {e}")
-            return False
-    
-    def get_differences_from(self, other):
-        """获取与另一个单词的差异详情"""
-        try:
-            differences = {}
-            fields_to_compare = ['phonetic', 'definition', 'part_of_speech', 'example', 'note']
-            for field in fields_to_compare:
-                self_value = getattr(self, field)
-                other_value = getattr(other, field)
-                if self_value != other_value:
-                    differences[field] = {
-                        'current': self_value,
-                        'existing': other_value
-                    }
-            return differences
-        except Exception as e:
-            print(f"差异详情获取失败: {e}")
-            return {}
-    
-    def get_next_version_number(self):
-        """获取下一个版本号"""
-        if self.parent_word:
-            # 如果是版本，返回主单词的下一个版本号
-            return self.parent_word.get_next_version_number()
-        else:
-            # 如果是主单词，返回当前最大版本号+1
-            max_version = Word.objects.filter(
-                models.Q(pk=self.pk) | models.Q(parent_word=self)
-            ).aggregate(models.Max('version_number'))['version_number__max']
-            return (max_version or 0) + 1
-    
-    def get_all_versions(self):
-        """获取所有版本（包括主单词）"""
-        if self.parent_word:
-            # 如果是版本，返回主单词的所有版本
-            return self.parent_word.get_all_versions()
-        else:
-            # 如果是主单词，返回自己和所有版本
-            return Word.objects.filter(
-                models.Q(pk=self.pk) | models.Q(parent_word=self)
-            ).order_by('version_number')
-    
-    def get_version_count(self):
-        """获取版本数量"""
-        return self.get_all_versions().count()
-    
-    def is_main_word(self):
-        """判断是否为主单词"""
-        return self.parent_word is None
-    
-    def is_version(self):
-        """判断是否为版本"""
-        return self.parent_word is not None
+        return str(self.word)
     
     @property
     def tag_list(self):
         """获取标签列表"""
         if self.tags:
-            return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
+            return [tag.strip() for tag in str(self.tags).split(',') if tag.strip()]
         return []
     
     def add_tag(self, tag):
@@ -360,71 +165,220 @@ class Word(models.Model):
             self.tags = ', '.join(tags)
             self.save()
     
-    def create_version(self, **version_data):
-        """创建新版本"""
-        version_data.update({
-            'word': self.word,
-            'parent_word': self,
-            'version_number': self.get_next_version_number(),
-            'has_multiple_versions': False
-        })
-        new_version = Word.objects.create(**version_data)
-        
-        # 更新主单词的多版本标记
-        self.has_multiple_versions = True
-        self.save(update_fields=['has_multiple_versions'])
-        
-        return new_version
+
+
+
+class WordEntry(models.Model):
+    """词条模型 - 存储单词的具体信息和上下文"""
+    # 关联单词
+    word = models.ForeignKey(
+        Word,
+        on_delete=models.CASCADE,
+        related_name='entries',
+        verbose_name='单词'
+    )
     
-    def delete_version(self, version_number):
-        """删除指定版本"""
-        if self.is_version():
-            raise ValidationError("只有主单词可以删除版本")
-        
-        version_to_delete = Word.objects.filter(
-            parent_word=self,
-            version_number=version_number
-        ).first()
-        
-        if version_to_delete:
-            version_to_delete.delete()
-            
-            # 重新编号版本
-            self.renumber_versions()
-            
-            # 检查是否还有多版本
-            if self.get_version_count() == 1:
-                self.has_multiple_versions = False
-                self.save(update_fields=['has_multiple_versions'])
-            
-            return True
-        return False
+    # 词条信息
+    phonetic = models.CharField(_('音标'), max_length=100, blank=True)
+    definition = models.TextField(_('释义'), blank=True)
+    part_of_speech = models.CharField(_('词性'), max_length=50, choices=PART_OF_SPEECH_CHOICES, blank=True)
+    example = models.TextField(_('例句'), blank=True)
+    note = models.TextField(_('笔记'), blank=True)
     
-    def renumber_versions(self):
-        """重新编号版本"""
-        if self.is_version():
-            return
+    # 教材信息
+    textbook_version = models.CharField('教材版本', max_length=50, blank=True)
+    grade = models.CharField('年级', max_length=20, choices=GRADE_CHOICES, blank=True)
+    book_volume = models.CharField('册别', max_length=20, blank=True, help_text='如：三上、三下、四上等')
+    unit = models.CharField('单元', max_length=20, blank=True, help_text='如：Unit 1、Unit 2等')
+    
+    # 关联信息
+    vocabulary_list = models.ForeignKey(
+        'VocabularyList', 
+        on_delete=models.CASCADE, 
+        related_name='word_entries', 
+        verbose_name='词库列表',
+        null=True,
+        blank=True
+    )
+    
+    # 时间戳
+    created_at = models.DateTimeField(_('创建时间'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('更新时间'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('词条')
+        verbose_name_plural = _('词条')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['word']),
+            models.Index(fields=['vocabulary_list']),
+            models.Index(fields=['textbook_version', 'grade', 'book_volume', 'unit']),
+        ]
+        # 唯一约束：同一个单词在同一教材版本、年级、册别、单元下的相同音标、释义、词性、备注组合不能重复
+        unique_together = [
+            ['word', 'textbook_version', 'grade', 'book_volume', 'unit', 'phonetic', 'definition', 'part_of_speech', 'note']
+        ]
+    
+    def __str__(self):
+        return f"{str(self.word.word)} - {self.textbook_version} {self.grade} {self.book_volume} {self.unit}"
+    
+    def is_identical_to(self, other):
+        """检查是否与另一个词条完全相同（重复数据）"""
+        if not isinstance(other, WordEntry):
+            return False
         
-        versions = Word.objects.filter(parent_word=self).order_by('created_at')
-        for index, version in enumerate(versions, start=2):
-            if version.version_number != index:
-                version.version_number = index
-                version.save(update_fields=['version_number'])
+        return (
+            self.word_id == other.word_id and
+            self.textbook_version == other.textbook_version and
+            self.grade == other.grade and
+            self.book_volume == other.book_volume and
+            self.unit == other.unit and
+            self.phonetic == other.phonetic and
+            self.definition == other.definition and
+            self.part_of_speech == other.part_of_speech and
+            self.note == other.note
+        )
+    
+    def is_same_word_different_version(self, other):
+        """检查是否为同一单词的不同版本（仅单词相同，其他信息不同）"""
+        if not isinstance(other, WordEntry):
+            return False
+        
+        return (
+            self.word_id == other.word_id and
+            not self.is_identical_to(other)
+        )
+
+
+class ImportRecord(models.Model):
+    """导入记录模型 - 记录词条的导入来源信息"""
+    # 关联词条
+    word_entry = models.ForeignKey(
+        WordEntry,
+        on_delete=models.CASCADE,
+        related_name='import_records',
+        verbose_name='词条'
+    )
+    
+    # 导入来源信息
+    import_source = models.ForeignKey(
+        'VocabularySource',
+        on_delete=models.SET_NULL,
+        related_name='import_records',
+        verbose_name='导入来源',
+        null=True,
+        blank=True
+    )
+    import_batch_id = models.CharField('导入批次ID', max_length=100, blank=True)
+    import_metadata = models.JSONField('导入元数据', default=dict, blank=True)
+    
+    # 导入类型
+    IMPORT_TYPE_CHOICES = (
+        ('new', '新增'),
+        ('duplicate', '重复'),
+        ('version', '新版本'),
+    )
+    import_type = models.CharField('导入类型', max_length=20, choices=IMPORT_TYPE_CHOICES, default='new')
+    
+    # 时间戳
+    created_at = models.DateTimeField(_('创建时间'), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _('导入记录')
+        verbose_name_plural = _('导入记录')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['word_entry']),
+            models.Index(fields=['import_source']),
+            models.Index(fields=['import_batch_id']),
+            models.Index(fields=['import_type']),
+        ]
+    
+    def __str__(self):
+        return f"{self.word_entry} - {self.import_type} - {self.created_at}"
 
 
 class VocabularySource(models.Model):
     """词库导入来源"""
     name = models.CharField('来源名称', max_length=100)
     description = models.TextField('来源描述', blank=True)
+    
+    # 导入统计信息
+    total_imports = models.IntegerField('总导入次数', default=0, help_text='该来源的总导入次数')
+    total_words_imported = models.IntegerField('总导入单词数', default=0, help_text='该来源导入的总单词数')
+    total_new_words = models.IntegerField('新增单词数', default=0, help_text='该来源新增的单词数')
+    total_duplicate_words = models.IntegerField('重复单词数', default=0, help_text='该来源重复的单词数')
+    total_version_words = models.IntegerField('版本单词数', default=0, help_text='该来源创建的版本单词数')
+    
+    # 最后导入信息
+    last_import_at = models.DateTimeField('最后导入时间', null=True, blank=True)
+    last_import_batch_id = models.CharField('最后导入批次ID', max_length=100, blank=True)
+    last_import_file_name = models.CharField('最后导入文件名', max_length=200, blank=True)
+    last_import_word_count = models.IntegerField('最后导入单词数', default=0)
+    
+    # 来源配置
+    is_active = models.BooleanField('是否启用', default=True, help_text='是否允许从该来源导入')
+    auto_create_lists = models.BooleanField('自动创建词库列表', default=True, help_text='是否自动创建词库列表')
+    
     created_at = models.DateTimeField('创建时间', auto_now_add=True)
+    updated_at = models.DateTimeField('更新时间', auto_now=True)
     
     class Meta:
         verbose_name = '词库导入来源设置'
         verbose_name_plural = '词库导入来源设置'
         ordering = ['name']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['last_import_at']),
+        ]
     
     def __str__(self):
-        return self.name
+        return f"{self.name} (导入{self.total_imports}次)"
+    
+    def update_import_stats(self, batch_id, file_name, new_words=0, duplicate_words=0, version_words=0):
+        """更新导入统计信息"""
+        # 使用F表达式进行原子更新
+        from django.db.models import F
+        VocabularySource.objects.filter(id=self.id).update(
+            total_imports=F('total_imports') + 1,
+            total_words_imported=F('total_words_imported') + (new_words + duplicate_words + version_words),
+            total_new_words=F('total_new_words') + new_words,
+            total_duplicate_words=F('total_duplicate_words') + duplicate_words,
+            total_version_words=F('total_version_words') + version_words,
+            last_import_at=timezone.now(),
+            last_import_batch_id=batch_id,
+            last_import_file_name=file_name,
+            last_import_word_count=new_words + duplicate_words + version_words
+        )
+        # 刷新实例
+        self.refresh_from_db()
+    
+    def get_import_history(self):
+        """获取导入历史记录"""
+        # 通过导入记录获取所有批次信息
+        batches = self.import_records.values('import_batch_id', 'import_metadata').distinct()
+        history = []
+        for batch in batches:
+            batch_id = batch['import_batch_id']
+            if batch_id:
+                batch_records = self.import_records.filter(import_batch_id=batch_id)
+                history.append({
+                    'batch_id': batch_id,
+                    'word_count': batch_records.count(),
+                    'import_time': batch_records.first().created_at if batch_records.exists() else None,
+                    'metadata': batch['import_metadata']
+                })
+        return sorted(history, key=lambda x: x['import_time'] or timezone.now(), reverse=True)
+    
+    def get_records_by_batch(self, batch_id):
+        """根据批次ID获取导入记录"""
+        return self.import_records.filter(import_batch_id=batch_id)
+    
+    def get_recent_imports(self, days=30):
+        """获取最近导入记录"""
+        since_date = timezone.now() - timedelta(days=days)
+        return self.import_records.filter(created_at__gte=since_date)
 
 
 class VocabularyList(models.Model):
@@ -449,17 +403,19 @@ class VocabularyList(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return self.name
+        return str(self.name)
     
     def update_word_count(self):
         """更新单词数量"""
-        self.word_count = getattr(self, 'words', self.__class__.objects.none()).count()
-        self.save(update_fields=['word_count'])
+        new_count = self.word_entries.count()
+        if self.word_count != new_count:
+            self.word_count = new_count
+            self.save(update_fields=['word_count'])
         return self.word_count
     
     def get_word_count(self):
         """获取词库中的单词数量"""
-        return getattr(self, 'words', self.__class__.objects.none()).count()
+        return self.word_entries.count()
 
 
 # ImportedVocabulary模型已合并到Word模型中
@@ -507,7 +463,7 @@ class WordSet(models.Model):
         ]
     
     def __str__(self):
-        return self.name
+        return str(self.name)
     
     def clean(self):
         """模型验证"""
@@ -540,8 +496,10 @@ class WordSet(models.Model):
     
     def update_word_count(self):
         """更新单词数量"""
-        self.word_count = self.words.count()
-        self.save(update_fields=['word_count'])
+        new_count = self.words.count()
+        if self.word_count != new_count:
+            self.word_count = new_count
+            self.save(update_fields=['word_count'])
         return self.word_count
     
     def add_words(self, word_ids):
@@ -582,15 +540,15 @@ class WordGrader(models.Model):
         ]
     
     def __str__(self):
-        return self.name
+        return str(self.name)
     
     def get_all_levels(self):
         """获取所有分级等级"""
-        return getattr(self, 'grade_levels', self.__class__.objects.none()).all().order_by('level')
+        return self.grade_levels.all().order_by('level')
     
     def get_total_levels(self):
         """获取总分级数量"""
-        return getattr(self, 'grade_levels', self.__class__.objects.none()).count()
+        return self.grade_levels.count()
 
 
 class WordGradeLevel(models.Model):
@@ -627,7 +585,7 @@ class WordGradeLevel(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.grader.name} - 等级{self.level}: {self.name}"
+        return f"{str(self.grader.name)} - 等级{self.level}: {str(self.name)}"
     
     def get_words(self):
         """获取该等级的所有单词"""

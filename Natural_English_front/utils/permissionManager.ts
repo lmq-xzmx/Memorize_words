@@ -1,19 +1,22 @@
 // 权限管理器 - 包含路由检查、缓存管理和同步功能
 
-// 导入依赖
+// 声明require函数
+declare const require: any;
 
-import * as permissionCache from './permissionCache';
-import * as unifiedPermissionConstants from './unifiedPermissionConstants';
-import * as roleDefinitions from './roleDefinitions';
+// 导入依赖
+const authSync = require('./authSync') as any;
+const permissionCache = require('./permissionCache') as any;
+const unifiedPermissionConstants = require('./unifiedPermissionConstants') as any;
+const roleDefinitions = require('./roleDefinitions') as any;
 
 // 从其他模块导入
 const { ROLES } = unifiedPermissionConstants;
 const { isRoleHigher } = roleDefinitions;
 const {
-  default: permissionCacheManager,
+  permissionCacheManager,
   clearPermissionCache,
-  getUserPermissions: getCachedUserPermissions,
-  syncPermissions: syncCachedPermissions
+  getCachedUserPermissions,
+  syncCachedPermissions
 } = permissionCache;
 
 // 导入基础权限函数
@@ -68,7 +71,7 @@ let permissionCacheStatus: PermissionCacheStatus = {
 // 权限同步配置
 const PERMISSION_SYNC_CONFIG: PermissionSyncConfig = {
   apiEndpoint: '/api/permissions/sync',
-  websocketEndpoint: 'ws://localhost:8000/ws/permissions/',
+  websocketEndpoint: 'ws://localhost:8001/ws/permissions/',
   syncInterval: 30 * 1000, // 30秒同步间隔
   retryAttempts: 5,
   retryDelay: 2000,
@@ -83,7 +86,7 @@ const PERMISSION_SYNC_CONFIG: PermissionSyncConfig = {
  */
 export async function checkRoutePermission(
   to: RouteObject, 
-  _from: RouteObject, 
+  from: RouteObject, 
   next: (path?: string) => void
 ): Promise<void> {
   // 确保路由对象有 meta 属性
@@ -92,7 +95,7 @@ export async function checkRoutePermission(
   }
   
   const authenticated = await isAuthenticated();
-  const user = await getCurrentUser();
+  const user = getCurrentUser();
   
   // 如果路由需要认证但用户未登录
   if (to.meta.requiresAuth && !authenticated) {
@@ -271,7 +274,7 @@ class PermissionSyncManager {
   private listeners: Array<(event: string, data?: any) => void> = [];
   private connectionStatus: string = 'disconnected';
   private lastSyncTime: number = 0;
-
+  private isDestroyed: boolean = false;
   
   constructor() {
     // 初始化状态
@@ -392,8 +395,8 @@ class PermissionSyncManager {
   /**
    * 建立WebSocket连接进行实时同步
    */
-  async connectWebSocket(): Promise<void> {
-    const user = await getCurrentUser();
+  connectWebSocket(): void {
+    const user = getCurrentUser();
     const token = localStorage.getItem('token');
     if (!user || !token) {
       console.warn('权限WebSocket连接失败：缺少用户信息或令牌');
@@ -509,7 +512,7 @@ class PermissionSyncManager {
       
       // 触发WebSocket诊断
       if (typeof window !== 'undefined' && (window as any).websocketDiagnostics) {
-        (window as any).websocketDiagnostics.handleWebSocketError('WebSocket连接失败', String(error));
+        (window as any).websocketDiagnostics.handleWebSocketError('WebSocket连接失败', error.toString());
       }
       
       this.scheduleReconnect();
@@ -532,9 +535,9 @@ class PermissionSyncManager {
     
     console.log(`${delay / 1000}秒后尝试重连权限WebSocket (第${this.retryCount + 1}次)`);
     
-    setTimeout(async () => {
+    setTimeout(() => {
       this.retryCount++;
-      await this.connectWebSocket();
+      this.connectWebSocket();
     }, delay);
   }
   
@@ -613,9 +616,9 @@ class PermissionSyncManager {
   /**
    * 启动同步管理器
    */
-  async start(): Promise<void> {
+  start(): void {
     this.startPeriodicSync();
-    await this.connectWebSocket();
+    this.connectWebSocket();
   }
 
   /**
@@ -643,9 +646,9 @@ export const permissionWatcher = permissionSyncManager;
 
 // 监听localStorage变化，自动更新权限状态
 if (typeof window !== 'undefined') {
-  window.addEventListener('storage', async (event) => {
+  window.addEventListener('storage', (event) => {
     if (event.key === 'user' || event.key === 'token') {
-      const user = await getCurrentUser();
+      const user = getCurrentUser();
       permissionWatcher.notifyChange(user || undefined);
     }
   });

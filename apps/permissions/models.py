@@ -183,30 +183,4 @@ class RoleManagement(models.Model):
         return f"{hierarchy_prefix}{self.display_name} ({self.get_role_display()})"
 
 
-class PermissionSyncLog(models.Model):
-    """权限同步日志"""
-    SYNC_TYPE_CHOICES = [
-        ('auto', '自动同步'),
-        ('manual', '手动同步'),
-        ('batch', '批量同步'),
-    ]
-    
-    sync_type = models.CharField('同步类型', max_length=20, choices=SYNC_TYPE_CHOICES)
-    target_type = models.CharField('目标类型', max_length=50)  # user, role, group
-    target_id = models.CharField('目标ID', max_length=100)
-    action = models.CharField('操作', max_length=200)
-    result = models.TextField('结果')
-    success = models.BooleanField('是否成功', default=True)
-    created_at = models.DateTimeField('创建时间', auto_now_add=True)
-
-    class Meta:
-        verbose_name = '权限同步日志'
-        verbose_name_plural = '权限同步日志'
-        ordering = ['-created_at']
-
-    def get_sync_type_display(self) -> str:
-        """获取同步类型显示名称"""
-        return str(dict(self.SYNC_TYPE_CHOICES).get(self.sync_type, self.sync_type) or self.sync_type)
-
-    def __str__(self):
-        return f"{self.get_sync_type_display()} - {self.target_type}({self.target_id})"
+# PermissionSyncLog 模型已移至 models_optimized.py

@@ -5,7 +5,8 @@ from django.http import HttpResponseRedirect, JsonResponse
 from django.urls import path, reverse
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
-from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, PermissionSyncLog, RoleManagement
+from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, RoleManagement
+from .models_optimized import PermissionSyncLog
 from .signals import sync_all_permissions
 from .widgets import StandardRoleSelectWidget, StandardRoleChoiceField, RoleTextInputWidget
 from .role_selector_config import StandardRoleAdminMixin, RoleCreationAdminMixin
@@ -497,11 +498,10 @@ class RoleGroupMappingAdmin(StandardRoleAdminMixin, admin.ModelAdmin):
 
 @admin.register(PermissionSyncLog)
 class PermissionSyncLogAdmin(admin.ModelAdmin):
-    """权限同步日志Admin"""
-    list_display = ['sync_type', 'target_type', 'get_sync_status', 'action', 'created_at']
-    list_filter = ['sync_type', 'target_type', 'success', 'created_at']
-    search_fields = ['action', 'result']
-    readonly_fields = ['sync_type', 'target_type', 'target_id', 'action', 'result', 'success', 'created_at']
+    list_display = ['sync_type', 'target_type', 'target_id', 'operation', 'is_success', 'created_at']
+    list_filter = ['sync_type', 'target_type', 'is_success', 'created_at']
+    search_fields = ['target_id', 'result']
+    readonly_fields = ['sync_type', 'target_type', 'target_id', 'operation', 'result', 'is_success', 'created_at', 'created_by', 'duration_ms']
     ordering = ['-created_at']
     
 

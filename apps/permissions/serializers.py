@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import Group, Permission
-from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, PermissionSyncLog
+from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping
+from .models_optimized import PermissionSyncLog
 from apps.accounts.models import UserRole
 from apps.accounts.services.role_service import RoleService
 
