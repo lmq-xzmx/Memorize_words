@@ -35,6 +35,7 @@ THIRD_PARTY_APPS = [
     'corsheaders',
     'guardian',  # django-guardian for object-level permissions
     'channels',  # WebSocket support
+    'massadmin',  # django-mass-edit for enhanced admin actions
 ]
 
 LOCAL_APPS = [

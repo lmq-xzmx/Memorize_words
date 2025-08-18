@@ -16,6 +16,7 @@ def health_check(request):
     })
 
 urlpatterns = [
+    path('admin/', include('massadmin.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls')),
     path('api/', include(('apps.accounts.urls', 'accounts'), namespace='api_accounts')),  # 修正API路由映射

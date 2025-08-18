@@ -9,6 +9,7 @@ from django.http import HttpRequest, HttpResponse
 from django.db.models.query import QuerySet
 from django.core.files.uploadedfile import UploadedFile
 from django.contrib.auth.models import User
+from massadmin.massadmin import MassEditMixin
 from .models import Word, WordEntry, ImportRecord, VocabularyList, VocabularySource, WordSet, WordResource, WordGrader, WordGradeLevel
 from utils.admin_mixins import AdminDynamicPaginationMixin
 import csv
@@ -18,7 +19,7 @@ from io import StringIO
 from .base_admin import BaseBatchImportAdmin
 
 @admin.register(Word)
-class WordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
+class WordAdmin(MassEditMixin, AdminDynamicPaginationMixin, admin.ModelAdmin):
     """单词管理"""
     list_display = [
         'word', 'entry_count_display', 'learned_at', 'created_at'
@@ -31,6 +32,9 @@ class WordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     ordering = ['word']
     list_per_page = 50
     actions = ['add_to_word_set']
+    
+    # django-mass-edit configuration
+    mass_edit_fields = ['tags', 'learned_at']  # 允许批量编辑的字段
     
     fieldsets = (
         ('基本信息', {

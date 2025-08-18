@@ -3,8 +3,10 @@
 
 {% block content %}
 <div id="content-main">
-  <form action="" method="post">
+  <form action="{% url 'admin:words_word_changelist' %}" method="post">
     {% csrf_token %}
+    <input type="hidden" name="action" value="add_to_word_set" />
+    <input type="hidden" name="index" value="0" />
     
     <h2>{% trans '将选中的单词添加到单词集' %}</h2>
     <p>{% blocktrans count counter=queryset.count %}您选择了 {{ counter }} 个单词。{% plural %}您选择了 {{ counter }} 个单词。{% endblocktrans %}</p>
