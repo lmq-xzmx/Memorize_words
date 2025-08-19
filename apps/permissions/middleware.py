@@ -240,7 +240,7 @@ User = get_user_model()
 
 
 if WEBSOCKET_AVAILABLE:
-    class TokenAuthMiddleware:
+    class TokenAuthMiddleware(BaseMiddleware):
         """
         WebSocket Token认证中间件
         从URL查询参数中获取token并验证用户身份
@@ -261,7 +261,9 @@ if WEBSOCKET_AVAILABLE:
                     user = await self.get_user_from_token(token)
                     scope['user'] = user
                 else:
+                    # 允许匿名连接，特别是对于 /ws/permissions/anonymous 路径
                     scope['user'] = self.get_anonymous_user()
+                    logger.info("WebSocket匿名连接已允许")
             
             return await self.inner(scope, receive, send)
         
@@ -273,20 +275,35 @@ if WEBSOCKET_AVAILABLE:
         def get_user_from_token(self, token):
             """
             从token获取用户
+            支持Django REST Framework Token认证
             """
             try:
-                # 简单的token验证
+                # 首先尝试Django REST Framework Token认证
+                from rest_framework.authtoken.models import Token as DRFToken
+                try:
+                    token_obj = DRFToken.objects.get(key=token)
+                    user = token_obj.user
+                    if user.is_active:
+                        logger.info(f"WebSocket DRF token认证成功: 用户 {user.username} (ID: {user.id})")
+                        return user
+                    else:
+                        logger.warning(f"WebSocket token认证失败: 用户 {user.username} 已被禁用")
+                        from django.contrib.auth.models import AnonymousUser
+                        return AnonymousUser()
+                except DRFToken.DoesNotExist:
+                    logger.info("DRF Token不存在，尝试JWT认证")
+                
+                # 备用方案：JWT token认证
                 import jwt
                 from django.conf import settings
                 
-                # 解码token
                 payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
                 user_id = payload.get('user_id')
                 
                 if user_id:
                     user = User.objects.get(id=user_id)
                     if user.is_active:
-                        logger.info(f"WebSocket token认证成功: 用户 {user.username}")
+                        logger.info(f"WebSocket JWT token认证成功: 用户 {user.username} (ID: {user.id})")
                         return user
                     else:
                         logger.warning(f"WebSocket token认证失败: 用户 {user.username} 已被禁用")

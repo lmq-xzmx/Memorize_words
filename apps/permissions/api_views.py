@@ -220,6 +220,150 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
 
+@api_view(['GET'])
+@permission_classes([])
+def get_menu_version(request):
+    """
+    获取菜单版本信息
+    用于前端版本控制和同步检查
+    """
+    try:
+        # 获取最新的菜单配置更新时间
+        from django.db.models import Max
+        from django.utils import timezone
+        import hashlib
+        import json
+        
+        # 获取菜单模块的最后更新时间
+        last_updated = MenuModuleConfig.objects.aggregate(
+            max_updated=Max('updated_at')
+        )['max_updated']
+        
+        if not last_updated:
+            last_updated = timezone.now()
+        
+        # 生成版本号（基于时间戳）
+        version = int(last_updated.timestamp())
+        
+        # 获取所有菜单配置用于生成校验和
+        menus = MenuModuleConfig.objects.filter(is_active=True).values(
+            'key', 'name', 'icon', 'url', 'sort_order', 'updated_at'
+        )
+        
+        # 生成配置校验和
+        menu_data = json.dumps(list(menus), sort_keys=True, default=str)
+        checksum = hashlib.md5(menu_data.encode()).hexdigest()
+        
+        # 获取最近的变更记录（如果有的话）
+        changes = []
+        try:
+            # 获取最近10条同步日志作为变更记录
+            sync_logs = PermissionSyncLog.objects.filter(
+                operation_type__in=['menu_sync', 'menu_update']
+            ).order_by('-created_at')[:10]
+            
+            for log in sync_logs:
+                changes.append({
+                    'type': 'update',
+                    'target': 'menu',
+                    'targetId': log.target_id or 'unknown',
+                    'targetName': log.description or '菜单更新',
+                    'timestamp': int(log.created_at.timestamp()),
+                    'author': log.user.username if log.user else 'system',
+                    'reason': log.description or '菜单配置更新'
+                })
+        except Exception as e:
+            logger.warning(f"获取变更记录失败: {str(e)}")
+        
+        version_info = {
+            'version': version,
+            'timestamp': int(last_updated.timestamp()),
+            'checksum': checksum,
+            'changes': changes,
+            'author': 'system',
+            'description': '菜单配置版本信息'
+        }
+        
+        return Response(version_info)
+        
+    except Exception as e:
+        logger.error(f"获取菜单版本信息失败: {str(e)}")
+        return Response({
+            'version': 1,
+            'timestamp': int(timezone.now().timestamp()),
+            'checksum': 'error',
+            'changes': [],
+            'author': 'system',
+            'description': f'获取版本信息失败: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([])
+def get_available_roles(request):
+    """
+    获取可用角色列表
+    GET /api/permissions/roles/available/
+    """
+    try:
+        from apps.accounts.services.role_service import RoleService
+        
+        # 获取角色选择项
+        roles = RoleService.get_role_choices(include_empty=False)
+        
+        # 转换为前端需要的格式
+        role_list = []
+        for role_value, role_label in roles:
+            role_list.append({
+                'id': role_value,
+                'name': role_label,
+                'code': role_value,
+                'display_name': role_label
+            })
+        
+        return Response({
+            'success': True,
+            'data': role_list,
+            'count': len(role_list)
+        })
+        
+    except Exception as e:
+        logger.error(f"获取可用角色列表失败: {str(e)}")
+        return Response({
+            'success': False,
+            'error': f'获取可用角色列表失败: {str(e)}',
+            'data': []
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([])
+def get_role_fields(request, role_id):
+    """
+    获取角色字段配置
+    GET /api/permissions/roles/{role_id}/fields/
+    """
+    try:
+        from apps.accounts.services.role_service import RoleService
+        
+        # 获取角色字段配置
+        fields = RoleService.get_role_fields(role_id)
+        
+        return Response({
+            'success': True,
+            'data': fields,
+            'role_id': role_id
+        })
+        
+    except Exception as e:
+        logger.error(f"获取角色字段配置失败: {str(e)}")
+        return Response({
+            'success': False,
+            'error': f'获取角色字段配置失败: {str(e)}',
+            'data': []
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def sync_frontend_menus(request):
@@ -295,7 +439,7 @@ def sync_frontend_menus(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
 def get_frontend_menu_config(request):
     """
     获取前端菜单配置格式的数据
@@ -303,6 +447,50 @@ def get_frontend_menu_config(request):
     """
     try:
         user = request.user
+        
+        # 如果用户未认证，提供默认菜单配置
+        if not user.is_authenticated:
+            # 返回默认的基础菜单配置
+            default_menu_config = {
+                'bottomNavMenus': [
+                    {
+                        'id': 'word',
+                        'key': 'word',
+                        'name': '单词学习',
+                        'title': '单词学习',
+                        'icon': 'book',
+                        'path': '/word',
+                        'url': '/word',
+                        'permission': '',
+                        'description': '单词学习功能',
+                        'enabled': True,
+                        'sort_order': 1
+                    },
+                    {
+                        'id': 'profile',
+                        'key': 'profile',
+                        'name': '个人中心',
+                        'title': '个人中心',
+                        'icon': 'user',
+                        'path': '/profile',
+                        'url': '/profile',
+                        'permission': '',
+                        'description': '个人中心',
+                        'enabled': True,
+                        'sort_order': 4
+                    }
+                ],
+                'toolsMenuConfig': {'title': '开发工具', 'items': []},
+                'fashionMenuConfig': {'title': '时尚内容', 'items': []},
+                'adminMenuConfig': {'title': '管理功能', 'items': []}
+            }
+            
+            return Response({
+                'success': True,
+                'data': default_menu_config,
+                'message': '使用默认菜单配置（未认证用户）'
+            })
+        
         user_role = getattr(user, 'role', None)
         
         # 获取用户可访问的菜单

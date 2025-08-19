@@ -159,6 +159,8 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       permission: 'admin.dashboard.view',
+      roles: ['admin', 'super_admin'],
+      securityLevel: 'high',
       title: '管理中心'
     },
     children: [
@@ -189,6 +191,9 @@ const routes: RouteRecordRaw[] = [
             meta: {
               requiresAuth: true,
               permission: 'admin.users.list.view',
+              roles: ['admin', 'super_admin'],
+              securityLevel: 'medium',
+              inheritPermissions: true,
               title: '用户列表'
             }
           },
@@ -198,8 +203,50 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/pages/admin/RoleManagement.vue'),
             meta: {
               requiresAuth: true,
-              permission: 'admin.users.roles.view',
+              permission: {
+                permissions: ['admin.users.roles.view', 'admin.users.roles.manage'],
+                mode: 'any'
+              },
+              roles: ['admin', 'super_admin'],
+              securityLevel: 'high',
+              inheritPermissions: true,
               title: '角色管理'
+            }
+          },
+          {
+            path: 'permission-test',
+            name: 'PermissionTest',
+            component: () => import('@/views/PermissionTest.vue'),
+            meta: {
+              requiresAuth: true,
+              permission: 'admin.permission.test',
+              roles: ['admin', 'super_admin'],
+              securityLevel: 'medium',
+              title: '权限测试'
+            }
+          },
+          {
+            path: 'audit-logs',
+            name: 'AuditLogManagement',
+            component: () => import('@/pages/admin/AuditLogManagement.vue'),
+            meta: {
+              requiresAuth: true,
+              permission: 'admin.audit.logs.view',
+              roles: ['admin', 'super_admin'],
+              securityLevel: 'high',
+              title: '审计日志管理'
+            }
+          },
+          {
+            path: 'permission-system',
+            name: 'PermissionSystemPanel',
+            component: () => import('@/pages/admin/PermissionSystemPanel.vue'),
+            meta: {
+              requiresAuth: true,
+              permission: ['admin.system.manage', 'admin.permission.admin'],
+              roles: ['admin', 'super_admin'],
+              securityLevel: 'high',
+              title: '权限系统管理'
             }
           }
         ]
@@ -214,6 +261,9 @@ const routes: RouteRecordRaw[] = [
     meta: {
       requiresAuth: true,
       permission: 'teacher.dashboard.view',
+      roles: ['teacher', 'admin', 'super_admin'],
+      securityLevel: 'medium',
+      preloadPermissions: true,
       title: '教师中心'
     },
     children: [
@@ -286,54 +336,348 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫
+import { ElMessage } from 'element-plus'
+
+// 扩展路由元信息接口
+declare module 'vue-router' {
+  interface RouteMeta {
+    requiresAuth?: boolean
+    permission?: string | string[] | {
+      permissions: string[]
+      mode: 'all' | 'any'
+    }
+    roles?: string[]
+    title?: string
+    preloadPermissions?: boolean
+    inheritPermissions?: boolean
+    securityLevel?: 'low' | 'medium' | 'high'
+    allowGuest?: boolean
+    requiresReauth?: boolean
+  }
+}
+
+// 权限检查结果接口
+interface PermissionCheckResult {
+  allowed: boolean
+  reason?: string
+  redirectTo?: string
+  requiresReauth?: boolean
+}
+
+// 安全日志记录
+function logSecurityEvent(event: string, details: any) {
+  const timestamp = new Date().toISOString()
+  const logEntry = {
+    timestamp,
+    event,
+    details,
+    userAgent: navigator.userAgent,
+    url: window.location.href
+  }
+  
+  console.log(`[Security] ${event}:`, logEntry)
+  
+  // 在生产环境中，这里应该发送到安全日志服务
+  if (process.env.NODE_ENV === 'production') {
+    // TODO: 发送到安全日志服务
+  }
+}
+
+// 增强的权限检查函数
+async function checkEnhancedPermissions(
+  to: any,
+  userInfo: any
+): Promise<PermissionCheckResult> {
+  // 动态导入权限缓存服务，避免循环依赖
+  const { PermissionCache } = await import('@/services/permissionCacheService')
+  const userId = userInfo.id || userInfo.user_id
+  const userRole = userInfo.role
+  
+  // 1. 检查角色权限
+  if (to.meta.roles && to.meta.roles.length > 0) {
+    if (!userRole || !to.meta.roles.includes(userRole)) {
+      logSecurityEvent('ROLE_ACCESS_DENIED', {
+        userId,
+        userRole,
+        requiredRoles: to.meta.roles,
+        route: to.path
+      })
+      return {
+        allowed: false,
+        reason: '角色权限不足',
+        redirectTo: '/403'
+      }
+    }
+  }
+  
+  // 2. 检查具体权限
+  if (to.meta.permission) {
+    try {
+      let hasPermission = false
+      
+      if (typeof to.meta.permission === 'string') {
+        hasPermission = await PermissionCache.checkRoute(
+          to.meta.permission,
+          userId.toString()
+        )
+      } else if (Array.isArray(to.meta.permission)) {
+         // 检查多个权限（默认需要全部）
+         const results = await Promise.all(
+           to.meta.permission.map((perm: string) => 
+             PermissionCache.checkRoute(perm, userId.toString())
+           )
+         )
+         hasPermission = results.every(result => result)
+       } else if (typeof to.meta.permission === 'object') {
+         // 支持 'all' 或 'any' 模式
+         const { permissions, mode = 'all' } = to.meta.permission
+         const results = await Promise.all(
+           permissions.map((perm: string) => 
+             PermissionCache.checkRoute(perm, userId.toString())
+           )
+         )
+        
+        hasPermission = mode === 'any' 
+          ? results.some(result => result)
+          : results.every(result => result)
+      }
+      
+      if (!hasPermission) {
+        logSecurityEvent('PERMISSION_ACCESS_DENIED', {
+          userId,
+          userRole,
+          requiredPermission: to.meta.permission,
+          route: to.path
+        })
+        return {
+          allowed: false,
+          reason: '权限不足',
+          redirectTo: '/403'
+        }
+      }
+    } catch (error: any) {
+       logSecurityEvent('PERMISSION_CHECK_ERROR', {
+         userId,
+         error: error?.message || 'Unknown error',
+         route: to.path
+       })
+      return {
+        allowed: false,
+        reason: '权限检查失败',
+        redirectTo: '/403'
+      }
+    }
+  }
+  
+  // 3. 检查权限继承
+  if (to.meta.inheritPermissions && to.matched.length > 1) {
+    for (let i = to.matched.length - 2; i >= 0; i--) {
+      const parentRoute = to.matched[i]
+      if (parentRoute.meta.permission) {
+        const parentResult = await checkEnhancedPermissions(
+          { meta: parentRoute.meta, path: parentRoute.path },
+          userInfo
+        )
+        if (!parentResult.allowed) {
+          return parentResult
+        }
+      }
+    }
+  }
+  
+  // 4. 检查安全级别
+  if (to.meta.securityLevel === 'high') {
+    const lastAuth = localStorage.getItem('lastAuthTime')
+    const authTimeout = 30 * 60 * 1000 // 30分钟
+    
+    if (!lastAuth || Date.now() - parseInt(lastAuth) > authTimeout) {
+      logSecurityEvent('HIGH_SECURITY_REAUTH_REQUIRED', {
+        userId,
+        route: to.path,
+        lastAuth
+      })
+      return {
+        allowed: false,
+        reason: '高安全级别页面需要重新认证',
+        requiresReauth: true,
+        redirectTo: '/login?reauth=true&redirect=' + encodeURIComponent(to.fullPath)
+      }
+    }
+  }
+  
+  return { allowed: true }
+}
+
+// 增强的路由守卫
 router.beforeEach(async (to, from, next) => {
   const token = localStorage.getItem('token')
   const isAuthenticated = !!token
   
-  // 如果路由需要认证但用户未登录，跳转到登录页
+  // 记录路由访问
+  logSecurityEvent('ROUTE_ACCESS_ATTEMPT', {
+    from: from.path,
+    to: to.path,
+    authenticated: isAuthenticated
+  })
+  
+  // 1. 认证检查
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
-    return
-  }
-  
-  // 如果用户已登录但访问登录或注册页，跳转到仪表板
-  if (isAuthenticated && (to.path === '/login' || to.path === '/register')) {
-    next('/dashboard')
-    return
-  }
-  
-  // 权限检查
-  if (isAuthenticated && to.meta.permission) {
-    try {
-      // 确保用户信息已加载
-      if (!store.getters['user/userProfile'].id) {
-        await store.dispatch('user/fetchUserInfo')
-      }
-      
-      const userPermissions = store.getters['user/userPermissions']
-      const hasPermission = checkRoutePermission(to, userPermissions)
-      
-      if (!hasPermission) {
-        // 权限不足，跳转到403页面
-        console.warn(`权限不足: 访问 ${to.path} 需要权限 ${to.meta.permission}`)
-        next('/403')
-        return
-      }
-    } catch (error) {
-      console.error('权限检查失败:', error)
-      // 权限检查失败，跳转到登录页
-      next('/login')
+    if (!to.meta.allowGuest) {
+      logSecurityEvent('UNAUTHENTICATED_ACCESS_DENIED', {
+        route: to.path
+      })
+      next('/login?redirect=' + encodeURIComponent(to.fullPath))
       return
     }
   }
   
-  // 设置页面标题
+  // 2. 已登录用户访问登录/注册页面的处理
+  if (isAuthenticated && (to.path === '/login' || to.path === '/register')) {
+    // 检查是否是重新认证请求
+    if (to.query.reauth) {
+      // 允许重新认证
+      next()
+      return
+    }
+    next('/dashboard')
+    return
+  }
+  
+  // 3. 权限检查（仅对已认证用户）
+  if (isAuthenticated) {
+    try {
+      // 首先尝试从store获取用户信息，如果没有则从API获取
+      let userInfo = store.getters['user/currentUser']
+      
+      if (!userInfo || !userInfo.id) {
+        // 从localStorage获取基本信息
+        const localUserInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+        
+        if (localUserInfo.id || localUserInfo.user_id) {
+          // 如果localStorage有用户信息，先使用它，然后异步更新store
+          userInfo = localUserInfo
+          // 异步获取最新用户信息并更新store
+          store.dispatch('user/fetchUserInfo').catch(error => {
+            console.warn('[Router] 获取用户信息失败:', error)
+          })
+        } else {
+          // 如果localStorage也没有有效用户信息，尝试从API获取
+          try {
+            await store.dispatch('user/fetchUserInfo')
+            userInfo = store.getters['user/currentUser']
+          } catch (error) {
+            console.error('[Router] 获取用户信息失败:', error)
+            logSecurityEvent('FETCH_USER_INFO_FAILED', {
+              error: error.message,
+              route: to.path
+            })
+            localStorage.removeItem('token')
+            localStorage.removeItem('userInfo')
+            next('/login')
+            return
+          }
+        }
+      }
+      
+      const userId = userInfo.id || userInfo.user_id
+      
+      if (!userId) {
+        logSecurityEvent('INVALID_USER_INFO', {
+          userInfo,
+          route: to.path
+        })
+        localStorage.removeItem('token')
+        localStorage.removeItem('userInfo')
+        next('/login')
+        return
+      }
+      
+      // 执行增强权限检查
+      const permissionResult = await checkEnhancedPermissions(to, userInfo)
+      
+      if (!permissionResult.allowed) {
+        if (permissionResult.requiresReauth) {
+          ElMessage.warning(permissionResult.reason || '需要重新认证')
+        } else {
+          ElMessage.error(permissionResult.reason || '权限不足')
+        }
+        
+        next(permissionResult.redirectTo || '/403')
+        return
+      }
+      
+      // 更新最后认证时间（用于高安全级别检查）
+      if (to.meta.securityLevel) {
+        localStorage.setItem('lastAuthTime', Date.now().toString())
+      }
+      
+      logSecurityEvent('ROUTE_ACCESS_GRANTED', {
+        userId,
+        route: to.path,
+        permissions: to.meta.permission
+      })
+      
+    } catch (error: any) {
+       logSecurityEvent('ROUTE_GUARD_ERROR', {
+         error: error?.message || 'Unknown error',
+         route: to.path
+       })
+      console.error('[Router] 路由守卫错误:', error)
+      next('/403')
+      return
+    }
+  }
+  
+  // 4. 预加载权限数据（优化性能）
+  if (isAuthenticated && to.meta.preloadPermissions) {
+    try {
+      const { PermissionCache } = await import('@/services/permissionCacheService')
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+      const userId = userInfo.id || userInfo.user_id
+      
+      // 预加载用户权限到缓存
+       await PermissionCache.getUserPermissions(userId.toString())
+       
+       // 预加载角色权限（如果需要的话，可以通过用户权限获取）
+       if (userInfo.role) {
+         // 通过获取用户权限来预加载相关数据
+         await PermissionCache.getUserPermissions(userId.toString(), true)
+       }
+    } catch (error) {
+      console.warn('[Router] 预加载权限数据失败:', error)
+      // 预加载失败不影响路由跳转
+    }
+  }
+  
+  // 5. 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - 英语学习平台`
   }
   
   next()
+})
+
+// 路由后置守卫（用于清理和统计）
+router.afterEach((to, from) => {
+  // 记录成功的路由跳转
+  logSecurityEvent('ROUTE_NAVIGATION_SUCCESS', {
+    from: from.path,
+    to: to.path,
+    timestamp: Date.now()
+  })
+  
+  // 清理敏感查询参数
+  if (to.query.reauth || to.query.redirect) {
+    const cleanQuery = { ...to.query }
+    delete cleanQuery.reauth
+    if (to.query.redirect && to.path !== '/login') {
+      delete cleanQuery.redirect
+    }
+    
+    if (Object.keys(cleanQuery).length !== Object.keys(to.query).length) {
+      router.replace({ path: to.path, query: cleanQuery })
+    }
+  }
 })
 
 export default router

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最小WebSocket测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>最小WebSocket测试</h1>
+    <p>这个测试只建立连接，不发送任何消息，用于隔离问题。</p>
+    
+    <button id="connectBtn" class="button">连接</button>
+    <button id="clearBtn" class="button">清空日志</button>
+    
+    <div id="log" class="log"></div>
+
+    <script>
+        let ws = null;
+        const logEl = document.getElementById('log');
+        const connectBtn = document.getElementById('connectBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.textContent += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function connect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            const wsUrl = 'ws://localhost:8000/ws/permissions/anonymous/';
+            log(`连接到: ${wsUrl}`);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function(event) {
+                log('WebSocket连接已建立');
+                log('连接状态: ' + ws.readyState);
+                // 不发送任何消息，只保持连接
+            };
+            
+            ws.onmessage = function(event) {
+                log(`收到消息: ${event.data}`);
+                
+                try {
+                    const message = JSON.parse(event.data);
+                    log(`解析后的消息: ${JSON.stringify(message, null, 2)}`);
+                    
+                    // 不做任何处理，只记录
+                    log('消息处理完成，不执行任何操作');
+                } catch (error) {
+                    log(`解析消息失败: ${error.message}`);
+                }
+            };
+            
+            ws.onerror = function(error) {
+                log(`WebSocket错误: ${error}`);
+            };
+            
+            ws.onclose = function(event) {
+                log(`WebSocket连接关闭 - 代码: ${event.code}, 原因: ${event.reason || '无'}, 正常关闭: ${event.wasClean}`);
+            };
+        }
+        
+        function clearLog() {
+            logEl.textContent = '';
+        }
+        
+        connectBtn.addEventListener('click', connect);
+        clearBtn.addEventListener('click', clearLog);
+        
+        // 页面加载后自动连接
+        window.addEventListener('load', () => {
+            log('页面加载完成');
+            setTimeout(connect, 1000);
+        });
+    </script>
+</body>
+</html>

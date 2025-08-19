@@ -6,6 +6,7 @@ from django.views.generic import RedirectView
 from django.http import JsonResponse
 
 from apps.accounts.views import dev_login_view
+from apps.permissions.api_views import get_menu_version
 
 # 简单的健康检查视图
 def health_check(request):
@@ -28,6 +29,9 @@ urlpatterns = [
     # 健康检查端点
     path('api/health-check', health_check, name='health_check'),
     path('api/health', health_check, name='health_check_alt'),
+    
+    # 菜单版本API（直接路由，避免嵌套路径问题）
+    path('api/menu/version/', get_menu_version, name='menu_version'),
     # path('', include('gamification.urls')),  # 临时禁用
     path('dev_login.html', dev_login_view, name='dev_login'),
     path('', RedirectView.as_view(url='/admin/', permanent=False)),

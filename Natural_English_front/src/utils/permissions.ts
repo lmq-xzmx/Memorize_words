@@ -216,7 +216,7 @@ export const handlePermissionError = (permission: string, action: string = '执�
 }
 
 // 权限缓存管理
-class PermissionCache {
+class LocalPermissionCache {
   private cache = new Map<string, boolean>()
   private cacheTimeout = 5 * 60 * 1000 // 5分钟缓存
   private timestamps = new Map<string, number>()
@@ -241,11 +241,9 @@ class PermissionCache {
     this.timestamps.clear()
   }
 
-  // 清理过期缓存
   cleanup() {
     const now = Date.now()
-    for (const entry of Array.from(this.timestamps.entries())) {
-      const [key, timestamp] = entry
+    for (const [key, timestamp] of this.timestamps.entries()) {
       if (now - timestamp > this.cacheTimeout) {
         this.cache.delete(key)
         this.timestamps.delete(key)
@@ -254,7 +252,7 @@ class PermissionCache {
   }
 }
 
-export const permissionCache = new PermissionCache()
+export const permissionCache = new LocalPermissionCache()
 
 // 定期清理缓存
 setInterval(() => {

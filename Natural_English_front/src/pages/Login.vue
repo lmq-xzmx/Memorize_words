@@ -114,8 +114,22 @@ const handleLogin = async () => {
     })
     
     if (result.success) {
-      ElMessage.success('登录成功')
-      router.push('/dashboard')
+      // 登录成功后获取用户信息
+      try {
+        const userInfo = await store.dispatch('user/fetchUserInfo')
+        // 将用户信息存储到localStorage供路由守卫使用
+        localStorage.setItem('userInfo', JSON.stringify(userInfo))
+        
+        ElMessage.success('登录成功')
+        
+        // 检查是否有重定向参数
+        const redirect = router.currentRoute.value.query.redirect as string
+        router.push(redirect || '/dashboard')
+      } catch (userError) {
+        console.error('获取用户信息失败:', userError)
+        ElMessage.warning('登录成功，但获取用户信息失败，请刷新页面')
+        router.push('/dashboard')
+      }
     } else {
       ElMessage.error(result.message || '登录失败')
     }
@@ -129,6 +143,8 @@ const handleLogin = async () => {
 </script>
 
 <style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
+
 .login-container {
   position: relative;
   min-height: 100vh;

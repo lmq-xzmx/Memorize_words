@@ -20,9 +20,9 @@ from django.conf import settings
 from .models import (
     RoleManagement, 
     RoleMenuPermission, 
-    MenuModuleConfig,
-    PermissionSyncLog
+    MenuModuleConfig
 )
+from .models_optimized import PermissionSyncLog
 from .utils import get_user_permissions, get_user_role
 
 User = get_user_model()
@@ -44,64 +44,99 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
         self.connection_time = None
         
     async def connect(self):
-        """建立WebSocket连接"""
+        """处理WebSocket连接"""
         try:
-            # 验证用户身份
-            user = await self.get_user()
-            if not user or not user.is_authenticated:
-                logger.warning(f"未认证用户尝试连接WebSocket: {self.scope.get('client')}")
-                await self.close(code=4001)
-                return
-            
-            self.user_id = user.id
-            self.connection_time = datetime.now()
-            
-            # 获取用户组和角色信息
-            await self.setup_user_groups()
-            
-            # 加入相关房间组
-            await self.join_room_groups()
+            logger.info("开始建立WebSocket连接")
             
             # 接受连接
+            logger.info("准备接受WebSocket连接")
             await self.accept()
+            logger.info("WebSocket连接已接受")
+            
+            # 从scope中获取用户信息（由middleware设置）
+            user = self.scope.get('user')
+            if user and hasattr(user, 'id') and user.id:
+                self.user_id = user.id
+                logger.info(f"WebSocket认证用户连接: {user.username} (ID: {user.id})")
+            else:
+                self.user_id = 0  # 匿名用户ID设为0
+                logger.info("WebSocket匿名连接已允许")
+            
+            # 设置用户组
+            await self.setup_user_groups()
             
             # 发送连接确认消息
+            logger.info("准备发送连接确认消息")
             await self.send_connection_confirmation()
+            logger.info("连接确认消息已发送")
             
-            # 记录连接日志
-            await self.log_connection('connected')
-            
-            logger.info(f"用户 {self.user_id} WebSocket连接已建立")
+            logger.info("WebSocket连接建立完成")
             
         except Exception as e:
-            logger.error(f"WebSocket连接失败: {e}")
-            await self.close(code=4000)
+            logger.error(f"WebSocket连接失败: {str(e)}")
+            import traceback
+            logger.error(f"错误堆栈: {traceback.format_exc()}")
+            await self.close()
     
     async def disconnect(self, close_code):
         """断开WebSocket连接"""
         try:
+            logger.info(f"WebSocket断开连接开始处理，用户: {self.user_id}, 代码: {close_code}")
+            
+            # 分析断开代码
+            close_code_meanings = {
+                1000: "正常关闭",
+                1001: "端点离开",
+                1002: "协议错误", 
+                1003: "不支持的数据类型",
+                1006: "异常关闭（无关闭帧）",
+                1007: "无效的帧载荷数据",
+                1008: "策略违规",
+                1009: "消息过大",
+                1010: "缺少扩展",
+                1011: "内部错误",
+                1015: "TLS握手失败"
+            }
+            
+            close_reason = close_code_meanings.get(close_code, f"未知代码: {close_code}")
+            logger.info(f"断开原因: {close_reason}")
+            
             # 离开所有房间组
             await self.leave_room_groups()
             
             # 记录断开连接日志
             await self.log_connection('disconnected', close_code)
             
-            logger.info(f"用户 {self.user_id} WebSocket连接已断开，代码: {close_code}")
+            logger.info(f"用户 {self.user_id} WebSocket连接已断开，代码: {close_code} ({close_reason})")
             
         except Exception as e:
             logger.error(f"WebSocket断开连接处理失败: {e}")
+            import traceback
+            logger.error(f"断开处理错误堆栈: {traceback.format_exc()}")
     
     async def receive(self, text_data):
         """接收客户端消息"""
         try:
-            data = json.loads(text_data)
+            logger.info(f"收到WebSocket消息: {text_data}")
+            
+            # 解析JSON数据
+            try:
+                data = json.loads(text_data)
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON解析失败: {e}, 原始数据: {text_data}")
+                await self.send_error('INVALID_JSON', 'Invalid JSON format')
+                return
+            
             message_type = data.get('type')
+            logger.info(f"消息类型: {message_type}, 数据: {data}")
             
             # 更新心跳时间
             self.last_heartbeat = datetime.now()
             
             # 处理不同类型的消息
-            if message_type == 'heartbeat':
+            if message_type == 'connect':
+                await self.handle_connect_message(data)
+            elif message_type == 'heartbeat' or message_type == 'ping':
                 await self.handle_heartbeat(data)
             elif message_type == 'permission_check':
                 await self.handle_permission_check(data)
@@ -111,22 +146,30 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
                 await self.handle_unsubscribe_notifications(data)
             else:
                 logger.warning(f"未知消息类型: {message_type}")
-                await self.send_error('unknown_message_type', f'未知消息类型: {message_type}')
+                await self.send_error('UNKNOWN_MESSAGE_TYPE', f'Unknown message type: {message_type}')
                 
-        except json.JSONDecodeError:
-            logger.error(f"无效的JSON数据: {text_data}")
-            await self.send_error('invalid_json', '无效的JSON数据')
         except Exception as e:
-            logger.error(f"处理消息失败: {e}")
-            await self.send_error('message_processing_error', str(e))
+            logger.error(f"处理WebSocket消息时发生错误: {e}")
+            await self.send_error('INTERNAL_ERROR', 'Internal server error')
+    
+    async def handle_connect_message(self, data):
+        """处理连接确认消息"""
+        logger.info(f"收到连接确认消息: {data}")
+        # 不再重复发送连接确认消息，避免重复处理
+        # 只记录收到连接消息即可
+        logger.info(f"用户 {self.user_id} 的连接消息已确认")
     
     async def handle_heartbeat(self, data):
         """处理心跳消息"""
-        await self.send(text_data=json.dumps({
-            'type': 'heartbeat_response',
-            'timestamp': datetime.now().isoformat(),
-            'server_time': datetime.now().timestamp()
-        }))
+        try:
+            await self.send(text_data=json.dumps({
+                'type': 'heartbeat_response',
+                'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'server_time': datetime.now().timestamp()
+            }))
+            logger.info(f"心跳响应已发送给用户 {self.user_id}")
+        except Exception as e:
+            logger.error(f"发送心跳响应失败: {e}")
     
     async def handle_permission_check(self, data):
         """处理权限检查请求"""
@@ -233,16 +276,19 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
         """设置用户组信息"""
         try:
             user = await self.get_user()
-            if user:
-                # 获取用户角色
+            if user and user.is_authenticated:
+                # 获取用户角色（返回字符串类型的角色代码）
                 user_role = await self.get_user_role_async(user)
                 if user_role:
-                    self.user_groups.add(f"role_{user_role.id}")
+                    self.user_groups.add(f"role_{user_role}")
                 
                 # 获取用户所属的Django组
                 user_groups = await self.get_user_django_groups(user)
                 for group in user_groups:
                     self.user_groups.add(f"group_{group.id}")
+            else:
+                # 匿名用户加入匿名组
+                self.user_groups.add("anonymous_users")
                     
         except Exception as e:
             logger.error(f"设置用户组失败: {e}")
@@ -250,10 +296,11 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
     async def join_room_groups(self):
         """加入房间组"""
         try:
-            # 加入用户专属组
-            user_group = f"user_{self.user_id}"
-            await self.channel_layer.group_add(user_group, self.channel_name)
-            self.room_groups.add(user_group)
+            # 加入用户专属组（仅认证用户）
+            if self.user_id:
+                user_group = f"user_{self.user_id}"
+                await self.channel_layer.group_add(user_group, self.channel_name)
+                self.room_groups.add(user_group)
             
             # 加入角色和组相关的房间
             for group in self.user_groups:
@@ -280,19 +327,28 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
     
     async def send_connection_confirmation(self):
         """发送连接确认消息"""
-        await self.send(text_data=json.dumps({
-            'type': 'connection_confirmed',
-            'user_id': self.user_id,
-            'groups': list(self.user_groups),
-            'server_time': datetime.now().isoformat(),
-            'features': {
-                'permission_notifications': True,
-                'role_updates': True,
-                'menu_access_updates': True,
-                'cache_invalidation': True,
-                'heartbeat': True
-            }
-        }))
+        try:
+            await self.send(text_data=json.dumps({
+                'type': 'connection_confirmed',
+                'data': {
+                    'user_id': self.user_id,
+                    'groups': list(self.user_groups) if hasattr(self, 'user_groups') else [],
+                    'server_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'sessionId': f"session_{self.user_id}_{datetime.now().timestamp()}",
+                    'features': {
+                        'permission_notifications': True,
+                        'role_updates': True,
+                        'menu_access_updates': True,
+                        'cache_invalidation': True,
+                        'heartbeat': True
+                    }
+                },
+                'timestamp': int(datetime.now().timestamp() * 1000)
+            }))
+            logger.info(f"连接确认消息已发送给用户: {self.user_id}")
+        except Exception as e:
+            logger.error(f"发送连接确认消息失败: {e}")
+            # 不要抛出异常，避免导致连接断开
     
     async def send_error(self, error_code, message):
         """发送错误消息"""
@@ -307,6 +363,12 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
     def get_user(self):
         """获取当前用户"""
         return self.scope.get('user')
+    
+    @database_sync_to_async
+    def check_anonymous_permission(self):
+        """检查匿名用户权限"""
+        # 可以根据需要配置匿名用户是否允许连接
+        return getattr(settings, 'WEBSOCKET_ALLOW_ANONYMOUS', True)
     
     @database_sync_to_async
     def get_user_role_async(self, user):

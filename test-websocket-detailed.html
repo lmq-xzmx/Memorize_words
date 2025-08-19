@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>详细WebSocket连接测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .connecting { background-color: #fff3cd; color: #856404; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+    </style>
+</head>
+<body>
+    <h1>详细WebSocket连接测试</h1>
+    
+    <div id="status" class="status disconnected">状态: 未连接</div>
+    
+    <div>
+        <button id="connectBtn" class="btn-primary">连接</button>
+        <button id="disconnectBtn" class="btn-danger">断开</button>
+        <button id="sendTestBtn" class="btn-success">发送测试消息</button>
+        <button id="clearLogBtn" class="btn-primary">清空日志</button>
+    </div>
+    
+    <div id="log" class="log"></div>
+
+    <script>
+        let ws = null;
+        let connectionStartTime = null;
+        
+        const statusDiv = document.getElementById('status');
+        const logDiv = document.getElementById('log');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const sendTestBtn = document.getElementById('sendTestBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            console.log(logEntry);
+            logDiv.innerHTML += logEntry + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(status, className) {
+            statusDiv.textContent = `状态: ${status}`;
+            statusDiv.className = `status ${className}`;
+        }
+        
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('WebSocket已经连接');
+                return;
+            }
+            
+            connectionStartTime = Date.now();
+            log('开始连接WebSocket...');
+            updateStatus('连接中...', 'connecting');
+            
+            const wsUrl = 'ws://localhost:8000/ws/permissions/anonymous/';
+            log(`连接URL: ${wsUrl}`);
+            
+            try {
+                ws = new WebSocket(wsUrl);
+                log('WebSocket对象已创建');
+                
+                ws.onopen = function(event) {
+                    const connectionTime = Date.now() - connectionStartTime;
+                    log(`WebSocket连接已建立 (耗时: ${connectionTime}ms)`);
+                    log(`WebSocket readyState: ${ws.readyState}`);
+                    updateStatus('已连接', 'connected');
+                    
+                    // 立即发送连接消息
+                    log('准备发送连接消息...');
+                    setTimeout(() => {
+                        const connectMessage = {
+                            type: 'connect',
+                            user_id: null,
+                            client_info: 'detailed-test-tool',
+                            timestamp: Date.now()
+                        };
+                        
+                        log(`发送连接消息: ${JSON.stringify(connectMessage)}`);
+                        
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify(connectMessage));
+                            log('连接消息已发送');
+                        } else {
+                            log(`无法发送连接消息，WebSocket状态: ${ws ? ws.readyState : 'null'}`);
+                        }
+                    }, 50);
+                };
+                
+                ws.onmessage = function(event) {
+                    log(`收到消息: ${event.data}`);
+                    try {
+                        const message = JSON.parse(event.data);
+                        log(`解析后的消息: ${JSON.stringify(message, null, 2)}`);
+                    } catch (e) {
+                        log(`消息解析失败: ${e.message}`);
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    const connectionTime = connectionStartTime ? Date.now() - connectionStartTime : 0;
+                    log(`WebSocket连接已关闭 (连接持续时间: ${connectionTime}ms)`);
+                    log(`关闭代码: ${event.code}`);
+                    log(`关闭原因: ${event.reason || '无原因'}`);
+                    log(`是否正常关闭: ${event.wasClean}`);
+                    updateStatus('已断开', 'disconnected');
+                    ws = null;
+                };
+                
+                ws.onerror = function(error) {
+                    log(`WebSocket错误: ${error}`);
+                    log(`错误对象: ${JSON.stringify(error)}`);
+                    updateStatus('连接错误', 'disconnected');
+                };
+                
+            } catch (error) {
+                log(`创建WebSocket时发生错误: ${error.message}`);
+                updateStatus('连接失败', 'disconnected');
+            }
+        }
+        
+        function disconnect() {
+            if (ws) {
+                log('手动断开WebSocket连接...');
+                ws.close(1000, '用户手动断开');
+            } else {
+                log('WebSocket未连接');
+            }
+        }
+        
+        function sendTestMessage() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const testMessage = {
+                    type: 'heartbeat',
+                    timestamp: Date.now()
+                };
+                
+                log(`发送测试消息: ${JSON.stringify(testMessage)}`);
+                ws.send(JSON.stringify(testMessage));
+            } else {
+                log(`无法发送测试消息，WebSocket状态: ${ws ? ws.readyState : 'null'}`);
+            }
+        }
+        
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+        
+        // 事件监听器
+        connectBtn.addEventListener('click', connect);
+        disconnectBtn.addEventListener('click', disconnect);
+        sendTestBtn.addEventListener('click', sendTestMessage);
+        clearLogBtn.addEventListener('click', clearLog);
+        
+        // 页面加载时的初始日志
+        log('页面已加载，准备测试WebSocket连接');
+        log('点击"连接"按钮开始测试');
+    </script>
+</body>
+</html>

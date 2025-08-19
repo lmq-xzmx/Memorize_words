@@ -1,4 +1,5 @@
-@import './variables.scss';
+@use './variables.scss' as *;
+@use './mobile.scss';
 
 // 重置样式
 * {
@@ -175,12 +176,44 @@ a {
 // 响应式工具类
 @media (max-width: $breakpoint-sm) {
   .hidden-sm { display: none; }
+  .show-sm { display: block !important; }
 }
 
 @media (max-width: $breakpoint-md) {
   .hidden-md { display: none; }
+  .show-md { display: block !important; }
 }
 
 @media (max-width: $breakpoint-lg) {
   .hidden-lg { display: none; }
+  .show-lg { display: block !important; }
+}
+
+// 移动端专用工具类
+@media (max-width: 767px) {
+  .mobile-only { display: block !important; }
+  .desktop-only { display: none !important; }
+  
+  .mobile-text-center { text-align: center; }
+  .mobile-full-width { width: 100% !important; }
+  .mobile-no-margin { margin: 0 !important; }
+  .mobile-no-padding { padding: 0 !important; }
+  
+  .mobile-stack {
+    flex-direction: column !important;
+    
+    > * {
+      width: 100% !important;
+      margin-bottom: 8px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-only { display: none !important; }
+  .desktop-only { display: block !important; }
 }

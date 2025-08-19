@@ -85,8 +85,7 @@ export default defineConfig({
       scss: {
         // 使用现代编译器
         api: 'modern-compiler',
-        silenceDeprecations: ['legacy-js-api'],
-        additionalData: `@import "@/styles/variables.scss";`
+        silenceDeprecations: ['legacy-js-api']
       }
     }
   },

@@ -4,7 +4,7 @@
  */
 
 import { webSocketManager } from './websocketManager';
-import { PermissionCache } from './permissionCache';
+import { PermissionCache } from '../src/services/permissionCacheService';
 
 // 类型定义
 interface NotificationData {
@@ -836,16 +836,15 @@ class PermissionNotificationManager {
      * 清除相关缓存
      */
     clearRelatedCache(resource: string): void {
-        const cache = new PermissionCache();
-        cache.clearByPattern(resource);
+        // 清除所有缓存，因为PermissionCache没有clearByPattern方法
+        PermissionCache.clear();
     }
 
     /**
      * 清除所有权限缓存
      */
     clearAllPermissionCache(): void {
-        const cache = new PermissionCache();
-        cache.clear();
+        PermissionCache.clear();
     }
 
     /**

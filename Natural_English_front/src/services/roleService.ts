@@ -17,6 +17,33 @@ export interface Role {
   updated_at: string
 }
 
+// 角色字段配置接口
+export interface RoleFieldOption {
+  label: string
+  value: string
+}
+
+export interface RoleField {
+  name: string
+  label: string
+  type: 'text' | 'select' | 'number' | 'email' | 'tel'
+  placeholder: string
+  required: boolean
+  validation?: {
+    pattern?: string
+    min?: number
+    max?: number
+    message?: string
+  }
+  options?: RoleFieldOption[]
+}
+
+export interface RoleFieldsConfig {
+  role: string
+  fields: RoleField[]
+  validation_rules: Record<string, any>
+}
+
 export interface RoleTemplate {
   id: number
   role: string
@@ -343,6 +370,57 @@ class RoleService {
     } catch (error) {
       console.error('导入角色失败:', error)
       throw error
+    }
+  }
+
+  // 动态角色字段配置 API
+  async getRoleFields(roleId: string): Promise<RoleField[]> {
+    try {
+      const response: AxiosResponse<ApiResponse<{ fields: RoleField[] }>> = 
+        await axios.get(`${this.baseURL}/roles/${roleId}/fields/`)
+      return response.data.data?.fields || []
+    } catch (error) {
+      console.error('获取角色字段配置失败:', error)
+      // 返回空数组作为降级处理
+      return []
+    }
+  }
+
+  async getAvailableRoles(): Promise<{ value: string, label: string, description?: string }[]> {
+    try {
+      const response: AxiosResponse<ApiResponse<Array<{ id: string, name: string, code: string, display_name: string }>>> = 
+        await axios.get(`${this.baseURL}/roles/available/`)
+      
+      // 后端返回的数据结构是 {data: [...]}，直接使用data数组
+      return response.data.data?.map(role => ({
+        value: role.code || role.id,
+        label: role.display_name || role.name,
+        description: undefined // 后端暂时不返回description字段
+      })) || []
+    } catch (error) {
+      console.error('获取可用角色列表失败:', error)
+      // 返回默认角色列表作为降级处理
+      return [
+        { value: 'student', label: '学生' },
+        { value: 'parent', label: '家长' },
+        { value: 'teacher', label: '自由老师' },
+        { value: 'admin', label: '管理员' },
+        { value: 'dean', label: '教导主任' },
+        { value: 'academic_director', label: '教务主任' },
+        { value: 'research_leader', label: '教研组长' }
+      ]
+    }
+  }
+
+  async validateRoleData(roleId: string, data: Record<string, any>): Promise<{ isValid: boolean, errors: Record<string, string> }> {
+    try {
+      const response: AxiosResponse<ApiResponse<{ isValid: boolean, errors: Record<string, string> }>> = 
+        await axios.post(`${this.baseURL}/roles/${roleId}/validate/`, { data })
+      
+      return response.data.data || { isValid: true, errors: {} }
+    } catch (error) {
+      console.error('验证角色数据失败:', error)
+      return { isValid: true, errors: {} }
     }
   }
 }

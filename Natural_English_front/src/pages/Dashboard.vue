@@ -1,15 +1,34 @@
 <template>
-  <div class="dashboard">
-    <!-- 侧边栏菜单 -->
-    <aside class="sidebar">
-      <BaseMenu 
+  <ResponsiveLayout
+    title="学习中心"
+    :show-sidebar="true"
+    :show-bottom-nav="true"
+    @sidebar-toggle="handleSidebarToggle"
+    @breakpoint-change="handleBreakpointChange"
+  >
+    <!-- 侧边栏内容 -->
+    <template #sidebar>
+      <MenuIntegration
         title="英语学习平台"
-        :menu-items="userMenuItems"
+        class="sidebar-menu"
+        @menu-click="handleMenuClick"
+        @tool-select="handleToolSelect"
       />
-    </aside>
+    </template>
     
-    <!-- 主内容区 -->
-    <div class="main-content">
+    <!-- 底部导航内容 -->
+    <template #bottom-nav>
+      <MenuIntegration
+        force-mode="mobile"
+        class="mobile-menu"
+        @menu-click="handleMenuClick"
+        @tool-select="handleToolSelect"
+      />
+    </template>
+    
+    <!-- 主要内容区域 -->
+    <template #main>
+      <div class="dashboard-content">
       <header class="dashboard-header">
         <h1>{{ getGreeting() }}</h1>
         <div class="user-info">
@@ -163,17 +182,18 @@
           </section>
         </div>
       </main>
-    </div>
-  </div>
+      </div>
+    </template>
+  </ResponsiveLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
-import BaseMenu from '@/components/menu/BaseMenu.vue'
-import { getMenuByRole } from '@/config/menu'
+import ResponsiveLayout from '@/components/layout/ResponsiveLayout.vue'
+import MenuIntegration from '@/components/menu/MenuIntegration.vue'
 import { permissionChecker } from '@/utils/permissions'
 
 interface Activity {
@@ -186,15 +206,35 @@ interface Activity {
 const router = useRouter()
 const store = useStore()
 
+
+
 // 用户信息
 const userProfile = computed(() => {
   return store.getters['user/profile'] || { username: '用户', role: 'student' }
 })
 
-// 用户菜单
-const userMenuItems = computed(() => {
-  return getMenuByRole(userProfile.value.role || 'student')
-})
+// 响应式状态
+const isMobile = ref(false)
+const sidebarVisible = ref(false)
+
+// 响应式布局事件处理
+const handleSidebarToggle = (visible: boolean) => {
+  sidebarVisible.value = visible
+}
+
+const handleBreakpointChange = (mobile: boolean) => {
+  isMobile.value = mobile
+}
+
+// 处理菜单点击
+const handleMenuClick = (item: any) => {
+  console.log('Dashboard menu clicked:', item.title)
+}
+
+// 处理工具选择
+const handleToolSelect = (tool: any) => {
+  console.log('Dashboard tool selected:', tool.title)
+}
 
 // 权限检查
 const hasPermission = (permission: string): boolean => {
@@ -277,24 +317,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dashboard {
-  display: flex;
-  min-height: 100vh;
-  background: #f5f7fa;
-}
-
-.sidebar {
-  width: 260px;
-  background: #fff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+.dashboard-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .dashboard-header {
@@ -304,6 +330,9 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-radius: 0.75rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .dashboard-header h1 {
@@ -341,9 +370,7 @@ onMounted(() => {
 }
 
 .dashboard-main {
-  flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
+  padding: 0;
 }
 
 .stats-grid {
@@ -543,40 +570,29 @@ onMounted(() => {
   font-size: 0.75rem;
 }
 
-@media (max-width: 1024px) {
-  .sidebar {
-    width: 220px;
-  }
-  
-  .dashboard-main {
-    padding: 1.5rem;
-  }
-}
-
+/* 移动端适配 */
 @media (max-width: 768px) {
-  .dashboard {
-    flex-direction: column;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-  }
-  
   .dashboard-header {
     padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
   }
   
   .dashboard-header h1 {
     font-size: 1.5rem;
   }
   
-  .dashboard-main {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .stat-card {
     padding: 1rem;
   }
   
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .stat-number {
+    font-size: 1.5rem;
   }
   
   .content-grid {
@@ -585,6 +601,35 @@ onMounted(() => {
   
   .quick-actions {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-header {
+    padding: 0.75rem;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 1.25rem;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  .action-btn:hover {
+    transform: none;
+  }
+  
+  .action-btn:active {
+    transform: scale(0.98);
+  }
+  
+  .stat-card:hover {
+    transform: none;
   }
 }
 </style>

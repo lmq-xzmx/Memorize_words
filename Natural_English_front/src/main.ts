@@ -5,12 +5,16 @@ import store from './store'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import './styles/index.scss'
-import { createPermissionDirective } from '@/utils/permissions'
+import { PermissionDirective } from './directives/permission'
+import { installApiPermissionInterceptor } from './utils/apiPermissionInterceptor'
 
 const app = createApp(App)
 
 // 注册权限指令
-app.directive('permission', createPermissionDirective())
+app.use(PermissionDirective)
+
+// 安装API权限拦截器
+installApiPermissionInterceptor()
 
 app.use(store)
 app.use(router)

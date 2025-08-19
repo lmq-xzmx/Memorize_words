@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple WebSocket Test</title>
+</head>
+<body>
+    <h1>Simple WebSocket Connection Test</h1>
+    <div id="status">Disconnected</div>
+    <div id="messages"></div>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+        
+        function log(message) {
+            console.log(message);
+            const div = document.createElement('div');
+            div.textContent = new Date().toISOString() + ': ' + message;
+            messagesDiv.appendChild(div);
+        }
+        
+        function testWebSocket() {
+            log('开始WebSocket连接测试...');
+            
+            // 测试匿名连接
+            const ws = new WebSocket('ws://localhost:8000/ws/permissions/anonymous/');
+            
+            ws.onopen = function(event) {
+                log('WebSocket连接已建立');
+                statusDiv.textContent = 'Connected';
+                statusDiv.style.color = 'green';
+            };
+            
+            ws.onmessage = function(event) {
+                log('收到消息: ' + event.data);
+                try {
+                    const message = JSON.parse(event.data);
+                    log('解析后的消息: ' + JSON.stringify(message, null, 2));
+                } catch (e) {
+                    log('消息解析失败: ' + e.message);
+                }
+            };
+            
+            ws.onclose = function(event) {
+                log('WebSocket连接已关闭，代码: ' + event.code + ', 原因: ' + event.reason);
+                statusDiv.textContent = 'Disconnected (Code: ' + event.code + ')';
+                statusDiv.style.color = 'red';
+            };
+            
+            ws.onerror = function(error) {
+                log('WebSocket错误: ' + error);
+                statusDiv.textContent = 'Error';
+                statusDiv.style.color = 'red';
+            };
+            
+            // 5秒后手动关闭连接进行测试
+            setTimeout(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    log('手动关闭连接进行测试');
+                    ws.close(1000, 'Test completed');
+                }
+            }, 5000);
+        }
+        
+        // 页面加载后自动开始测试
+        window.onload = testWebSocket;
+    </script>
+</body>
+</html>

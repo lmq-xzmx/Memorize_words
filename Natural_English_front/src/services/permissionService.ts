@@ -70,7 +70,7 @@ interface ApiResponse<T> {
 
 class PermissionService {
   private baseURL = '/api/permissions'
-  private unifiedURL = '/api/permissions/unified'
+  private unifiedURL = '/api/permissions'
 
   // 权限检查 API
   async checkPermission(permission: string, userId?: number): Promise<PermissionCheck> {
@@ -99,9 +99,22 @@ class PermissionService {
   async getUserPermissions(userId?: number): Promise<UserPermissions> {
     try {
       const params = userId ? { userId } : {}
-      const response: AxiosResponse<ApiResponse<UserPermissions>> = 
-        await axios.get(`${this.unifiedURL}/user/permissions/`, { params })
-      return response.data.data || {
+      const response: AxiosResponse<ApiResponse<any>> = 
+        await axios.get(`${this.baseURL}/user-permissions/`, { params })
+      const data = response.data.data
+      if (data) {
+        // 适配后端返回的数据格式
+        return {
+          userId: data.user_id || data.userId || 0,
+          username: data.username || '',
+          role: data.role || '',
+          permissions: data.permissions || [],
+          groups: data.groups || [],
+          isActive: data.isActive !== undefined ? data.isActive : true,
+          lastUpdated: data.lastUpdated || new Date().toISOString()
+        }
+      }
+      return {
         userId: 0,
         username: '',
         role: '',

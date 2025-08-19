@@ -97,10 +97,16 @@ const user = {
         // 后端返回的数据结构是 {success: true, user: {...}}
         const userData = response.data.user || response.data
         
-        commit('SET_USER_PROFILE', userData)
-        commit('SET_USER_ROLES', [userData.role])
+        // 确保用户数据包含id字段（路由守卫需要）
+        const userInfo = {
+          ...userData,
+          id: userData.id || userData.user_id
+        }
         
-        return userData
+        commit('SET_USER_PROFILE', userInfo)
+        commit('SET_USER_ROLES', [userInfo.role])
+        
+        return userInfo
       } catch (error) {
         console.error('获取用户信息失败:', error)
         
@@ -169,7 +175,13 @@ const user = {
     // 检查是否为学生
     isStudent: (state: UserState) => {
       return state.profile.role === 'student' || state.roles.includes('student')
-    }
+    },
+    
+    // 获取当前用户（兼容性getter）
+    currentUser: (state: UserState) => state.profile,
+    
+    // 获取用户资料（别名）
+    profile: (state: UserState) => state.profile
   }
 }
 

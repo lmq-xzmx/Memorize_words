@@ -97,18 +97,23 @@
             :label="field.label"
             :prop="field.name"
           >
+            <!-- 文本输入框 -->
             <el-input
               v-if="field.type === 'text'"
               v-model="registerForm[field.name]"
               :placeholder="field.placeholder"
               :disabled="loading"
+              clearable
             />
+            
+            <!-- 选择框 -->
             <el-select
               v-else-if="field.type === 'select'"
               v-model="registerForm[field.name]"
               :placeholder="field.placeholder"
               style="width: 100%"
               :disabled="loading"
+              clearable
             >
               <el-option
                 v-for="option in field.options"
@@ -117,6 +122,35 @@
                 :value="option.value"
               />
             </el-select>
+            
+            <!-- 数字输入框 -->
+            <el-input-number
+              v-else-if="field.type === 'number'"
+              v-model="registerForm[field.name]"
+              :placeholder="field.placeholder"
+              style="width: 100%"
+              :disabled="loading"
+            />
+            
+            <!-- 日期选择器 -->
+            <el-date-picker
+              v-else-if="field.type === 'date'"
+              v-model="registerForm[field.name]"
+              type="date"
+              :placeholder="field.placeholder"
+              style="width: 100%"
+              :disabled="loading"
+            />
+            
+            <!-- 多行文本 -->
+            <el-input
+              v-else-if="field.type === 'textarea'"
+              v-model="registerForm[field.name]"
+              type="textarea"
+              :placeholder="field.placeholder"
+              :rows="3"
+              :disabled="loading"
+            />
           </el-form-item>
         </div>
         
@@ -183,28 +217,11 @@ import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import { ElMessage } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import roleService from '@/services/roleService'
+import type { RoleField } from '@/services/roleService'
 
-// 定义字段配置类型
-interface FieldOption {
-  label: string
-  value: string
-}
-
-interface ExtendedField {
-  name: string
-  label: string
-  type: string
-  placeholder: string
-  options?: FieldOption[]
-}
-
-interface FieldConfig {
-  name: string
-  label: string
-  type: string
-  placeholder: string
-  options?: FieldOption[]
-}
+// 使用roleService中定义的类型
+type ExtendedField = RoleField
 
 const router = useRouter()
 const store = useStore()
@@ -217,7 +234,10 @@ const loading = ref(false)
 const rolesLoading = ref(false)
 
 // 角色列表
-const availableRoles = ref<Array<{value: string, label: string}>>([])
+const availableRoles = ref<Array<{value: string, label: string, description?: string}>>([])
+
+// 动态扩展字段
+const extendedFields = ref<RoleField[]>([])
 
 // 表单数据
 const registerForm: Record<string, any> = reactive({
@@ -229,94 +249,37 @@ const registerForm: Record<string, any> = reactive({
   role: '',
   password: '',
   confirmPassword: '',
-  agreeTerms: false,
-  // 动态字段
-  student_id: '',
-  grade: '',
-  school: '',
-  teacher_id: '',
-  subject: '',
-  experience_years: '',
-  child_name: '',
-  relationship: '',
-  department: '',
-  employee_id: '',
-  management_level: '',
-  academic_area: '',
-  management_scope: '',
-  research_group: '',
-  research_field: ''
+  agreeTerms: false
+  // 动态字段将根据角色选择动态添加
 })
 
-// 角色扩展字段配置
-const roleFieldsConfig: Record<string, ExtendedField[]> = {
-  student: [
-    { name: 'student_id', label: '学号', type: 'text', placeholder: '请输入学号' },
-    { name: 'grade', label: '年级', type: 'select', placeholder: '请选择年级', options: [
-      { label: '小学一年级', value: 'grade_1' },
-      { label: '小学二年级', value: 'grade_2' },
-      { label: '小学三年级', value: 'grade_3' },
-      { label: '小学四年级', value: 'grade_4' },
-      { label: '小学五年级', value: 'grade_5' },
-      { label: '小学六年级', value: 'grade_6' },
-      { label: '初中一年级', value: 'grade_7' },
-      { label: '初中二年级', value: 'grade_8' },
-      { label: '初中三年级', value: 'grade_9' },
-      { label: '高中一年级', value: 'grade_10' },
-      { label: '高中二年级', value: 'grade_11' },
-      { label: '高中三年级', value: 'grade_12' }
-    ]},
-    { name: 'school', label: '学校', type: 'text', placeholder: '请输入学校名称' }
-  ],
-  teacher: [
-    { name: 'teacher_id', label: '教师编号', type: 'text', placeholder: '请输入教师编号' },
-    { name: 'subject', label: '任教科目', type: 'text', placeholder: '请输入任教科目' },
-    { name: 'experience_years', label: '教学经验', type: 'select', placeholder: '请选择教学经验', options: [
-      { label: '1年以下', value: '0-1' },
-      { label: '1-3年', value: '1-3' },
-      { label: '3-5年', value: '3-5' },
-      { label: '5-10年', value: '5-10' },
-      { label: '10年以上', value: '10+' }
-    ]}
-  ],
-  parent: [
-    { name: 'child_name', label: '孩子姓名', type: 'text', placeholder: '请输入孩子姓名' },
-    { name: 'relationship', label: '关系', type: 'select', placeholder: '请选择与孩子的关系', options: [
-      { label: '父亲', value: 'father' },
-      { label: '母亲', value: 'mother' },
-      { label: '监护人', value: 'guardian' }
-    ]}
-  ],
-  admin: [
-    { name: 'department', label: '部门', type: 'text', placeholder: '请输入所属部门' },
-    { name: 'employee_id', label: '员工编号', type: 'text', placeholder: '请输入员工编号' }
-  ],
-  dean: [
-    { name: 'department', label: '负责部门', type: 'text', placeholder: '请输入负责部门' },
-    { name: 'employee_id', label: '员工编号', type: 'text', placeholder: '请输入员工编号' },
-    { name: 'management_level', label: '管理级别', type: 'select', placeholder: '请选择管理级别', options: [
-      { label: '初级', value: 'junior' },
-      { label: '中级', value: 'middle' },
-      { label: '高级', value: 'senior' }
-    ]}
-  ],
-  academic_director: [
-    { name: 'department', label: '负责部门', type: 'text', placeholder: '请输入负责部门' },
-    { name: 'employee_id', label: '员工编号', type: 'text', placeholder: '请输入员工编号' },
-    { name: 'academic_area', label: '学术领域', type: 'text', placeholder: '请输入学术领域' },
-    { name: 'management_scope', label: '管理范围', type: 'text', placeholder: '请输入管理范围' }
-  ],
-  research_leader: [
-    { name: 'research_group', label: '教研组', type: 'text', placeholder: '请输入教研组名称' },
-    { name: 'employee_id', label: '员工编号', type: 'text', placeholder: '请输入员工编号' },
-    { name: 'research_field', label: '研究领域', type: 'text', placeholder: '请输入研究领域' }
-  ]
+// 动态生成表单验证规则
+const generateFieldRules = (field: RoleField): any[] => {
+  const rules: any[] = []
+  
+  if (field.required) {
+    rules.push({ required: true, message: `请输入${field.label}`, trigger: 'blur' })
+  }
+  
+  if (field.validation) {
+    const { pattern, min, max, message } = field.validation
+    
+    if (pattern) {
+      rules.push({ pattern: new RegExp(pattern), message: message || `${field.label}格式不正确`, trigger: 'blur' })
+    }
+    
+    if (min !== undefined || max !== undefined) {
+      rules.push({ 
+        min: min || 0, 
+        max: max || 999, 
+        message: message || `${field.label}长度在 ${min || 0} 到 ${max || 999} 个字符`, 
+        trigger: 'blur' 
+      })
+    }
+  }
+  
+  return rules
 }
-
-// 计算当前角色的扩展字段
-const extendedFields = computed((): ExtendedField[] => {
-  return roleFieldsConfig[registerForm.role as keyof typeof roleFieldsConfig] || []
-})
 
 // 密码确认验证器
 const validateConfirmPassword = (rule: any, value: string, callback: Function) => {
@@ -372,34 +335,64 @@ const registerRules: FormRules = {
   ]
 }
 
-// 初始化角色列表（注册页面使用固定角色列表）
-const initializeRoles = () => {
-  // 注册页面使用预定义的角色列表，无需动态获取
-  availableRoles.value = [
-    { value: 'student', label: '学生' },
-    { value: 'parent', label: '家长' },
-    { value: 'teacher', label: '自由老师' },
-    { value: 'admin', label: '管理员' },
-    { value: 'dean', label: '教导主任' },
-    { value: 'academic_director', label: '教务主任' },
-    { value: 'research_leader', label: '教研组长' }
-  ]
-  rolesLoading.value = false
+// 初始化角色列表（动态获取）
+const initializeRoles = async () => {
+  try {
+    rolesLoading.value = true
+    availableRoles.value = await roleService.getAvailableRoles()
+  } catch (error) {
+    console.error('初始化角色列表失败:', error)
+    ElMessage.error('获取角色列表失败，请刷新页面重试')
+  } finally {
+    rolesLoading.value = false
+  }
 }
 
 // 角色变化处理
-const handleRoleChange = () => {
-  // 清空之前的扩展字段数据
-  Object.keys(roleFieldsConfig).forEach(role => {
-    roleFieldsConfig[role as keyof typeof roleFieldsConfig].forEach((field: FieldConfig) => {
-      registerForm[field.name as keyof typeof registerForm] = ''
+const handleRoleChange = async () => {
+  if (!registerForm.role) {
+    extendedFields.value = []
+    return
+  }
+  
+  try {
+    // 清空之前的扩展字段数据
+    extendedFields.value.forEach((field: RoleField) => {
+      delete registerForm[field.name]
     })
+    
+    // 获取新角色的字段配置
+    extendedFields.value = await roleService.getRoleFields(registerForm.role)
+    
+    // 初始化新字段的默认值
+    extendedFields.value.forEach((field: RoleField) => {
+      registerForm[field.name] = ''
+    })
+    
+    // 动态更新表单验证规则
+    updateFormRules()
+    
+  } catch (error) {
+    console.error('获取角色字段配置失败:', error)
+    ElMessage.warning('获取角色配置失败，将使用默认配置')
+    extendedFields.value = []
+  }
+}
+
+// 更新表单验证规则
+const updateFormRules = (): void => {
+  // 为动态字段添加验证规则
+  extendedFields.value.forEach((field: RoleField) => {
+    const rules = generateFieldRules(field)
+    if (rules.length > 0) {
+      registerRules[field.name] = rules
+    }
   })
 }
 
 // 组件挂载时初始化
-onMounted(() => {
-  initializeRoles()
+onMounted(async () => {
+  await initializeRoles()
 })
 
 // 注册处理
@@ -448,6 +441,8 @@ const handleRegister = async () => {
 </script>
 
 <style lang="scss" scoped>
+@use '@/styles/variables.scss' as *;
+
 .register-container {
   position: relative;
   min-height: 100vh;

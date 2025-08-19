@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket消息验证调试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket消息验证调试工具</h1>
+        
+        <div class="test-section">
+            <h2>测试消息验证函数</h2>
+            <button onclick="testMessageValidation()">运行验证测试</button>
+            <div id="validation-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>实际WebSocket连接测试</h2>
+            <button onclick="testWebSocketConnection()">测试WebSocket连接</button>
+            <button onclick="disconnectWebSocket()">断开连接</button>
+            <div id="connection-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>连接日志</h2>
+            <button onclick="clearLogs()">清除日志</button>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        
+        // 模拟前端的WebSocket消息类型枚举
+        const WebSocketMessageType = {
+            CONNECT: 'connect',
+            CONNECTION_CONFIRMED: 'connection_confirmed',
+            DISCONNECT: 'disconnect',
+            HEARTBEAT: 'heartbeat',
+            HEARTBEAT_RESPONSE: 'heartbeat_response',
+            MENU_UPDATED: 'menu_updated',
+            MENU_CONFIG_CHANGED: 'menu_config_changed',
+            MENU_PERMISSION_CHANGED: 'menu_permission_changed',
+            TOOL_STATUS_CHANGED: 'tool_status_changed',
+            TOOL_CONFIG_UPDATED: 'tool_config_updated',
+            PERMISSION_UPDATED: 'permission_updated',
+            ROLE_CHANGED: 'role_changed',
+            USER_STATUS_CHANGED: 'user_status_changed',
+            SYSTEM_NOTIFICATION: 'system_notification',
+            ERROR: 'error'
+        };
+        
+        // 模拟前端的消息验证函数
+        function validateWebSocketMessage(message) {
+            if (!message || typeof message !== 'object') {
+                return false;
+            }
+            
+            if (!message.type || !Object.values(WebSocketMessageType).includes(message.type)) {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `result ${type}`;
+            logEntry.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            logsDiv.appendChild(logEntry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function testMessageValidation() {
+            const resultsDiv = document.getElementById('validation-results');
+            resultsDiv.innerHTML = '';
+            
+            // 测试后端实际发送的消息格式
+            const backendMessage = {
+                type: 'connection_confirmed',
+                data: {
+                    user_id: null,
+                    groups: [],
+                    server_time: '2025-01-19T05:21:51.328Z',
+                    sessionId: 'session_1737264111328',
+                    features: ['menu_updates', 'tool_status', 'permissions']
+                },
+                timestamp: 1737264111328
+            };
+            
+            // 测试前端期望的消息格式
+            const frontendMessage = {
+                type: 'connection_confirmed',
+                data: {
+                    sessionId: 'session_1737264111328'
+                },
+                timestamp: 1737264111328,
+                userId: undefined,
+                sessionId: 'session_1737264111328'
+            };
+            
+            // 测试无效消息
+            const invalidMessage1 = {
+                // 缺少type字段
+                data: { test: 'data' }
+            };
+            
+            const invalidMessage2 = {
+                type: 'invalid_type',
+                data: { test: 'data' }
+            };
+            
+            const tests = [
+                { name: '后端实际消息格式', message: backendMessage, expected: true },
+                { name: '前端期望消息格式', message: frontendMessage, expected: true },
+                { name: '无效消息（缺少type）', message: invalidMessage1, expected: false },
+                { name: '无效消息（错误type）', message: invalidMessage2, expected: false }
+            ];
+            
+            tests.forEach(test => {
+                const result = validateWebSocketMessage(test.message);
+                const success = result === test.expected;
+                
+                const testResult = document.createElement('div');
+                testResult.className = `result ${success ? 'success' : 'error'}`;
+                testResult.innerHTML = `
+                    <strong>${test.name}:</strong> ${success ? '✓ 通过' : '✗ 失败'}<br>
+                    <strong>期望:</strong> ${test.expected ? '有效' : '无效'}<br>
+                    <strong>实际:</strong> ${result ? '有效' : '无效'}<br>
+                    <pre>${JSON.stringify(test.message, null, 2)}</pre>
+                `;
+                resultsDiv.appendChild(testResult);
+            });
+        }
+        
+        function testWebSocketConnection() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('WebSocket已连接，先断开现有连接', 'info');
+                ws.close();
+            }
+            
+            try {
+                ws = new WebSocket('ws://localhost:8000/ws/permissions/anonymous/');
+                log('尝试连接到 ws://localhost:8000/ws/permissions/anonymous/', 'info');
+                
+                ws.onopen = function(event) {
+                    log('WebSocket连接已建立', 'success');
+                    
+                    // 发送连接消息
+                    const connectMessage = {
+                        type: 'connect',
+                        data: {
+                            user_id: null,
+                            client_info: {
+                                userAgent: navigator.userAgent,
+                                timestamp: Date.now()
+                            }
+                        }
+                    };
+                    
+                    setTimeout(() => {
+                        if (ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify(connectMessage));
+                            log('已发送连接消息: ' + JSON.stringify(connectMessage), 'info');
+                        }
+                    }, 100);
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        log('收到消息: ' + JSON.stringify(message, null, 2), 'info');
+                        
+                        const isValid = validateWebSocketMessage(message);
+                        log(`消息验证结果: ${isValid ? '有效' : '无效'}`, isValid ? 'success' : 'error');
+                        
+                        if (message.type === 'connection_confirmed') {
+                            log('收到连接确认消息，连接成功！', 'success');
+                        }
+                    } catch (error) {
+                        log('解析消息失败: ' + error.message, 'error');
+                        log('原始消息: ' + event.data, 'error');
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    log(`WebSocket连接已关闭，代码: ${event.code}, 原因: ${event.reason}`, 'error');
+                };
+                
+                ws.onerror = function(error) {
+                    log('WebSocket错误: ' + error, 'error');
+                };
+                
+            } catch (error) {
+                log('创建WebSocket连接失败: ' + error.message, 'error');
+            }
+        }
+        
+        function disconnectWebSocket() {
+            if (ws) {
+                ws.close();
+                log('手动断开WebSocket连接', 'info');
+            } else {
+                log('没有活动的WebSocket连接', 'info');
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        // 页面加载时自动运行验证测试
+        window.onload = function() {
+            testMessageValidation();
+        };
+    </script>
+</body>
+</html>

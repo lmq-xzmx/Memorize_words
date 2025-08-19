@@ -5,7 +5,8 @@ from .api_views import (
     MenuModuleConfigViewSet, RoleMenuPermissionViewSet, GroupViewSet,
     PermissionViewSet, RoleGroupMappingViewSet, PermissionSyncLogViewSet,
     get_user_permissions, get_role_permissions_config,
-    sync_frontend_menus, get_frontend_menu_config
+    sync_frontend_menus, get_frontend_menu_config,
+    get_available_roles, get_role_fields, get_menu_version
 )
 from .api.menu_api import (
     get_user_menu_permissions, check_menu_permission, 
@@ -43,6 +44,13 @@ urlpatterns = [
     # 前后端菜单同步API
     path('sync-frontend-menus/', sync_frontend_menus, name='sync_frontend_menus'),
     path('frontend-menu-config/', get_frontend_menu_config, name='get_frontend_menu_config'),
+    
+    # 菜单版本控制API
+    path('api/menu/version/', get_menu_version, name='get_menu_version'),
+    
+    # 角色相关API
+    path('roles/available/', get_available_roles, name='get_available_roles'),
+    path('roles/<str:role_id>/fields/', get_role_fields, name='get_role_fields'),
     
     # 权限管理主页
     path('', views.PermissionIndexView.as_view(), name='index'),

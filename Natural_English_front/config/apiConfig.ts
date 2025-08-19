@@ -56,22 +56,22 @@ interface ApiConfig {
 
 // 获取后端基础URL
 export function getApiBaseUrl(): string {
-  return (import.meta as any).env.MODE === 'production' ? '/api' : 'http://127.0.0.1:8001/api'
+  return (import.meta as any).env.MODE === 'production' ? '/api' : 'http://127.0.0.1:8000/api'
 }
 
 // 获取后端完整地址（不包含/api路径）
 export function getBaseUrl(): string {
-  return (import.meta as any).env.MODE === 'production' ? '' : 'http://127.0.0.1:8001'
+  return (import.meta as any).env.MODE === 'production' ? '' : 'http://127.0.0.1:8000'
 }
 
 // 获取后端主机地址（兼容性方法）
 export function getBackendHost(): string {
-  return (import.meta as any).env.MODE === 'production' ? '' : 'http://127.0.0.1:8001'
+  return (import.meta as any).env.MODE === 'production' ? '' : 'http://127.0.0.1:8000'
 }
 
 // 获取后端基础URL（兼容性方法）
 export function getBackendBaseURL(): string {
-  return (import.meta as any).env.MODE === 'production' ? '/api' : 'http://127.0.0.1:8001/api'
+  return (import.meta as any).env.MODE === 'production' ? '/api' : 'http://127.0.0.1:8000/api'
 }
 
 // API端点配置
@@ -135,7 +135,7 @@ export function buildPageUrl(path: string): string {
 // 获取WebSocket URL
 export function getWebSocketUrl(): string {
   const protocol = (import.meta as any).env.MODE === 'production' ? 'wss:' : 'ws:'
-  const host = (import.meta as any).env.MODE === 'production' ? window.location.host : '127.0.0.1:8001'
+  const host = (import.meta as any).env.MODE === 'production' ? window.location.host : '127.0.0.1:8000'
   return `${protocol}//${host}/ws/`
 }
 

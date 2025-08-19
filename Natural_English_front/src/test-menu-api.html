@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜单API测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>菜单API集成测试</h1>
+    
+    <div class="test-section">
+        <h2>1. 后端API直接测试</h2>
+        <button onclick="testBackendAPI()">测试后端API</button>
+        <div id="backend-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 前端MenuService测试</h2>
+        <button onclick="testMenuService()">测试MenuService</button>
+        <div id="menuservice-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. WebSocket连接测试</h2>
+        <button onclick="testWebSocket()">测试WebSocket</button>
+        <div id="websocket-result"></div>
+    </div>
+
+    <script>
+        // 测试后端API
+        async function testBackendAPI() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.innerHTML = '<p>正在测试后端API...</p>';
+            
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/permissions/frontend-menu-config/');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ 后端API测试成功</h3>
+                        <p>状态码: ${response.status}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${data.message || '未知错误'}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h3>❌ 后端API测试失败</h3>
+                    <p>错误: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // 测试MenuService
+        async function testMenuService() {
+            const resultDiv = document.getElementById('menuservice-result');
+            resultDiv.innerHTML = '<p>正在测试MenuService...</p>';
+            
+            try {
+                // 模拟MenuService的getUserMenuConfig方法
+                const token = localStorage.getItem('token') || 'test-token-for-development';
+                
+                const response = await fetch('/api/permissions/frontend-menu-config/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ MenuService测试成功</h3>
+                        <p>使用Token: ${token}</p>
+                        <p>菜单数量: ${data.data?.bottomNavMenus?.length || 0}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${data.message || '未知错误'}`);
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h3>❌ MenuService测试失败</h3>
+                    <p>错误: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // 测试WebSocket连接
+        function testWebSocket() {
+            const resultDiv = document.getElementById('websocket-result');
+            resultDiv.innerHTML = '<p>正在测试WebSocket连接...</p>';
+            
+            try {
+                const token = localStorage.getItem('token') || 'test-token-for-development';
+                const ws = new WebSocket(`ws://127.0.0.1:8000/ws/permissions/?token=${token}`);
+                
+                let connectionTimeout = setTimeout(() => {
+                    ws.close();
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ WebSocket连接超时</h3>
+                        <p>无法在5秒内建立连接</p>
+                    `;
+                }, 5000);
+                
+                ws.onopen = function(event) {
+                    clearTimeout(connectionTimeout);
+                    resultDiv.className = 'success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ WebSocket连接成功</h3>
+                        <p>连接状态: ${ws.readyState}</p>
+                        <p>使用Token: ${token}</p>
+                    `;
+                    
+                    // 发送测试消息
+                    ws.send(JSON.stringify({
+                        type: 'ping',
+                        message: 'test connection'
+                    }));
+                    
+                    // 5秒后关闭连接
+                    setTimeout(() => {
+                        ws.close();
+                    }, 3000);
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    const currentContent = resultDiv.innerHTML;
+                    resultDiv.innerHTML = currentContent + `
+                        <p>收到消息: <code>${JSON.stringify(data)}</code></p>
+                    `;
+                };
+                
+                ws.onerror = function(error) {
+                    clearTimeout(connectionTimeout);
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ WebSocket连接错误</h3>
+                        <p>错误详情: ${error.message || '连接失败'}</p>
+                    `;
+                };
+                
+                ws.onclose = function(event) {
+                    if (resultDiv.className === 'success') {
+                        const currentContent = resultDiv.innerHTML;
+                        resultDiv.innerHTML = currentContent + `
+                            <p>连接已关闭 (代码: ${event.code})</p>
+                        `;
+                    }
+                };
+                
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.innerHTML = `
+                    <h3>❌ WebSocket测试失败</h3>
+                    <p>错误: ${error.message}</p>
+                `;
+            }
+        }
+        
+        // 页面加载时自动运行测试
+        window.onload = function() {
+            console.log('菜单API集成测试页面已加载');
+            
+            // 设置测试token
+            if (!localStorage.getItem('token')) {
+                localStorage.setItem('token', 'test-token-for-development');
+                console.log('已设置测试token');
+            }
+        };
+    </script>
+</body>
+</html>

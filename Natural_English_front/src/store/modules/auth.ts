@@ -70,6 +70,8 @@ const auth = {
     
     logout({ commit }: ActionContext<AuthState, RootState>) {
       commit('CLEAR_TOKEN')
+      // 清除用户信息
+      localStorage.removeItem('userInfo')
     }
   },
   
