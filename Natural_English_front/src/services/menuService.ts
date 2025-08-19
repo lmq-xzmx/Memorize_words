@@ -544,7 +544,9 @@ class MenuWebSocketService {
     }
     
     try {
-      this.ws = new WebSocket(wsUrl, this.config.protocols)
+      // 暂时移除protocols参数，避免协议不匹配问题
+      this.ws = new WebSocket(wsUrl)
+      console.log('WebSocket创建成功，URL:', wsUrl)
       
       // 连接超时处理
       const connectionTimeout = setTimeout(() => {
@@ -557,29 +559,33 @@ class MenuWebSocketService {
       this.ws.onopen = () => {
         clearTimeout(connectionTimeout)
         console.log('菜单 WebSocket 连接已建立，URL:', wsUrl)
+        console.log('WebSocket readyState:', this.ws?.readyState)
         // 不要立即设置为CONNECTED，等待连接确认消息
         this.status = WebSocketStatus.CONNECTING
         this.reconnectAttempts = 0
         this.emit('statusChanged', this.status)
         
-        // 发送连接消息以完成握手流程
-        console.log('发送连接消息以完成握手流程')
-        // 添加小延迟确保连接完全建立
-        setTimeout(() => {
-          // 直接构造符合后端期望的消息格式
-          const connectMessage = {
-            type: 'connect',
-            user_id: this.userId,
-            client_info: 'menu-service',
-            timestamp: Date.now()
-          }
-          console.log('准备发送连接消息:', connectMessage)
-          this.sendMessage(connectMessage)
-          console.log('连接消息已发送')
-        }, 100)
+        // 发送连接消息给后端 - 直接发送，不通过sendMessage方法
+        const connectMessage = {
+          type: 'connect',
+          data: {
+            userId: this.userId || null,
+            client_info: 'menu-websocket-client'
+          },
+          timestamp: Date.now()
+        }
         
-        // 启动心跳机制
-        this.startHeartbeat()
+        console.log('发送连接消息:', connectMessage)
+        const messageStr = JSON.stringify(connectMessage)
+        console.log('消息字符串:', messageStr)
+        
+        // 直接发送，确保在onopen事件中立即发送
+        if (this.ws) {
+          this.ws.send(messageStr)
+          console.log('连接消息已直接发送到WebSocket')
+        }
+        
+        console.log('WebSocket连接已建立，已发送连接消息，等待后端连接确认')
       }
       
       this.ws.onmessage = (event) => {
@@ -652,10 +658,11 @@ class MenuWebSocketService {
         case WebSocketMessageType.CONNECTION_CONFIRMED:
           try {
             console.log('收到连接确认消息:', message)
-            // 处理新的消息格式，数据在data字段中
-            const messageData = message.data || message
+            // 后端发送的消息格式：{ type: 'connection_confirmed', data: { ... }, timestamp: ... }
+            const messageData = message.data || {}
             this.sessionId = messageData.sessionId || `session_${Date.now()}`
             console.log('设置sessionId:', this.sessionId)
+            console.log('连接确认数据:', messageData)
             
             // 更新连接状态
             this.status = WebSocketStatus.CONNECTED
@@ -669,6 +676,13 @@ class MenuWebSocketService {
             // 重置重连计数
             this.reconnectAttempts = 0
             console.log('重置重连计数为0')
+            
+            // 连接确认后延迟启动心跳机制，确保连接完全稳定
+            console.log('连接确认完成，延迟启动心跳机制')
+            setTimeout(() => {
+              console.log('延迟后启动心跳机制')
+              this.startHeartbeat()
+            }, 1000) // 延迟1秒启动心跳
           } catch (error) {
             console.error('处理CONNECTION_CONFIRMED消息时出错:', error)
             // 不要抛出错误，避免导致连接断开

@@ -3,7 +3,9 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.template.response import TemplateResponse
+import os
 
 from apps.accounts.views import dev_login_view
 from apps.permissions.api_views import get_menu_version
@@ -15,6 +17,17 @@ def health_check(request):
         'status': 'ok',
         'message': 'Service is healthy'
     })
+
+# 测试文件服务视图
+def serve_test_file(request, filename):
+    """提供测试文件服务"""
+    file_path = os.path.join(settings.BASE_DIR, filename)
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return HttpResponse(content, content_type='text/html')
+    else:
+        return HttpResponse('File not found', status=404)
 
 urlpatterns = [
     path('admin/', include('massadmin.urls')),
@@ -34,6 +47,11 @@ urlpatterns = [
     path('api/menu/version/', get_menu_version, name='menu_version'),
     # path('', include('gamification.urls')),  # 临时禁用
     path('dev_login.html', dev_login_view, name='dev_login'),
+    
+    # 测试文件路由
+    path('test-websocket-minimal.html', lambda request: serve_test_file(request, 'test-websocket-minimal.html'), name='test_websocket_minimal'),
+    path('test-websocket-no-heartbeat.html', lambda request: serve_test_file(request, 'test-websocket-no-heartbeat.html'), name='test_websocket_no_heartbeat'),
+    
     path('', RedirectView.as_view(url='/admin/', permanent=False)),
 ]
 

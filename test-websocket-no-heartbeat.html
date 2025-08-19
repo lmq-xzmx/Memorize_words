@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket测试 - 无心跳版本</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .connecting { background-color: #fff3cd; color: #856404; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket连接测试 - 无心跳版本</h1>
+        <p>此测试版本禁用心跳机制，用于验证连接稳定性</p>
+        
+        <div id="status" class="status disconnected">未连接</div>
+        
+        <div>
+            <button id="connectBtn" onclick="connect()">连接</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>断开</button>
+            <button onclick="sendTestMessage()">发送测试消息</button>
+            <button onclick="clearLog()">清空日志</button>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let connectionStartTime = null;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateStatus(status, className) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = status;
+            statusDiv.className = `status ${className}`;
+            
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (className === 'connected') {
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+            } else {
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+            }
+        }
+        
+        function connect() {
+            if (ws) {
+                log('关闭现有连接', 'warning');
+                ws.close();
+                ws = null;
+            }
+            
+            connectionStartTime = Date.now();
+            updateStatus('连接中...', 'connecting');
+            log('开始建立WebSocket连接', 'info');
+            
+            // 使用认证用户连接
+            const token = 'your_token_here'; // 实际应用中从localStorage获取
+            const wsUrl = `ws://localhost:8000/ws/permissions/2/?token=${encodeURIComponent(token)}`;
+            
+            log(`连接URL: ${wsUrl}`, 'info');
+            
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function() {
+                    const connectionTime = Date.now() - connectionStartTime;
+                    log(`✅ WebSocket连接已建立 (耗时: ${connectionTime}ms)`, 'success');
+                    updateStatus('已连接', 'connected');
+                    
+                    // 发送连接消息
+                    setTimeout(() => {
+                        const connectMessage = {
+                            type: 'connect',
+                            user_id: '2',
+                            client_info: 'test-no-heartbeat',
+                            timestamp: Date.now()
+                        };
+                        
+                        if (ws && ws.readyState === WebSocket.OPEN) {
+                            ws.send(JSON.stringify(connectMessage));
+                            log('📤 连接消息已发送', 'info');
+                        }
+                    }, 100);
+                    
+                    // 注意：此版本不启动心跳机制
+                    log('⚠️ 心跳机制已禁用，测试连接稳定性', 'warning');
+                };
+                
+                ws.onmessage = function(event) {
+                    log(`📥 收到消息: ${event.data}`, 'success');
+                    
+                    try {
+                        const message = JSON.parse(event.data);
+                        log(`📋 消息类型: ${message.type}`, 'info');
+                        
+                        if (message.type === 'connection_confirmed') {
+                            log('🎉 连接确认成功！', 'success');
+                            log('✅ 连接将保持活跃状态（无心跳）', 'success');
+                        }
+                    } catch (e) {
+                        log(`⚠️ 消息解析失败: ${e.message}`, 'warning');
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    const connectionTime = connectionStartTime ? Date.now() - connectionStartTime : 0;
+                    log(`🔌 WebSocket连接关闭 (连接持续: ${connectionTime}ms)`, 'error');
+                    log(`关闭代码: ${event.code}, 原因: ${event.reason || '无'}`, 'error');
+                    updateStatus('已断开', 'disconnected');
+                    
+                    if (event.code === 1006) {
+                        log('❌ 错误代码1006表示连接异常关闭', 'error');
+                    }
+                };
+                
+                ws.onerror = function(error) {
+                    log(`❌ WebSocket错误: ${error}`, 'error');
+                    updateStatus('错误', 'disconnected');
+                };
+                
+            } catch (error) {
+                log(`❌ 创建WebSocket时发生错误: ${error.message}`, 'error');
+                updateStatus('错误', 'disconnected');
+            }
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                log('主动断开连接', 'info');
+            }
+        }
+        
+        function sendTestMessage() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const testMessage = {
+                    type: 'permission_check',
+                    resource: 'test',
+                    action: 'read',
+                    timestamp: Date.now()
+                };
+                
+                ws.send(JSON.stringify(testMessage));
+                log('📤 测试消息已发送', 'info');
+            } else {
+                log('❌ WebSocket未连接，无法发送消息', 'error');
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        // 页面加载完成后的初始化
+        window.onload = function() {
+            log('页面加载完成，准备测试WebSocket连接（无心跳版本）', 'info');
+        };
+        
+        // 页面卸载时清理连接
+        window.onbeforeunload = function() {
+            if (ws) {
+                ws.close();
+            }
+        };
+    </script>
+</body>
+</html>

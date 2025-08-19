@@ -65,12 +65,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 自定义中间件
+    # 自定义中间件 - 全部启用
     'apps.accounts.middleware.ForceHTTPMiddleware',
     'apps.permissions.middleware.EnhancedRBACMiddleware',  # 增强的RBAC中间件
     'apps.permissions.middleware.ObjectPermissionMiddleware',  # 对象级权限中间件
     'apps.accounts.middleware.RolePermissionMiddleware',
-    # 'apps.accounts.middleware.AdminUnifiedLoginMiddleware',  # 临时禁用以解决重定向循环
+    'apps.accounts.middleware.AdminUnifiedLoginMiddleware',  # 管理员统一登录中间件
     'apps.accounts.middleware.UserActivityMiddleware',
 ]
 
@@ -385,8 +385,17 @@ ARTICLE_FACTORY_CONFIG = {
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'CONFIG': {
+            'capacity': 1500,  # 增加容量
+            'expiry': 300,     # 5分钟过期时间
+        },
     },
 }
+
+# WebSocket超时配置
+WEBSOCKET_TIMEOUT = 300  # 5分钟
+WEBSOCKET_HEARTBEAT_INTERVAL = 30  # 30秒心跳间隔
+WEBSOCKET_CONNECTION_TIMEOUT = 10  # 10秒连接超时
 
 # Redis Channel Layer配置（生产环境使用）
 # CHANNEL_LAYERS = {

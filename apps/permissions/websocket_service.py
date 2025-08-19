@@ -53,24 +53,53 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
             await self.accept()
             logger.info("WebSocket连接已接受")
             
-            # 从scope中获取用户信息（由middleware设置）
-            user = self.scope.get('user')
-            if user and hasattr(user, 'id') and user.id:
-                self.user_id = user.id
-                logger.info(f"WebSocket认证用户连接: {user.username} (ID: {user.id})")
+            # 首先尝试从URL参数中获取用户ID
+            url_user_id = self.scope['url_route']['kwargs'].get('user_id')
+            if url_user_id:
+                self.user_id = int(url_user_id)
+                logger.info(f"WebSocket从URL参数获取用户ID: {self.user_id}")
             else:
-                self.user_id = 0  # 匿名用户ID设为0
-                logger.info("WebSocket匿名连接已允许")
+                # 如果URL中没有用户ID，则从scope中获取用户信息（由middleware设置）
+                user = self.scope.get('user')
+                if user and hasattr(user, 'id') and user.id:
+                    self.user_id = user.id
+                    logger.info(f"WebSocket认证用户连接: {user.username} (ID: {user.id})")
+                else:
+                    self.user_id = 0  # 匿名用户ID设为0
+                    logger.info("WebSocket匿名连接已允许")
             
             # 设置用户组
+            logger.info("即将调用setup_user_groups")
             await self.setup_user_groups()
+            logger.info("setup_user_groups调用完成")
             
-            # 发送连接确认消息
-            logger.info("准备发送连接确认消息")
-            await self.send_connection_confirmation()
-            logger.info("连接确认消息已发送")
+            # 加入房间组
+            logger.info("即将调用join_room_groups")
+            await self.join_room_groups()
+            logger.info("join_room_groups调用完成")
+            
+            # 不立即发送连接确认消息，等待前端发送连接消息后再确认
+            logger.info("等待前端发送连接消息进行握手确认")
             
             logger.info("WebSocket连接建立完成")
+            
+            # 记录连接到管理器
+            headers = dict(self.scope.get('headers', []))
+            user_agent = headers.get(b'user-agent', b'').decode('utf-8')
+            client_ip = self.scope.get('client', ['unknown', None])[0]
+            
+            connection_manager.add_connection(
+                self.channel_name, 
+                self.user_id, 
+                {
+                    'connected_at': datetime.now(),
+                    'user_agent': user_agent,
+                    'client_ip': client_ip
+                }
+            )
+            
+            # 记录连接日志
+            await self.log_connection('connected')
             
         except Exception as e:
             logger.error(f"WebSocket连接失败: {str(e)}")
@@ -104,6 +133,9 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
             # 离开所有房间组
             await self.leave_room_groups()
             
+            # 从连接管理器中移除连接
+            connection_manager.remove_connection(self.channel_name)
+            
             # 记录断开连接日志
             await self.log_connection('disconnected', close_code)
             
@@ -117,7 +149,8 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         """接收客户端消息"""
         try:
-            logger.info(f"收到WebSocket消息: {text_data}")
+            logger.info(f"[RECEIVE] 收到WebSocket消息: {text_data}")
+            logger.info(f"[RECEIVE] 当前连接状态 - 用户ID: {self.user_id}, Channel: {self.channel_name}")
             
             # 解析JSON数据
             try:
@@ -153,11 +186,17 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
             await self.send_error('INTERNAL_ERROR', 'Internal server error')
     
     async def handle_connect_message(self, data):
-        """处理连接确认消息"""
-        logger.info(f"收到连接确认消息: {data}")
-        # 不再重复发送连接确认消息，避免重复处理
-        # 只记录收到连接消息即可
-        logger.info(f"用户 {self.user_id} 的连接消息已确认")
+        """处理前端连接消息并发送确认"""
+        logger.info(f"收到前端连接消息: {data}")
+        logger.info(f"WebSocket连接状态: readyState={getattr(self, '_websocket_ready', 'unknown')}")
+        
+        try:
+            # 收到前端连接消息后，发送连接确认消息
+            await self.send_connection_confirmation()
+            logger.info(f"用户 {self.user_id} 的连接握手完成，确认消息已发送")
+        except Exception as e:
+            logger.error(f"发送连接确认消息失败: {e}")
+            raise
     
     async def handle_heartbeat(self, data):
         """处理心跳消息"""
@@ -275,45 +314,69 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
     async def setup_user_groups(self):
         """设置用户组信息"""
         try:
+            logger.info(f"开始设置用户组，用户ID: {self.user_id}")
             user = await self.get_user()
+            logger.info(f"获取到用户对象: {user}")
+            
             if user and user.is_authenticated:
+                logger.info(f"认证用户: {user.username}")
                 # 获取用户角色（返回字符串类型的角色代码）
                 user_role = await self.get_user_role_async(user)
+                logger.info(f"用户角色: {user_role}")
                 if user_role:
-                    self.user_groups.add(f"role_{user_role}")
+                    role_group = f"role_{user_role}"
+                    self.user_groups.add(role_group)
+                    logger.info(f"添加角色组: {role_group}")
                 
                 # 获取用户所属的Django组
                 user_groups = await self.get_user_django_groups(user)
+                logger.info(f"Django组列表: {user_groups}")
                 for group in user_groups:
-                    self.user_groups.add(f"group_{group.id}")
+                    group_name = f"group_{group.id}"
+                    self.user_groups.add(group_name)
+                    logger.info(f"添加Django组: {group_name}")
             else:
+                logger.info("匿名用户，添加匿名组")
                 # 匿名用户加入匿名组
                 self.user_groups.add("anonymous_users")
+            
+            logger.info(f"用户组设置完成，总共 {len(self.user_groups)} 个组: {self.user_groups}")
                     
         except Exception as e:
-            logger.error(f"设置用户组失败: {e}")
+            logger.error(f"设置用户组失败: {e}", exc_info=True)
     
     async def join_room_groups(self):
         """加入房间组"""
         try:
+            logger.info(f"开始加入房间组，用户ID: {self.user_id}")
+            
             # 加入用户专属组（仅认证用户）
             if self.user_id:
                 user_group = f"user_{self.user_id}"
+                logger.info(f"加入用户专属组: {user_group}")
                 await self.channel_layer.group_add(user_group, self.channel_name)
                 self.room_groups.add(user_group)
+                logger.info(f"成功加入用户专属组: {user_group}")
             
             # 加入角色和组相关的房间
+            logger.info(f"用户组列表: {self.user_groups}")
             for group in self.user_groups:
+                logger.info(f"加入角色/组房间: {group}")
                 await self.channel_layer.group_add(group, self.channel_name)
                 self.room_groups.add(group)
+                logger.info(f"成功加入角色/组房间: {group}")
             
             # 加入全局通知组
             global_group = "global_notifications"
+            logger.info(f"加入全局通知组: {global_group}")
             await self.channel_layer.group_add(global_group, self.channel_name)
             self.room_groups.add(global_group)
+            logger.info(f"成功加入全局通知组: {global_group}")
+            
+            logger.info(f"房间组加入完成，总共加入 {len(self.room_groups)} 个组")
             
         except Exception as e:
-            logger.error(f"加入房间组失败: {e}")
+            logger.error(f"加入房间组失败: {e}", exc_info=True)
     
     async def leave_room_groups(self):
         """离开房间组"""
@@ -328,24 +391,25 @@ class PermissionWebSocketConsumer(AsyncWebsocketConsumer):
     async def send_connection_confirmation(self):
         """发送连接确认消息"""
         try:
-            await self.send(text_data=json.dumps({
+            confirmation_message = {
                 'type': 'connection_confirmed',
                 'data': {
                     'user_id': self.user_id,
-                    'groups': list(self.user_groups) if hasattr(self, 'user_groups') else [],
-                    'server_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    'sessionId': f"session_{self.user_id}_{datetime.now().timestamp()}",
+                    'groups': list(self.room_groups),
+                    'server_time': datetime.now().isoformat(),
+                    'sessionId': self.channel_name,
                     'features': {
-                        'permission_notifications': True,
-                        'role_updates': True,
-                        'menu_access_updates': True,
-                        'cache_invalidation': True,
-                        'heartbeat': True
+                        'heartbeat': True,
+                        'notifications': True,
+                        'permission_check': True
                     }
                 },
                 'timestamp': int(datetime.now().timestamp() * 1000)
-            }))
-            logger.info(f"连接确认消息已发送给用户: {self.user_id}")
+            }
+            
+            logger.info(f"准备发送连接确认消息: {confirmation_message}")
+            await self.send(text_data=json.dumps(confirmation_message))
+            logger.info(f"连接确认消息发送成功，用户: {self.user_id}")
         except Exception as e:
             logger.error(f"发送连接确认消息失败: {e}")
             # 不要抛出异常，避免导致连接断开
