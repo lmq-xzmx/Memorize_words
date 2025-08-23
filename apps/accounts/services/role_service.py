@@ -3,12 +3,15 @@ from django.db.models import Q
 from typing import List, Dict, Tuple, Optional
 from apps.accounts.models import UserRole
 from asgiref.sync import sync_to_async
+import logging
 
 # 动态导入，避免循环导入
 try:
     from apps.permissions.models import RoleManagement
 except ImportError:
     RoleManagement = None
+
+# RoleExtension在同一个app中，使用字符串引用避免循环导入
 
 
 class RoleService:
@@ -178,101 +181,53 @@ class RoleService:
     
     @classmethod
     def get_role_fields(cls, role_code: str) -> List[Dict]:
-        """获取角色字段配置"""
-        # 默认字段配置
-        default_fields = [
-            {
-                'name': 'username',
-                'label': '用户名',
-                'type': 'text',
-                'required': True,
-                'placeholder': '请输入用户名'
-            },
-            {
-                'name': 'email',
-                'label': '邮箱',
-                'type': 'email',
-                'required': True,
-                'placeholder': '请输入邮箱地址'
-            },
-            {
-                'name': 'password',
-                'label': '密码',
-                'type': 'password',
-                'required': True,
-                'placeholder': '请输入密码'
-            },
-            {
-                'name': 'confirm_password',
-                'label': '确认密码',
-                'type': 'password',
-                'required': True,
-                'placeholder': '请再次输入密码'
-            }
-        ]
-        
-        # 根据角色添加特定字段
-        if role_code == 'teacher':
-            default_fields.extend([
-                {
-                    'name': 'teacher_id',
-                    'label': '教师编号',
-                    'type': 'text',
-                    'required': True,
-                    'placeholder': '请输入教师编号'
-                },
-                {
-                    'name': 'subject',
-                    'label': '任教科目',
-                    'type': 'select',
-                    'required': True,
-                    'options': [
-                        {'value': 'english', 'label': '英语'},
-                        {'value': 'math', 'label': '数学'},
-                        {'value': 'chinese', 'label': '语文'}
-                    ]
+        """获取角色字段配置 - 从数据库获取角色增项"""
+        try:
+            # 使用Django的apps.get_model来避免循环导入
+            from django.apps import apps
+            RoleExtension = apps.get_model('accounts', 'RoleExtension')
+            
+            # 获取角色增项字段
+            extensions = RoleExtension.objects.filter(
+                role=role_code,
+                is_active=True,
+                show_in_frontend_register=True
+            ).order_by('sort_order', 'field_name')
+            
+            fields = []
+            for extension in extensions:
+                field_config = {
+                    'name': extension.field_name,
+                    'label': extension.field_label,
+                    'type': extension.field_type,
+                    'required': extension.is_required,
+                    'placeholder': extension.help_text or f'请输入{extension.field_label}'
                 }
-            ])
-        elif role_code == 'student':
-            default_fields.extend([
-                {
-                    'name': 'student_id',
-                    'label': '学号',
-                    'type': 'text',
-                    'required': True,
-                    'placeholder': '请输入学号'
-                },
-                {
-                    'name': 'grade',
-                    'label': '年级',
-                    'type': 'select',
-                    'required': True,
-                    'options': [
-                        {'value': '1', 'label': '一年级'},
-                        {'value': '2', 'label': '二年级'},
-                        {'value': '3', 'label': '三年级'},
-                        {'value': '4', 'label': '四年级'},
-                        {'value': '5', 'label': '五年级'},
-                        {'value': '6', 'label': '六年级'}
-                    ]
-                }
-            ])
-        elif role_code == 'parent':
-            default_fields.extend([
-                {
-                    'name': 'phone',
-                    'label': '联系电话',
-                    'type': 'tel',
-                    'required': True,
-                    'placeholder': '请输入联系电话'
-                },
-                {
-                    'name': 'child_name',
-                    'label': '孩子姓名',
-                    'type': 'text',
-                    'required': True,
-                    'placeholder': '请输入孩子姓名'
-                }
-            ])
-        
-        return default_fields
+                
+                # 如果是选择字段，添加选择项
+                if extension.field_type == 'choice':
+                    try:
+                        choices = extension.get_choices_list()
+                        field_config['options'] = [
+                            {'value': choice[0], 'label': choice[1]} 
+                            for choice in choices
+                        ]
+                    except Exception:
+                        field_config['options'] = []
+                
+                # 添加验证规则
+                if hasattr(extension, 'get_validation_rules'):
+                    validation_rules = extension.get_validation_rules()
+                    if validation_rules:
+                        field_config['validation'] = validation_rules
+                
+                fields.append(field_config)
+            
+            return fields
+            
+        except Exception as e:
+            # 如果获取失败，返回空列表并记录错误
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"获取角色 {role_code} 的字段配置失败: {str(e)}")
+            return []

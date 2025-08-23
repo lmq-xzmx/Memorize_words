@@ -6,10 +6,8 @@ from .api_views import (
     LearningProfileViewSet, UserLoginLogViewSet,
     RoleExtensionViewSet, StudentListViewSet
 )
-from .template_api_views import (
-    RoleTemplateViewSet, EnhancedUserExtensionDataViewSet
-)
-from .bulk_api_views import BulkOperationsViewSet
+# 已删除template_api_views相关导入
+# 已删除bulk_api_views相关导入
 from .auth_views import (
     AuthVerifyView, CurrentUserView, AuthSyncView
 )
@@ -23,9 +21,8 @@ router.register(r'students', StudentListViewSet, basename='student')
 router.register(r'learning-profiles', LearningProfileViewSet, basename='learningprofile')
 router.register(r'login-logs', UserLoginLogViewSet, basename='userloginlog')
 router.register(r'role-extensions', RoleExtensionViewSet, basename='roleextension')
-router.register(r'user-extensions', EnhancedUserExtensionDataViewSet, basename='userextensions')
-router.register(r'role-templates', RoleTemplateViewSet, basename='roletemplate')
-router.register(r'bulk-operations', BulkOperationsViewSet, basename='bulkoperations')
+# 已删除user-extensions和role-templates路由
+# 已删除bulk-operations路由
 
 urlpatterns = [
     # API路由 (注意：根urls.py已包含api/前缀，这里不需要重复)

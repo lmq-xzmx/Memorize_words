@@ -250,22 +250,44 @@ if WEBSOCKET_AVAILABLE:
             super().__init__(inner)
         
         async def __call__(self, scope, receive, send):
-            # 只处理WebSocket连接
-            if scope['type'] == 'websocket':
-                # 从查询字符串中获取token
-                query_string = scope.get('query_string', b'').decode()
-                query_params = parse_qs(query_string)
-                token = query_params.get('token', [None])[0]
+            try:
+                logger.info(f"TokenAuthMiddleware处理请求 - 类型: {scope['type']}, 路径: {scope.get('path', 'N/A')}")
                 
-                if token:
-                    user = await self.get_user_from_token(token)
-                    scope['user'] = user
-                else:
-                    # 允许匿名连接，特别是对于 /ws/permissions/anonymous 路径
-                    scope['user'] = self.get_anonymous_user()
-                    logger.info("WebSocket匿名连接已允许")
-            
-            return await self.inner(scope, receive, send)
+                # 只处理WebSocket连接
+                if scope['type'] == 'websocket':
+                    path = scope.get('path', '')
+                    logger.info(f"WebSocket连接请求路径: {path}")
+                    
+                    # 从查询字符串中获取token
+                    query_string = scope.get('query_string', b'').decode()
+                    query_params = parse_qs(query_string)
+                    token = query_params.get('token', [None])[0]
+                    
+                    logger.info(f"WebSocket查询参数: {query_string}")
+                    
+                    if token:
+                        user = await self.get_user_from_token(token)
+                        scope['user'] = user
+                        logger.info(f"WebSocket Token认证用户: {user}")
+                    else:
+                        # 允许匿名连接，特别是对于 /ws/permissions/anonymous 路径
+                        scope['user'] = self.get_anonymous_user()
+                        logger.info(f"WebSocket匿名连接已允许，路径: {path}")
+                
+                logger.info(f"TokenAuthMiddleware即将调用内部应用")
+                result = await self.inner(scope, receive, send)
+                logger.info(f"TokenAuthMiddleware内部应用调用完成")
+                return result
+                
+            except Exception as e:
+                logger.error(f"TokenAuthMiddleware发生异常: {e}", exc_info=True)
+                # 对于WebSocket连接，发送错误响应
+                if scope['type'] == 'websocket':
+                    await send({
+                        'type': 'websocket.close',
+                        'code': 4000,
+                    })
+                raise
         
         def get_anonymous_user(self):
             from django.contrib.auth.models import AnonymousUser
@@ -777,3 +799,178 @@ class RateLimitMiddleware(MiddlewareMixin):
         # 限制缓存大小
         if len(self._request_cache[client_id]) > self.default_limit * 2:
             self._request_cache[client_id] = self._request_cache[client_id][-self.default_limit:]
+
+
+class OperationLogMiddleware(MiddlewareMixin):
+    """操作日志中间件 - 自动记录用户操作"""
+    
+    # 需要记录的HTTP方法
+    LOGGED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE']
+    
+    # 排除的URL路径（不记录日志）
+    EXCLUDED_PATHS = [
+        '/admin/jsi18n/',
+        '/static/',
+        '/media/',
+        '/favicon.ico',
+        '/api/health',
+        '/api/health-check',
+        '/api/permissions/operation-logs/',  # 避免记录操作日志的查询操作
+    ]
+    
+    # 敏感字段（在日志中隐藏）
+    SENSITIVE_FIELDS = [
+        'password', 'token', 'secret', 'key', 'csrf',
+        'csrfmiddlewaretoken', 'sessionid'
+    ]
+    
+    def process_request(self, request):
+        """请求开始时记录时间"""
+        request._operation_log_start_time = time.time()
+        return None
+    
+    def process_response(self, request, response):
+        """响应完成时记录操作日志"""
+        try:
+            # 检查是否需要记录日志
+            if not self._should_log_request(request):
+                return response
+            
+            # 记录操作日志
+            self._create_operation_log(request, response)
+            
+        except Exception as e:
+            logger.error(f"记录操作日志失败: {str(e)}")
+        
+        return response
+    
+    def _should_log_request(self, request):
+        """判断是否应该记录此请求"""
+        # 只记录指定的HTTP方法
+        if request.method not in self.LOGGED_METHODS:
+            return False
+        
+        # 排除特定路径
+        path = request.path
+        for excluded_path in self.EXCLUDED_PATHS:
+            if path.startswith(excluded_path):
+                return False
+        
+        # 只记录API请求
+        if not path.startswith('/api/'):
+            return False
+        
+        return True
+    
+    def _create_operation_log(self, request, response):
+        """创建操作日志记录"""
+        try:
+            from .models import OperationLog
+            from .utils import get_client_ip, get_user_agent_info
+            import json
+            
+            # 获取请求信息
+            user = getattr(request, 'user', None)
+            if user and user.is_anonymous:
+                user = None
+            
+            # 获取URL信息
+            try:
+                url_match = resolve(request.path)
+                request_modular = url_match.app_name or 'unknown'
+            except:
+                request_modular = 'unknown'
+            
+            # 获取请求参数
+            request_body = self._get_request_body(request)
+            
+            # 获取响应信息
+            response_code = str(response.status_code)
+            status = 200 <= response.status_code < 400
+            
+            # 获取响应内容（限制大小）
+            json_result = self._get_response_content(response)
+            
+            # 获取客户端信息
+            request_ip = get_client_ip(request)
+            user_agent_info = get_user_agent_info(request)
+            
+            # 计算响应时间
+            start_time = getattr(request, '_operation_log_start_time', time.time())
+            response_time = round((time.time() - start_time) * 1000, 2)  # 毫秒
+            
+            # 创建操作日志
+            OperationLog.objects.create(
+                request_modular=request_modular,
+                request_path=request.path,
+                request_body=request_body,
+                request_method=request.method,
+                request_msg=f"{request.method} {request.path} - {response_time}ms",
+                request_ip=request_ip,
+                request_browser=user_agent_info.get('browser', ''),
+                response_code=response_code,
+                request_os=user_agent_info.get('os', ''),
+                json_result=json_result,
+                status=status,
+                creator=user
+            )
+            
+        except Exception as e:
+            logger.error(f"创建操作日志失败: {str(e)}")
+    
+    def _get_request_body(self, request):
+        """获取请求参数（过滤敏感信息）"""
+        try:
+            import json
+            body_data = {}
+            
+            # 获取GET参数
+            if request.GET:
+                body_data['GET'] = dict(request.GET)
+            
+            # 获取POST参数
+            if request.POST:
+                post_data = dict(request.POST)
+                # 过滤敏感字段
+                for field in self.SENSITIVE_FIELDS:
+                    if field in post_data:
+                        post_data[field] = '***'
+                body_data['POST'] = post_data
+            
+            # 获取JSON数据
+            if hasattr(request, 'body') and request.content_type == 'application/json':
+                try:
+                    json_data = json.loads(request.body.decode('utf-8'))
+                    # 过滤敏感字段
+                    if isinstance(json_data, dict):
+                        for field in self.SENSITIVE_FIELDS:
+                            if field in json_data:
+                                json_data[field] = '***'
+                    body_data['JSON'] = json_data
+                except:
+                    pass
+            
+            # 限制数据大小
+            body_str = json.dumps(body_data, ensure_ascii=False)
+            if len(body_str) > 2000:
+                body_str = body_str[:2000] + '...'
+            
+            return body_str
+            
+        except Exception as e:
+            logger.error(f"获取请求参数失败: {str(e)}")
+            return ''
+    
+    def _get_response_content(self, response):
+        """获取响应内容（限制大小）"""
+        try:
+            if hasattr(response, 'content'):
+                content = response.content.decode('utf-8')
+                # 限制响应内容大小
+                if len(content) > 1000:
+                    content = content[:1000] + '...'
+                return content
+            return ''
+        except Exception as e:
+            logger.error(f"获取响应内容失败: {str(e)}")
+            return ''

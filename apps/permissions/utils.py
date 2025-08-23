@@ -198,3 +198,68 @@ def get_user_role(user):
     if hasattr(user, 'role'):
         return user.role
     return None
+
+
+def get_client_ip(request):
+    """获取客户端真实IP地址"""
+    # 优先从代理头获取真实IP
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        # X-Forwarded-For可能包含多个IP，取第一个
+        ip = x_forwarded_for.split(',')[0].strip()
+        return ip
+    
+    # 从其他代理头获取
+    x_real_ip = request.META.get('HTTP_X_REAL_IP')
+    if x_real_ip:
+        return x_real_ip.strip()
+    
+    # 从Cloudflare获取
+    cf_connecting_ip = request.META.get('HTTP_CF_CONNECTING_IP')
+    if cf_connecting_ip:
+        return cf_connecting_ip.strip()
+    
+    # 最后使用REMOTE_ADDR
+    return request.META.get('REMOTE_ADDR', '127.0.0.1')
+
+
+def get_user_agent_info(request):
+    """解析用户代理信息"""
+    user_agent_string = request.META.get('HTTP_USER_AGENT', '')
+    
+    try:
+        # 简单解析浏览器信息
+        browser = 'Unknown'
+        os = 'Unknown'
+        
+        if 'Chrome' in user_agent_string:
+            browser = 'Chrome'
+        elif 'Firefox' in user_agent_string:
+            browser = 'Firefox'
+        elif 'Safari' in user_agent_string:
+            browser = 'Safari'
+        elif 'Edge' in user_agent_string:
+            browser = 'Edge'
+        
+        if 'Windows' in user_agent_string:
+            os = 'Windows'
+        elif 'Mac' in user_agent_string:
+            os = 'macOS'
+        elif 'Linux' in user_agent_string:
+            os = 'Linux'
+        elif 'Android' in user_agent_string:
+            os = 'Android'
+        elif 'iOS' in user_agent_string:
+            os = 'iOS'
+        
+        return {
+            'browser': browser,
+            'os': os,
+            'raw': user_agent_string
+        }
+    except Exception:
+        return {
+            'browser': 'Unknown',
+            'os': 'Unknown',
+            'raw': user_agent_string
+        }

@@ -122,7 +122,7 @@ class DynamicRegisterSerializer(serializers.ModelSerializer):
     
     def _add_role_extension_fields(self, role):
         """根据角色动态添加增项字段"""
-        extensions = RoleExtension.objects.filter(
+        extensions = RoleExtension.objects.filter(  # type: ignore
             role=role,
             is_active=True,
             show_in_frontend_register=True
@@ -160,7 +160,7 @@ class DynamicRegisterSerializer(serializers.ModelSerializer):
                 field = serializers.CharField(**field_kwargs)
             
             # 添加字段到序列化器
-            self.fields[f'ext_{extension.field_name}'] = field
+            self.fields[f'ext_{extension.field_name}'] = field  # type: ignore
     
     def validate_username(self, value):
         """验证用户名"""
@@ -254,7 +254,7 @@ class DynamicRegisterSerializer(serializers.ModelSerializer):
         
         # 保存扩展数据
         if extension_data:
-            extensions = RoleExtension.objects.filter(
+            extensions = RoleExtension.objects.filter(  # type: ignore
                 role=user.role,
                 is_active=True,
                 show_in_frontend_register=True
@@ -262,7 +262,7 @@ class DynamicRegisterSerializer(serializers.ModelSerializer):
             
             for extension in extensions:
                 if isinstance(extension_data, dict) and extension.field_name in extension_data:
-                    UserExtensionData.objects.create(
+                    UserExtensionData.objects.create(  # type: ignore
                         user=user,
                         role_extension=extension,
                         field_value=str(extension_data[extension.field_name])
@@ -271,7 +271,7 @@ class DynamicRegisterSerializer(serializers.ModelSerializer):
         # 为申请管理员角色的用户创建审批记录
         if role == 'admin':
             from .models import RoleApproval
-            RoleApproval.objects.create(
+            RoleApproval.objects.create(  # type: ignore
                 user=user,
                 requested_role='admin',
                 current_role='student',  # 默认当前角色为学生
@@ -326,7 +326,7 @@ class RegisterWithExtensionSerializer(DynamicRegisterSerializer):
             role = self.initial_data.get('role', 'student')
         
         # 获取该角色的所有扩展字段
-        extensions = RoleExtension.objects.filter(
+        extensions = RoleExtension.objects.filter(  # type: ignore
             role=role,
             is_active=True,
             show_in_frontend_register=True
@@ -449,15 +449,22 @@ class ChangePasswordSerializer(serializers.Serializer):
 class LearningProfileSerializer(serializers.ModelSerializer):
     """学习档案序列化器"""
     user_username = serializers.CharField(source='user.username', read_only=True)
+    total_study_time_display = serializers.SerializerMethodField()
     
     class Meta:
         model = LearningProfile
         fields = [
-            'id', 'user', 'user_username', 'learning_goals',
-            'preferred_difficulty', 'daily_target', 'study_time_preference',
+            'id', 'user', 'user_username', 'total_study_time', 'total_study_time_display',
+            'completed_lessons', 'current_streak', 'max_streak', 'last_study_date',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['user', 'created_at', 'updated_at']
+    
+    def get_total_study_time_display(self, obj):
+        """总学习时长显示"""
+        hours = obj.total_study_time // 60
+        minutes = obj.total_study_time % 60
+        return f"{hours}小时{minutes}分钟"
 
 
 class UserLoginLogSerializer(serializers.ModelSerializer):
@@ -554,12 +561,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         
         # 为申请管理员角色的用户创建审批记录
-        if validated_data.get('role') == UserRole.ADMIN:
+        if validated_data.get('role') == 'admin':
             from .models import RoleApproval
-            RoleApproval.objects.create(
+            RoleApproval.objects.create(  # type: ignore
                 user=user,
-                requested_role=UserRole.ADMIN,
-                current_role=UserRole.STUDENT,  # 默认当前角色为学生
+                requested_role='admin',
+                current_role='student',  # 默认当前角色为学生
                 reason=validated_data.get('reason', '申请管理员角色')
             )
             

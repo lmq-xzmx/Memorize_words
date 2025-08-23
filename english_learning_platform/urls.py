@@ -25,15 +25,15 @@ def serve_test_file(request, filename):
     if os.path.exists(file_path):
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        return HttpResponse(content, content_type='text/html')
+        return HttpResponse(content.encode('utf-8'), content_type='text/html; charset=utf-8')
     else:
-        return HttpResponse('File not found', status=404)
+        return HttpResponse(b'File not found', status=404)
 
 urlpatterns = [
     path('admin/', include('massadmin.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls')),
-    path('api/', include(('apps.accounts.urls', 'accounts'), namespace='api_accounts')),  # 修正API路由映射
+    path('accounts/api/', include('apps.accounts.urls')),  # 修正API路由映射
     path('api/words/', include('apps.words.urls')),
     path('api/teaching/', include('apps.teaching.urls')),
     path('api/vocabulary/', include('apps.vocabulary_manager.urls')),

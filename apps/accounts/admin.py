@@ -7,8 +7,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import (
     CustomUser, UserLoginLog, UserRole, RoleApproval, LearningProfile,
-    RoleTemplate, RoleExtension, RoleUserGroup, UserExtensionData,
-    RoleLevel, RoleUser, UserExtension
+    RoleTemplate, RoleExtension, RoleUserGroup, UserExtensionData
 )
 from django.contrib.auth.models import Group
 
@@ -406,109 +405,7 @@ class UserExtensionDataAdmin(admin.ModelAdmin):
         return obj.field_value
 
 
-@admin.register(RoleLevel)
-class RoleLevelAdmin(admin.ModelAdmin):
-    """角色级别管理"""
-    list_display = [
-        'role_name', 'role', 'user_count_display',
-        'extension_config_count_display', 'is_active', 'sort_order'
-    ]
-    list_filter = ['role', 'is_active', 'created_at']
-    search_fields = ['role_name', 'description']
-    readonly_fields = ['created_at', 'updated_at']
-    ordering = ['sort_order', 'role']
-    
-    @admin.display(description='用户数量')
-    def user_count_display(self, obj):
-        """用户数量显示"""
-        return obj.get_user_count()
-    
-    @admin.display(description='增项配置数量')
-    def extension_config_count_display(self, obj):
-        """增项配置数量显示"""
-        return obj.get_extension_config_count()
-
-
-@admin.register(RoleUser)
-class RoleUserAdmin(admin.ModelAdmin):
-    """角色用户管理"""
-    list_display = [
-        'user', 'role_level', 'extension_count_display',
-        'is_active', 'joined_at'
-    ]
-    list_filter = [
-        'role_level__role', 'is_active', 'joined_at'
-    ]
-    search_fields = [
-        'user__username', 'user__real_name',
-        'role_level__role_name', 'notes'
-    ]
-    readonly_fields = ['joined_at', 'updated_at']
-    ordering = ['role_level', 'user__username']
-    
-    fieldsets = (
-        ('基本信息', {
-            'fields': ('role_level', 'user', 'is_active')
-        }),
-        ('备注信息', {
-            'fields': ('notes',)
-        }),
-        ('时间信息', {
-            'fields': ('joined_at', 'updated_at'),
-            'classes': ('collapse',)
-        })
-    )
-    
-    @admin.display(description='增项数量')
-    def extension_count_display(self, obj):
-        """增项数量显示"""
-        return obj.get_extension_count()
-
-
-@admin.register(UserExtension)
-class UserExtensionAdmin(admin.ModelAdmin):
-    """用户增项管理"""
-    list_display = [
-        'role_user', 'role_extension', 'display_value_short',
-        'is_active', 'created_at'
-    ]
-    list_filter = [
-        'role_extension__role', 'role_extension__field_type',
-        'is_active', 'created_at'
-    ]
-    search_fields = [
-        'role_user__user__username', 'role_user__user__real_name',
-        'role_extension__field_label', 'field_value'
-    ]
-    readonly_fields = ['created_at', 'updated_at']
-    ordering = ['role_user', 'role_extension__sort_order']
-    
-    fieldsets = (
-        ('基本信息', {
-            'fields': ('role_user', 'role_extension', 'field_value')
-        }),
-        ('状态设置', {
-            'fields': ('is_active',)
-        }),
-        ('创建信息', {
-            'fields': ('created_by', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
-        })
-    )
-    
-    @admin.display(description='显示值')
-    def display_value_short(self, obj):
-        """显示值简短显示"""
-        value = obj.get_display_value()
-        if len(value) > 50:
-            return value[:50] + '...'
-        return value
-    
-    def save_model(self, request, obj, form, change):
-        """保存时设置创建者"""
-        if not change:
-            obj.created_by = request.user
-        super().save_model(request, obj, form, change)
+# 已删除RoleLevel、RoleUser、UserExtension相关的Admin类
 
 
 # 注册模型到admin

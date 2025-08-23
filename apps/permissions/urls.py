@@ -8,6 +8,7 @@ from .api_views import (
     sync_frontend_menus, get_frontend_menu_config,
     get_available_roles, get_role_fields, get_menu_version
 )
+from .operation_log_views import OperationLogViewSet
 from .api.menu_api import (
     get_user_menu_permissions, check_menu_permission, 
     get_role_display_name, get_menu_hierarchy
@@ -21,6 +22,7 @@ router.register(r'groups', GroupViewSet, basename='group')
 router.register(r'permissions', PermissionViewSet, basename='permission')
 router.register(r'role-group-mappings', RoleGroupMappingViewSet, basename='rolegroupmapping')
 router.register(r'sync-logs', PermissionSyncLogViewSet, basename='permissionsynclog')
+router.register(r'operation-logs', OperationLogViewSet, basename='operationlog')
 
 app_name = 'permissions'
 

@@ -351,7 +351,9 @@ def get_role_fields(request, role_id):
         
         return Response({
             'success': True,
-            'data': fields,
+            'data': {
+                'fields': fields
+            },
             'role_id': role_id
         })
         

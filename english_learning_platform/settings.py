@@ -29,13 +29,10 @@ THIRD_PARTY_APPS = [
     'django_bootstrap5',
     'crispy_forms',
     'crispy_bootstrap5',
-    'django_extensions',
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
     'guardian',  # django-guardian for object-level permissions
-    'channels',  # WebSocket support
-    'massadmin',  # django-mass-edit for enhanced admin actions
 ]
 
 LOCAL_APPS = [
@@ -58,20 +55,16 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # CORS中间件
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 自定义中间件 - 全部启用
-    'apps.accounts.middleware.ForceHTTPMiddleware',
-    'apps.permissions.middleware.EnhancedRBACMiddleware',  # 增强的RBAC中间件
-    'apps.permissions.middleware.ObjectPermissionMiddleware',  # 对象级权限中间件
+    # 核心自定义中间件
     'apps.accounts.middleware.RolePermissionMiddleware',
-    'apps.accounts.middleware.AdminUnifiedLoginMiddleware',  # 管理员统一登录中间件
-    'apps.accounts.middleware.UserActivityMiddleware',
+    'apps.permissions.middleware.EnhancedRBACMiddleware',
 ]
 
 ROOT_URLCONF = 'english_learning_platform.urls'
@@ -237,56 +230,14 @@ os.makedirs(BASE_DIR / 'logs', exist_ok=True)
 # Email settings (for development)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-# Cache settings
-# 开发环境使用本地内存缓存，生产环境可切换到Redis
+# Cache settings - Simplified for development
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'unique-snowflake',
+        'LOCATION': 'default-cache',
         'TIMEOUT': 300,
-    },
-    'permissions': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'permissions-cache',
-        'TIMEOUT': 600,
-    },
-    'sessions': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        'LOCATION': 'sessions-cache',
-        'TIMEOUT': 86400,
     }
 }
-
-# Redis缓存配置（生产环境使用）
-# CACHES = {
-#     'default': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379/1',
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#         },
-#         'KEY_PREFIX': 'english_learning',
-#         'TIMEOUT': 300,
-#     },
-#     'permissions': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379/2',
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#         },
-#         'KEY_PREFIX': 'permissions',
-#         'TIMEOUT': 600,
-#     },
-#     'sessions': {
-#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-#         'LOCATION': 'redis://127.0.0.1:6379/3',
-#         'OPTIONS': {
-#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-#         },
-#         'KEY_PREFIX': 'sessions',
-#         'TIMEOUT': 86400,
-#     }
-# }
 
 # Security settings for production
 if not DEBUG:
@@ -324,49 +275,16 @@ REST_FRAMEWORK = {
     ],
 }
 
-# CSRF配置
+# CSRF and CORS configuration - Simplified
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://localhost:3002",
-    "http://127.0.0.1:3002",
-    "http://localhost:3003",
-    "http://127.0.0.1:3003",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
-    "http://localhost:8001",
-    "http://127.0.0.1:8001",
-]
-
-# CORS配置
-CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://localhost:3002",
-    "http://127.0.0.1:3002",
-    "http://localhost:3003",
-    "http://127.0.0.1:3003",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://localhost:8001",
-    "http://127.0.0.1:8001",
 ]
 
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # Allow all origins in development
 CORS_ALLOW_CREDENTIALS = True
-
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # 仅在开发环境允许所有来源
 
 # 文章解析工厂配置
 ARTICLE_FACTORY_CONFIG = {
@@ -380,52 +298,17 @@ ARTICLE_FACTORY_CONFIG = {
     'CACHE_TIMEOUT': 3600,  # 缓存超时时间（秒）
 }
 
-# WebSocket配置
-# 开发环境使用内存Channel Layer，生产环境可切换到Redis
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        'CONFIG': {
-            'capacity': 1500,  # 增加容量
-            'expiry': 300,     # 5分钟过期时间
-        },
-    },
-}
+# WebSocket configuration - Disabled for simplicity
+# WebSocket features are disabled to reduce complexity
 
-# WebSocket超时配置
-WEBSOCKET_TIMEOUT = 300  # 5分钟
-WEBSOCKET_HEARTBEAT_INTERVAL = 30  # 30秒心跳间隔
-WEBSOCKET_CONNECTION_TIMEOUT = 10  # 10秒连接超时
-
-# Redis Channel Layer配置（生产环境使用）
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             'hosts': [('127.0.0.1', 6379)],
-#             'capacity': 1500,
-#             'expiry': 60,
-#         },
-#     },
-# }
-
-# 权限系统配置
+# Permission system configuration - Simplified
 PERMISSION_SYSTEM_CONFIG = {
     'ENABLE_OBJECT_PERMISSIONS': True,
     'ENABLE_ROLE_HIERARCHY': True,
-    'ENABLE_PERMISSION_CACHING': True,
-    'CACHE_TIMEOUT': 600,
-    'ENABLE_AUDIT_LOG': True,
-    'AUDIT_LOG_RETENTION_DAYS': 90,
-    'ENABLE_WEBSOCKET_NOTIFICATIONS': True,
-    'BATCH_OPERATION_CHUNK_SIZE': 1000,
-    'PERFORMANCE_MONITORING': True,
+    'ENABLE_PERMISSION_CACHING': False,  # Disabled for simplicity
+    'ENABLE_AUDIT_LOG': False,  # Disabled for simplicity
+    'ENABLE_WEBSOCKET_NOTIFICATIONS': False,  # Disabled for simplicity
 }
 
-# Session配置
-# 开发环境使用数据库存储，生产环境可切换到Redis
+# Session configuration - Use database for simplicity
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-
-# Redis Session配置（生产环境使用）
-# SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-# SESSION_CACHE_ALIAS = 'sessions'
