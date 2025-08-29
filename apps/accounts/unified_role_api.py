@@ -7,9 +7,11 @@ from django.db import transaction
 from django.db.models import Count, Q
 from .models import (
     CustomUser, UserRole, RoleTemplate, RoleExtension, 
-    UserExtensionData, RoleLevel, RoleUser, UserExtension
+    UserExtensionData
+    # RoleLevel, RoleUser, UserExtension  # 这些模型不存在或已废弃
 )
-from apps.permissions.models import RoleMenuPermission, RoleGroupMapping
+# from apps.permissions.models import RoleMenuPermission, RoleGroupMapping  # RoleMenuPermission已废弃，使用MenuValidity和RoleMenuAssignment替代
+from apps.permissions.models import RoleGroupMapping
 from .serializers import UserSerializer
 from rest_framework import serializers
 import json

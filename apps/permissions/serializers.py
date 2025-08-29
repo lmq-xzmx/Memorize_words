@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import Group, Permission
-from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping
+from .models import MenuModuleConfig, RoleGroupMapping
 from .models_optimized import PermissionSyncLog
 from apps.accounts.models import UserRole
 from apps.accounts.services.role_service import RoleService
@@ -22,15 +22,8 @@ class MenuModuleConfigSerializer(serializers.ModelSerializer):
         read_only_fields = ('created_at', 'updated_at')
 
 
-class RoleMenuPermissionSerializer(serializers.ModelSerializer):
-    """角色菜单权限配置序列化器"""
-    role_display = serializers.CharField(source='get_role_display', read_only=True)
-    menu_module_name = serializers.CharField(source='menu_module.name', read_only=True)
-    
-    class Meta:
-        model = RoleMenuPermission
-        fields = '__all__'
-        read_only_fields = ('created_at', 'updated_at')
+# RoleMenuPermissionSerializer 已被移除（RoleMenuPermission 模型已废弃）
+# 请使用 MenuValidity 和 RoleMenuAssignment 相关序列化器替代
 
 
 class GroupSerializer(serializers.ModelSerializer):

@@ -16,6 +16,8 @@ class UserRole(models.TextChoices):
     DEAN = 'dean', '教导主任'
     ACADEMIC_DIRECTOR = 'academic_director', '教务主任'
     RESEARCH_LEADER = 'research_leader', '教研组长'
+    PROJECT_ASSISTANT = 'project_assistant', '项目助理'
+    PROJECT_MANAGER_ASSISTANT = 'project_manager_assistant', '项目管理助理'
     
     @classmethod
     def get_role_hierarchy(cls):
@@ -57,7 +59,7 @@ class CustomUser(AbstractUser):
     """英语学习平台用户模型"""
     
     # 基础信息
-    role = models.CharField('用户角色', max_length=20, choices=UserRole.choices, default=UserRole.STUDENT)
+    role = models.CharField('用户角色', max_length=30, choices=UserRole.choices, default=UserRole.STUDENT)
     phone = models.CharField('手机号码', max_length=20, validators=[RegexValidator(r'^[\d\-\+\(\)\s]+$')], blank=False)
     real_name = models.CharField('真实姓名', max_length=100, blank=True)
     nickname = models.CharField('网名', max_length=50, blank=True, unique=True, null=True, help_text='选填，不可与他人相同')
@@ -162,8 +164,8 @@ class RoleApproval(models.Model):
     ]
     
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, verbose_name='申请用户')
-    requested_role = models.CharField('申请角色', max_length=20, choices=UserRole.choices)
-    current_role = models.CharField('当前角色', max_length=20, choices=UserRole.choices)
+    requested_role = models.CharField('申请角色', max_length=30, choices=UserRole.choices)
+    current_role = models.CharField('当前角色', max_length=30, choices=UserRole.choices)
     status = models.CharField('审批状态', max_length=20, choices=APPROVAL_STATUS_CHOICES, default='pending')
     reason = models.TextField('申请理由', max_length=500, blank=True)
     admin_comment = models.TextField('管理员备注', max_length=500, blank=True)
@@ -208,7 +210,7 @@ class LearningProfile(models.Model):
 
 class RoleTemplate(models.Model):
     """角色模板模型 - 统一管理角色增项配置"""
-    role = models.CharField('角色', max_length=20, choices=UserRole.choices, unique=True, help_text='绑定的用户角色')
+    role = models.CharField('角色', max_length=30, choices=UserRole.choices, unique=True, help_text='绑定的用户角色')
     template_name = models.CharField('模板名称', max_length=100, help_text='角色模板的显示名称')
     description = models.TextField('模板描述', blank=True, help_text='模板的详细描述')
     version = models.CharField('模板版本', max_length=20, default='1.0.0', help_text='模板版本号')
@@ -267,7 +269,7 @@ class RoleExtension(models.Model):
         blank=True
     )
     # 保持向后兼容
-    role = models.CharField('角色', max_length=20, choices=UserRole.choices, help_text='绑定的用户角色')
+    role = models.CharField('角色', max_length=30, choices=UserRole.choices, help_text='绑定的用户角色')
     field_name = models.CharField('字段名称', max_length=50, help_text='字段的内部名称，用于API和数据库存储')
     field_label = models.CharField('字段标签', max_length=100, help_text='显示给用户的字段名称')
     field_type = models.CharField('字段类型', max_length=20, choices=FIELD_TYPE_CHOICES, default='text')
@@ -334,7 +336,7 @@ class RoleExtension(models.Model):
 class RoleUserGroup(models.Model):
     """角色用户组配置模型"""
     name = models.CharField('组名称', max_length=100, help_text='用户组的显示名称')
-    role = models.CharField('绑定角色', max_length=20, choices=UserRole.choices, help_text='绑定的用户角色')
+    role = models.CharField('绑定角色', max_length=30, choices=UserRole.choices, help_text='绑定的用户角色')
     description = models.TextField('组描述', blank=True, help_text='用户组的详细描述')
     users = models.ManyToManyField(
         CustomUser, 

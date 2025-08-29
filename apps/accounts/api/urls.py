@@ -9,11 +9,11 @@ router.register(r'roles', RoleAPIViewSet, basename='role')
 # URL配置
 urlpatterns = [
     # DRF API路由
-    path('api/', include(router.urls)),
+    path('', include(router.urls)),
     
     # 兼容性API路由（非DRF）
-    path('api/role-choices/', role_choices_api, name='role_choices_api'),
-    path('api/role-validate/<str:role_code>/', role_validate_api, name='role_validate_api'),
+    path('role-choices/', role_choices_api, name='role_choices_api'),
+    path('role-validate/<str:role_code>/', role_validate_api, name='role_validate_api'),
 ]
 
 # 导出路由器供主URL配置使用

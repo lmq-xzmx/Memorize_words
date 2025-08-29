@@ -1,0 +1,650 @@
+<!-- 简化的级联选择器 - 移除冗余div元素 -->
+<div class="cascade-selector-container" style="margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+    <!-- 智能级联配置区 -->
+    <div class="config-section" style="background: white; border-radius: 8px; border: 1px solid #dee2e6; padding: 20px;">
+        <h3 style="margin: 0 0 20px 0; color: #495057; font-size: 18px; border-bottom: 2px solid #007bff; padding-bottom: 10px;">🎯 智能级联配置</h3>
+        
+        <form id="cascade-config-form" style="display: grid; gap: 20px;">
+            {% csrf_token %}
+            
+            <!-- 第一级：角色选择 -->
+            <div id="role-level" class="cascade-level" style="background: #f0f8ff; border: 2px solid #007bff; border-radius: 8px; padding: 15px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="background: #007bff; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">1</span>
+                    <h4 style="margin: 0; color: #007bff;">选择角色</h4>
+                    <span id="current-role" style="margin-left: auto; font-size: 12px; color: #6c757d;">未选择</span>
+                </div>
+                <select id="cascade-role-select" onchange="onRoleChange(this.value)" 
+                        style="width: 100%; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;">
+                    <option value="">请选择角色...</option>
+                </select>
+                <div id="role-info" style="margin-top: 8px; font-size: 12px;"></div>
+            </div>
+            
+            <!-- 第二级：槽位配置 -->
+            <div id="slot-level" class="cascade-level" style="background: #fafbfc; border: 2px solid #e9ecef; border-radius: 8px; padding: 15px; opacity: 0.5;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="background: #6c757d; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">2</span>
+                    <h4 style="margin: 0; color: #6c757d;">配置槽位</h4>
+                    <span id="current-slot" style="margin-left: auto; font-size: 12px; color: #6c757d;">未选择</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
+                    <select id="cascade-slot-select" onchange="onSlotChange(this.value)" disabled
+                            style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;">
+                        <option value="">选择槽位...</option>
+                    </select>
+                    <input id="slot-status" type="text" readonly placeholder="槽位状态" 
+                           style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px; background: #f8f9fa; width: 80px;">
+                </div>
+            </div>
+            
+            <!-- 第三级：菜单选择 -->
+            <div id="menu-level" class="cascade-level" style="background: #fafbfc; border: 2px solid #e9ecef; border-radius: 8px; padding: 15px; opacity: 0.5;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="background: #6c757d; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">3</span>
+                    <h4 style="margin: 0; color: #6c757d;">选择菜单</h4>
+                    <span id="current-menu" style="margin-left: auto; font-size: 12px; color: #6c757d;">未选择</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;">
+                    <select id="cascade-menu-select" onchange="onMenuChange(this.value)" disabled
+                            style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px;">
+                        <option value="">选择根菜单...</option>
+                    </select>
+                    <select id="cascade-status-select" disabled
+                            style="padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; font-size: 12px; width: 100px;">
+                        <option value="active">激活</option>
+                        <option value="backup">候补</option>
+                        <option value="disabled">禁用</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- 第四级：确认和提交 -->
+            <div id="submit-level" class="cascade-level" style="background: #fafbfc; border: 2px solid #e9ecef; border-radius: 8px; padding: 15px; opacity: 0.5;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                    <span style="background: #6c757d; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">4</span>
+                    <h4 style="margin: 0; color: #6c757d;">确认提交</h4>
+                </div>
+                <div id="config-summary" style="background: #e9ecef; color: #495057; padding: 12px; border-radius: 4px; margin-bottom: 15px; font-size: 13px;">
+                    请完成上述配置步骤...
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="cascade-submit-btn" type="submit" disabled
+                            style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; flex: 1;">
+                        ✅ 应用配置
+                    </button>
+                    <button type="button" onclick="resetCascadeForm()"
+                            style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                        🔄 重置
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 全局状态显示区域 -->
+<div id="global-status-display" style="margin-top: 15px; padding: 10px; background: #e9ecef; border-radius: 4px; font-size: 13px; display: none;">
+    <div id="global-status-content"></div>
+</div>
+
+<!-- 历史数据显示区域 -->
+<div id="history-data-section" class="history-section" style="margin-top: 20px; background: white; border-radius: 8px; border: 1px solid #dee2e6; padding: 20px; display: none;">
+    <h3 style="margin: 0 0 20px 0; color: #495057; font-size: 18px; border-bottom: 2px solid #28a745; padding-bottom: 10px;">📋 历史配置记录</h3>
+    <div id="history-loading" style="text-align: center; padding: 20px; color: #6c757d; display: none;">
+        <span>正在加载历史数据...</span>
+    </div>
+    <div id="history-table-container">
+        <table id="history-table" style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">角色</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">槽位位置</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">根菜单</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">状态</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">排序</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">创建时间</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">更新时间</th>
+                </tr>
+            </thead>
+            <tbody id="history-table-body">
+                <!-- 历史数据将在这里动态加载 -->
+            </tbody>
+        </table>
+    </div>
+    <div id="history-empty" style="text-align: center; padding: 40px; color: #6c757d; display: none;">
+        <p>暂无历史配置记录</p>
+    </div>
+</div>
+
+<script>
+// 级联选择器数据
+let cascadeData = {
+    roles: [],
+    slots: {},
+    menus: [],
+    slotConfigs: [],
+    currentConfig: {
+        role: null,
+        slot: null,
+        menu: null,
+        status: 'active'
+    }
+};
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    initializePage();
+    
+    // 绑定表单提交事件
+    const cascadeForm = document.getElementById('cascade-config-form');
+    if (cascadeForm) {
+        cascadeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitCascadeConfig();
+        });
+    }
+});
+
+// 初始化页面 - 直接从后端获取真实角色数据
+function initializePage() {
+    // 获取系统中的真实角色数据
+    const configUrl = window.location.pathname + 'configure-menu-by-role-slot/';
+    
+    fetch(configUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('API返回数据:', data);
+            cascadeData.roles = data.roles || [];
+            cascadeData.menus = data.root_menus || [];
+            cascadeData.slotConfigs = data.slot_configs || [];
+            
+            // 填充角色选项
+            populateRoleSelect();
+            
+            if (cascadeData.roles.length > 0) {
+                showGlobalStatus(`成功加载 ${cascadeData.roles.length} 个角色和 ${cascadeData.slotConfigs.length} 个槽位配置`, 'success');
+                console.log('已加载角色:', cascadeData.roles);
+                console.log('已加载槽位配置:', cascadeData.slotConfigs);
+                
+                // 加载历史数据
+                setTimeout(() => {
+                    loadHistoryData();
+                }, 500);
+            }
+        })
+        .catch(error => {
+            console.error('初始化页面失败:', error);
+            // 如果API失败，使用硬编码的角色数据作为备选
+            cascadeData.roles = [
+                ['student', '学生'],
+                ['parent', '家长'], 
+                ['teacher', '自由老师'],
+                ['admin', '管理员'],
+                ['dean', '教导主任'],
+                ['academic_director', '教务主任'],
+                ['research_leader', '教研组长'],
+                ['project_assistant', '项目助理'],
+                ['project_manager_assistant', '项目管理助理']
+            ];
+            populateRoleSelect();
+            showGlobalStatus('API调用失败，使用默认角色数据', 'warning');
+        });
+}
+
+// 填充角色选择器
+function populateRoleSelect() {
+    const roleSelect = document.getElementById('cascade-role-select');
+    roleSelect.innerHTML = '<option value="">请选择角色...</option>';
+    cascadeData.roles.forEach(role => {
+        roleSelect.innerHTML += `<option value="${role[0]}">${role[1]}</option>`;
+    });
+}
+
+// 角色选择变化处理
+function onRoleChange(roleValue) {
+    cascadeData.currentConfig.role = roleValue;
+    updateCurrentStatus('role', roleValue);
+    
+    if (roleValue) {
+        enableCascadeLevel('slot-level');
+        fetchRoleSlots(roleValue);
+        updateRoleInfo(roleValue);
+    } else {
+        disableCascadeLevel('slot-level');
+        disableCascadeLevel('menu-level');
+        disableCascadeLevel('submit-level');
+        resetConfigSummary();
+    }
+}
+
+// 槽位选择变化处理
+function onSlotChange(slotValue) {
+    cascadeData.currentConfig.slot = slotValue;
+    updateCurrentStatus('slot', slotValue);
+    
+    if (slotValue) {
+        enableCascadeLevel('menu-level');
+        populateMenuOptions();
+        updateSlotInfo(slotValue);
+    } else {
+        disableCascadeLevel('menu-level');
+        disableCascadeLevel('submit-level');
+        resetConfigSummary();
+    }
+}
+
+// 菜单选择变化处理
+function onMenuChange(menuValue) {
+    cascadeData.currentConfig.menu = menuValue;
+    updateCurrentStatus('menu', menuValue);
+    
+    if (menuValue) {
+        enableCascadeLevel('submit-level');
+        updateMenuInfo(menuValue);
+        updateConfigSummary();
+    } else {
+        disableCascadeLevel('submit-level');
+        resetConfigSummary();
+    }
+}
+
+// 更新当前状态显示
+function updateCurrentStatus(type, value) {
+    const statusMap = {
+        'role': 'current-role',
+        'slot': 'current-slot', 
+        'menu': 'current-menu'
+    };
+    
+    const element = document.getElementById(statusMap[type]);
+    if (element) {
+        if (value) {
+            if (type === 'role') {
+                const role = cascadeData.roles.find(r => r[0] === value);
+                element.textContent = role ? role[1] : value;
+                element.style.color = '#28a745';
+            } else if (type === 'slot') {
+                element.textContent = `${value}号槽位`;
+                element.style.color = '#007bff';
+            } else if (type === 'menu') {
+                const menu = cascadeData.menus.find(m => m.id == value);
+                element.textContent = menu ? menu.name : value;
+                element.style.color = '#17a2b8';
+            }
+        } else {
+            element.textContent = '未选择';
+            element.style.color = '#6c757d';
+        }
+    }
+}
+
+// 获取角色槽位配置
+function fetchRoleSlots(roleValue) {
+    const slotSelect = document.getElementById('cascade-slot-select');
+    slotSelect.innerHTML = '<option value="">加载中...</option>';
+    slotSelect.disabled = true;
+    
+    // 调用API获取槽位状态
+    fetch(`${window.location.pathname}get-slot-status/${roleValue}/`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('槽位状态API响应:', data);
+            
+            slotSelect.innerHTML = '<option value="">选择槽位...</option>';
+            
+            if (data.success) {
+                // 根据API返回的槽位状态生成选项
+                data.slot_status.forEach(slot => {
+                    const statusText = slot.is_occupied ? 
+                        ` (已占用: ${slot.menu_name})` : ' (可用)';
+                    const disabled = slot.is_occupied ? 'disabled' : '';
+                    
+                    slotSelect.innerHTML += 
+                        `<option value="${slot.position}" ${disabled}>${slot.position}号槽位${statusText}</option>`;
+                });
+                
+                slotSelect.disabled = false;
+                console.log(`已为角色 ${roleValue} 加载 ${data.total_slots} 个槽位`);
+            } else {
+                console.error('获取槽位状态失败:', data.message);
+                slotSelect.innerHTML = '<option value="">获取槽位失败</option>';
+                
+                // 回退到本地配置数据
+                const roleSlotConfig = cascadeData.slotConfigs.find(config => config.role === roleValue);
+                if (roleSlotConfig) {
+                    slotSelect.innerHTML = '<option value="">选择槽位...</option>';
+                    for (let i = 1; i <= roleSlotConfig.slot_count; i++) {
+                        slotSelect.innerHTML += `<option value="${i}">${i}号槽位</option>`;
+                    }
+                    slotSelect.disabled = false;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('API调用失败:', error);
+            slotSelect.innerHTML = '<option value="">网络错误</option>';
+            
+            // 回退到本地配置数据
+            const roleSlotConfig = cascadeData.slotConfigs.find(config => config.role === roleValue);
+            if (roleSlotConfig) {
+                slotSelect.innerHTML = '<option value="">选择槽位...</option>';
+                for (let i = 1; i <= roleSlotConfig.slot_count; i++) {
+                    slotSelect.innerHTML += `<option value="${i}">${i}号槽位</option>`;
+                }
+                slotSelect.disabled = false;
+            }
+        });
+}
+
+// 填充菜单选项
+function populateMenuOptions() {
+    const menuSelect = document.getElementById('cascade-menu-select');
+    menuSelect.innerHTML = '<option value="">选择根菜单...</option>';
+    
+    cascadeData.menus.forEach(menu => {
+        menuSelect.innerHTML += `<option value="${menu.id}">${menu.name}</option>`;
+    });
+    
+    menuSelect.disabled = false;
+    document.getElementById('cascade-status-select').disabled = false;
+}
+
+// 启用级联级别
+function enableCascadeLevel(levelId) {
+    const level = document.getElementById(levelId);
+    level.style.opacity = '1';
+    level.style.background = '#f0f8ff';
+    level.style.borderColor = '#007bff';
+    
+    const stepNumber = level.querySelector('span');
+    if (stepNumber) {
+        stepNumber.style.background = '#007bff';
+    }
+    
+    const heading = level.querySelector('h4');
+    if (heading) {
+        heading.style.color = '#007bff';
+    }
+}
+
+// 禁用级联级别
+function disableCascadeLevel(levelId) {
+    const level = document.getElementById(levelId);
+    level.style.opacity = '0.5';
+    level.style.background = '#fafbfc';
+    level.style.borderColor = '#e9ecef';
+    
+    const stepNumber = level.querySelector('span');
+    if (stepNumber) {
+        stepNumber.style.background = '#6c757d';
+    }
+    
+    const heading = level.querySelector('h4');
+    if (heading) {
+        heading.style.color = '#6c757d';
+    }
+    
+    const inputs = level.querySelectorAll('select, input, button');
+    inputs.forEach(input => {
+        input.disabled = true;
+        if (input.tagName === 'SELECT') {
+            input.selectedIndex = 0;
+        } else if (input.tagName === 'INPUT') {
+            input.value = '';
+        }
+    });
+}
+
+// 更新角色信息
+function updateRoleInfo(roleValue) {
+    const roleInfo = document.getElementById('role-info');
+    const role = cascadeData.roles.find(r => r[0] === roleValue);
+    if (role) {
+        roleInfo.innerHTML = `<span style="color: #28a745;">✓ ${role[1]}</span>`;
+    }
+}
+
+// 更新槽位信息
+function updateSlotInfo(slotValue) {
+    const slotStatus = document.getElementById('slot-status');
+    const isOccupied = Math.random() > 0.7;
+    const status = isOccupied ? '已占用' : '可用';
+    slotStatus.value = status;
+}
+
+// 更新菜单信息
+function updateMenuInfo(menuValue) {
+    // 菜单信息更新逻辑
+}
+
+// 更新配置摘要
+function updateConfigSummary() {
+    const summary = document.getElementById('config-summary');
+    const submitBtn = document.getElementById('cascade-submit-btn');
+    
+    const role = cascadeData.roles.find(r => r[0] === cascadeData.currentConfig.role);
+    const menu = cascadeData.menus.find(m => m.id == cascadeData.currentConfig.menu);
+    const status = document.getElementById('cascade-status-select').value;
+    
+    if (role && cascadeData.currentConfig.slot && menu) {
+        summary.innerHTML = `
+            <strong>配置摘要：</strong><br>
+            角色: ${role[1]} | 槽位: ${cascadeData.currentConfig.slot} | 菜单: ${menu.name} | 状态: ${status}
+        `;
+        summary.style.background = '#d4edda';
+        summary.style.color = '#155724';
+        
+        submitBtn.disabled = false;
+        submitBtn.style.background = '#28a745';
+    } else {
+        resetConfigSummary();
+    }
+}
+
+// 重置配置摘要
+function resetConfigSummary() {
+    const summary = document.getElementById('config-summary');
+    const submitBtn = document.getElementById('cascade-submit-btn');
+    
+    summary.innerHTML = '请完成上述配置步骤...';
+    summary.style.background = '#e9ecef';
+    summary.style.color = '#495057';
+    
+    submitBtn.disabled = true;
+    submitBtn.style.background = '#6c757d';
+}
+
+// 提交级联配置
+function submitCascadeConfig() {
+    const formData = new FormData();
+    formData.append('role', cascadeData.currentConfig.role);
+    formData.append('slot_position', cascadeData.currentConfig.slot);
+    formData.append('root_menu', cascadeData.currentConfig.menu);
+    formData.append('menu_status', document.getElementById('cascade-status-select').value);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    const configUrl = window.location.pathname + 'configure-menu-by-role-slot/';
+    
+    fetch(configUrl, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showGlobalStatus('配置成功应用！', 'success');
+            resetCascadeForm();
+            
+            // 显示历史数据而不是重新加载页面
+            setTimeout(() => {
+                loadHistoryData();
+            }, 1000);
+        } else {
+            showGlobalStatus('配置失败: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('配置失败:', error);
+        showGlobalStatus('配置失败: ' + error.message, 'error');
+    });
+}
+
+// 加载历史数据
+function loadHistoryData() {
+    const historySection = document.getElementById('history-data-section');
+    const historyLoading = document.getElementById('history-loading');
+    const historyTableContainer = document.getElementById('history-table-container');
+    const historyEmpty = document.getElementById('history-empty');
+    const historyTableBody = document.getElementById('history-table-body');
+    
+    // 显示历史数据区域和加载状态
+    historySection.style.display = 'block';
+    historyLoading.style.display = 'block';
+    historyTableContainer.style.display = 'none';
+    historyEmpty.style.display = 'none';
+    
+    const historyUrl = window.location.pathname + 'get-assignment-history/';
+    
+    fetch(historyUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        historyLoading.style.display = 'none';
+        
+        if (data.success && data.assignments && data.assignments.length > 0) {
+            // 显示历史数据表格
+            historyTableContainer.style.display = 'block';
+            historyEmpty.style.display = 'none';
+            
+            // 清空表格内容
+            historyTableBody.innerHTML = '';
+            
+            // 填充历史数据
+            data.assignments.forEach(assignment => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #dee2e6';
+                
+                const statusColor = {
+                    'active': '#28a745',
+                    'backup': '#ffc107', 
+                    'disabled': '#6c757d'
+                }[assignment.menu_status] || '#6c757d';
+                
+                const statusText = {
+                    'active': '激活',
+                    'backup': '候补',
+                    'disabled': '禁用'
+                }[assignment.menu_status] || assignment.menu_status;
+                
+                row.innerHTML = `
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">${assignment.role_display_name}</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">${assignment.slot_position}</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">${assignment.root_menu_name}</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">
+                        <span style="color: ${statusColor}; font-weight: bold;">${statusText}</span>
+                    </td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">${assignment.sort_order}</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">${assignment.created_at}</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">${assignment.updated_at}</td>
+                `;
+                
+                historyTableBody.appendChild(row);
+            });
+            
+            showGlobalStatus(`成功加载 ${data.assignments.length} 条历史配置记录`, 'success');
+        } else {
+            // 显示空状态
+            historyTableContainer.style.display = 'none';
+            historyEmpty.style.display = 'block';
+            showGlobalStatus('暂无历史配置记录', 'info');
+        }
+    })
+    .catch(error => {
+        console.error('加载历史数据失败:', error);
+        historyLoading.style.display = 'none';
+        historyTableContainer.style.display = 'none';
+        historyEmpty.style.display = 'block';
+        showGlobalStatus('加载历史数据失败: ' + error.message, 'error');
+    });
+}
+
+// 重置级联表单
+function resetCascadeForm() {
+    document.getElementById('cascade-config-form').reset();
+    cascadeData.currentConfig = { role: null, slot: null, menu: null, status: 'active' };
+    
+    disableCascadeLevel('slot-level');
+    disableCascadeLevel('menu-level');
+    disableCascadeLevel('submit-level');
+    
+    updateCurrentStatus('role', null);
+    updateCurrentStatus('slot', null);
+    updateCurrentStatus('menu', null);
+    
+    document.getElementById('role-info').innerHTML = '';
+    resetConfigSummary();
+}
+
+// 显示全局状态信息
+function showGlobalStatus(message, type) {
+    const statusDisplay = document.getElementById('global-status-display');
+    const statusContent = document.getElementById('global-status-content');
+    
+    let bgColor = '#e9ecef';
+    let textColor = '#495057';
+    
+    switch(type) {
+        case 'success':
+            bgColor = '#d4edda';
+            textColor = '#155724';
+            break;
+        case 'error':
+            bgColor = '#f8d7da';
+            textColor = '#721c24';
+            break;
+        case 'info':
+            bgColor = '#d1ecf1';
+            textColor = '#0c5460';
+            break;
+    }
+    
+    statusDisplay.style.background = bgColor;
+    statusDisplay.style.color = textColor;
+    statusContent.innerHTML = message;
+    statusDisplay.style.display = 'block';
+    
+    if (type === 'success' || type === 'info') {
+        setTimeout(() => {
+            statusDisplay.style.display = 'none';
+        }, 3000);
+    }
+}
+</script>

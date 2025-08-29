@@ -1,0 +1,395 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <!-- 前端菜单选择器组件 -->
+    <script src="{% static 'admin/js/components/FrontendMenuSelector.js' %}"></script>
+    <script src="{% static 'admin/js/components/FrontendMenuSelectorConfig.js' %}"></script>
+    <script src="{% static 'admin/js/components/FrontendMenuSelectorFactory.js' %}"></script>
+    
+    <!-- 前端菜单集成脚本 -->
+    <script src="{% static 'admin/js/frontend_menu_integration.js' %}"></script>
+    
+    <!-- 页面特定样式 -->
+    <style>
+        .hierarchy-indicator {
+            color: #6c757d;
+            font-size: 0.875em;
+            margin-left: 10px;
+        }
+        
+        .sort-order-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #auto-sort {
+            white-space: nowrap;
+        }
+        
+        .menu-hierarchy-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .hierarchy-tree {
+            font-family: monospace;
+            line-height: 1.6;
+        }
+        
+        .hierarchy-tree .menu-item {
+            padding: 2px 0;
+        }
+        
+        .hierarchy-tree .current {
+            background: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        
+        .validation-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .validation-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        
+        .field-help {
+            font-size: 0.875em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+{% endblock %}
+
+{% block field_sets %}
+    {{ block.super }}
+    
+    <!-- 菜单层级预览 -->
+    <div class="module aligned">
+        <h2>菜单层级预览</h2>
+        <div class="menu-hierarchy-preview">
+            <div id="hierarchy-display">
+                <p class="field-help">选择父菜单后将显示层级结构预览</p>
+            </div>
+            <button type="button" id="refresh-hierarchy" class="btn btn-sm btn-secondary">
+                刷新预览
+            </button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    
+    <!-- 添加额外的操作按钮 -->
+    <div class="submit-row">
+        {% if original %}
+            <button type="button" id="clone-menu" class="btn btn-secondary">
+                克隆菜单
+            </button>
+        {% endif %}
+        
+        <button type="button" id="preview-menu-structure" class="btn btn-info">
+            预览菜单结构
+        </button>
+        
+        <button type="button" id="validate-menu-config" class="btn btn-warning">
+            验证配置
+        </button>
+    </div>
+    
+    <script>
+        (function($) {
+            'use strict';
+            
+            $(document).ready(function() {
+                // 初始化页面功能
+                initMenuConfigPage();
+                
+                // 绑定按钮事件
+                bindButtonEvents();
+                
+                // 初始化字段监听
+                initFieldListeners();
+            });
+            
+            // 初始化菜单配置页面
+            function initMenuConfigPage() {
+                // 添加字段帮助信息
+                addFieldHelp();
+                
+                // 初始化排序控件
+                initSortOrderControls();
+                
+                // 加载初始层级预览
+                updateHierarchyPreview();
+            }
+            
+            // 绑定按钮事件
+            function bindButtonEvents() {
+                $('#clone-menu').on('click', cloneMenu);
+                $('#preview-menu-structure').on('click', previewMenuStructure);
+                $('#validate-menu-config').on('click', validateMenuConfig);
+                $('#refresh-hierarchy').on('click', updateHierarchyPreview);
+            }
+            
+            // 初始化字段监听
+            function initFieldListeners() {
+                // 父菜单变化时更新预览
+                $('#id_parent').on('change', function() {
+                    updateHierarchyPreview();
+                    validateHierarchy();
+                });
+                
+                // 位置变化时更新排序建议
+                $('#id_position').on('change', function() {
+                    updateSortOrderSuggestion();
+                });
+                
+                // 菜单类型变化时显示相关提示
+                $('#id_menu_type').on('change', function() {
+                    showMenuTypeHelp($(this).val());
+                });
+            }
+            
+            // 添加字段帮助信息
+            function addFieldHelp() {
+                const helpTexts = {
+                    'id_key': '菜单的唯一标识符，用于程序中引用此菜单',
+                    'id_icon': '支持Font Awesome图标类名，如：fa fa-home',
+                    'id_url': '菜单链接地址，支持相对路径和绝对路径',
+                    'id_sort_order': '数值越小排序越靠前，建议使用10的倍数便于插入',
+                    'id_target': '链接打开方式：_self(当前窗口)、_blank(新窗口)'
+                };
+                
+                Object.keys(helpTexts).forEach(function(fieldId) {
+                    const field = $('#' + fieldId);
+                    if (field.length) {
+                        field.after(`<div class="field-help">${helpTexts[fieldId]}</div>`);
+                    }
+                });
+            }
+            
+            // 初始化排序控件
+            function initSortOrderControls() {
+                const sortField = $('#id_sort_order');
+                if (sortField.length) {
+                    const controls = $('<div class="sort-order-controls"></div>');
+                    sortField.wrap(controls);
+                }
+            }
+            
+            // 更新层级预览
+            function updateHierarchyPreview() {
+                const parentId = $('#id_parent').val();
+                const currentId = getObjectId();
+                
+                $.ajax({
+                    url: '{% url "admin:permissions_frontendmenuconfig_changelist" %}get-hierarchy/',
+                    type: 'GET',
+                    data: {
+                        'parent_id': parentId,
+                        'current_id': currentId
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            displayHierarchy(response.hierarchy);
+                        } else {
+                            $('#hierarchy-display').html('<p class="field-help">无法加载层级预览</p>');
+                        }
+                    },
+                    error: function() {
+                        $('#hierarchy-display').html('<p class="field-help">加载层级预览失败</p>');
+                    }
+                });
+            }
+            
+            // 显示层级结构
+            function displayHierarchy(hierarchy) {
+                if (!hierarchy || hierarchy.length === 0) {
+                    $('#hierarchy-display').html('<p class="field-help">当前为顶级菜单</p>');
+                    return;
+                }
+                
+                let html = '<div class="hierarchy-tree">';
+                hierarchy.forEach(function(item, index) {
+                    const indent = '&nbsp;'.repeat(item.level * 4);
+                    const isCurrent = item.is_current;
+                    const className = isCurrent ? 'menu-item current' : 'menu-item';
+                    
+                    html += `<div class="${className}">${indent}├─ ${item.name}</div>`;
+                });
+                html += '</div>';
+                
+                $('#hierarchy-display').html(html);
+            }
+            
+            // 验证层级结构
+            function validateHierarchy() {
+                const parentId = $('#id_parent').val();
+                const currentId = getObjectId();
+                
+                if (!parentId || !currentId) return;
+                
+                $.ajax({
+                    url: '{% url "admin:permissions_frontendmenuconfig_changelist" %}validate-hierarchy/',
+                    type: 'POST',
+                    data: {
+                        'parent_id': parentId,
+                        'current_id': currentId,
+                        'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                    },
+                    success: function(response) {
+                        if (!response.success) {
+                            showValidationMessage(response.error, 'error');
+                        } else {
+                            clearValidationMessages();
+                        }
+                    }
+                });
+            }
+            
+            // 更新排序建议
+            function updateSortOrderSuggestion() {
+                const position = $('#id_position').val();
+                const parentId = $('#id_parent').val();
+                
+                if (!position) return;
+                
+                $.ajax({
+                    url: '{% url "admin:permissions_frontendmenuconfig_changelist" %}get-sort-suggestion/',
+                    type: 'GET',
+                    data: {
+                        'position': position,
+                        'parent_id': parentId
+                    },
+                    success: function(response) {
+                        if (response.success && !$('#id_sort_order').val()) {
+                            $('#id_sort_order').val(response.suggested_order);
+                            showValidationMessage(`建议排序值：${response.suggested_order}`, 'info');
+                        }
+                    }
+                });
+            }
+            
+            // 显示菜单类型帮助
+            function showMenuTypeHelp(menuType) {
+                const helpTexts = {
+                    'menu': '普通菜单项，可以包含子菜单',
+                    'link': '直接链接，点击后跳转到指定URL',
+                    'button': '按钮类型，通常用于触发特定操作',
+                    'separator': '分隔符，用于分组显示菜单项'
+                };
+                
+                const helpText = helpTexts[menuType] || '';
+                if (helpText) {
+                    showValidationMessage(helpText, 'info');
+                }
+            }
+            
+            // 克隆菜单
+            function cloneMenu() {
+                if (confirm('确定要克隆当前菜单吗？克隆的菜单将以"副本"为后缀。')) {
+                    const addUrl = '{% url "admin:permissions_frontendmenuconfig_add" %}';
+                    const currentData = serializeFormData();
+                    
+                    // 修改名称和标识
+                    currentData.name += ' - 副本';
+                    currentData.key += '_copy';
+                    
+                    const params = new URLSearchParams(currentData);
+                    window.location.href = `${addUrl}?${params.toString()}`;
+                }
+            }
+            
+            // 预览菜单结构
+            function previewMenuStructure() {
+                window.open('{% url "admin:permissions_frontendmenuconfig_changelist" %}preview-structure/', '_blank');
+            }
+            
+            // 验证菜单配置
+            function validateMenuConfig() {
+                const formData = serializeFormData();
+                
+                $.ajax({
+                    url: '{% url "admin:permissions_frontendmenuconfig_changelist" %}validate-config/',
+                    type: 'POST',
+                    data: Object.assign(formData, {
+                        'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            showValidationMessage('配置验证通过', 'success');
+                        } else {
+                            showValidationMessage('配置验证失败：' + response.errors.join(', '), 'error');
+                        }
+                    },
+                    error: function() {
+                        showValidationMessage('验证请求失败', 'error');
+                    }
+                });
+            }
+            
+            // 序列化表单数据
+            function serializeFormData() {
+                const data = {};
+                $('#frontendmenuconfig_form').find('input, select, textarea').each(function() {
+                    const field = $(this);
+                    if (field.attr('name')) {
+                        data[field.attr('name')] = field.val();
+                    }
+                });
+                return data;
+            }
+            
+            // 显示验证消息
+            function showValidationMessage(message, type) {
+                clearValidationMessages();
+                
+                const className = type === 'error' ? 'validation-error' : 
+                                type === 'warning' ? 'validation-warning' : 'validation-info';
+                
+                const messageHtml = `<div class="${className}">${message}</div>`;
+                $('.menu-hierarchy-preview').before(messageHtml);
+                
+                // 自动移除信息类消息
+                if (type === 'info' || type === 'success') {
+                    setTimeout(function() {
+                        $(`.${className}`).fadeOut(function() {
+                            $(this).remove();
+                        });
+                    }, 3000);
+                }
+            }
+            
+            // 清除验证消息
+            function clearValidationMessages() {
+                $('.validation-warning, .validation-error, .validation-info').remove();
+            }
+            
+            // 获取当前对象ID
+            function getObjectId() {
+                const match = window.location.pathname.match(/\/(\d+)\/change\/$/);
+                return match ? match[1] : null;
+            }
+            
+        })(django.jQuery || jQuery);
+    </script>
+{% endblock %}

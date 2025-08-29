@@ -33,7 +33,7 @@ urlpatterns = [
     path('admin/', include('massadmin.urls')),
     path('admin/', admin.site.urls),
     path('accounts/', include('apps.accounts.urls')),
-    path('accounts/api/', include('apps.accounts.urls')),  # 修正API路由映射
+    path('api/', include('apps.accounts.api.urls')),  # 添加API路由映射
     path('api/words/', include('apps.words.urls')),
     path('api/teaching/', include('apps.teaching.urls')),
     path('api/vocabulary/', include('apps.vocabulary_manager.urls')),

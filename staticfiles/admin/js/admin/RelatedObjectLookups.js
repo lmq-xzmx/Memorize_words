@@ -200,11 +200,7 @@
 
     // 使用beforeunload替代unload以避免权限策略违规
     window.addEventListener('beforeunload', function(evt) {
-        try {
-            window.dismissChildPopups();
-        } catch (error) {
-            console.warn('Error dismissing child popups:', error);
-        }
+        window.dismissChildPopups();
     });
 
     $(document).ready(function() {

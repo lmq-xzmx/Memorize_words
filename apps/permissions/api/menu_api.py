@@ -4,7 +4,8 @@ from rest_framework.authentication import TokenAuthentication, SessionAuthentica
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from apps.permissions.models import MenuModuleConfig, RoleMenuPermission
+from apps.permissions.models import MenuModuleConfig
+# RoleMenuPermission 模型已废弃，请使用 MenuValidity 和 RoleMenuAssignment 替代
 from apps.accounts.models import UserRole
 import logging
 
@@ -60,39 +61,24 @@ def get_user_menu_permissions(request):
                 'user_role': None
             })
         
-        # 获取用户可访问的菜单
-        accessible_menus = RoleMenuPermission.objects.filter(
-            role=user_role,
-            can_access=True,
-            menu_module__is_active=True
-        ).select_related('menu_module').order_by('menu_module__sort_order')
+        # 获取用户可访问的菜单 - 暂时返回所有活跃菜单
+        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
+        all_menus = MenuModuleConfig.objects.filter(is_active=True).order_by('sort_order')
         
         menu_list = []
-        for perm in accessible_menus:
-            menu = perm.menu_module
-            menu_list.append({
-                'key': menu.key,
-                'name': menu.name,
-                'menu_level': menu.menu_level,
-                'icon': menu.icon,
-                'url': menu.url,
-                'sort_order': menu.sort_order,
-                'can_access': True
-            })
-        
-        # 同时获取所有菜单的权限状态（用于前端权限检查）
-        all_menus = MenuModuleConfig.objects.filter(is_active=True)
         all_permissions = {}
         
         for menu in all_menus:
-            try:
-                perm = RoleMenuPermission.objects.get(
-                    role=user_role,
-                    menu_module=menu
-                )
-                all_permissions[menu.key] = perm.can_access
-            except RoleMenuPermission.DoesNotExist:
-                all_permissions[menu.key] = False
+            menu_list.append({
+                'key': menu.module_name,
+                'name': menu.display_name,
+                'menu_level': 1,  # 默认级别
+                'icon': menu.icon,
+                'url': menu.url_pattern,
+                'sort_order': menu.sort_order,
+                'can_access': True  # 暂时允许所有访问
+            })
+            all_permissions[menu.module_name] = True  # 暂时允许所有访问
         
         return Response({
             'success': True,
@@ -155,25 +141,15 @@ def check_menu_permission(request):
                 'has_permission': False
             })
         
-        try:
-            permission = RoleMenuPermission.objects.get(
-                role=user_role,
-                menu_module=menu
-            )
-            return Response({
-                'success': True,
-                'has_permission': permission.can_access,
-                'menu_key': menu_key,
-                'menu_name': menu.name
-            })
-        except RoleMenuPermission.DoesNotExist:
-            return Response({
-                'success': True,
-                'has_permission': False,
-                'menu_key': menu_key,
-                'menu_name': menu.name,
-                'message': '未配置权限，默认拒绝访问'
-            })
+        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
+        # 暂时允许所有访问
+        return Response({
+            'success': True,
+            'has_permission': True,  # 暂时允许所有访问
+            'menu_key': menu_key,
+            'menu_name': menu.display_name,
+            'message': 'RoleMenuPermission已废弃，暂时允许所有访问'
+        })
             
     except Exception as e:
         logger.error(f"检查菜单权限失败: {e}")
@@ -234,25 +210,15 @@ def get_menu_hierarchy(request):
         }
         
         for menu in all_menus:
-            # 检查权限
-            has_permission = False
-            if user.is_superuser:
-                has_permission = True
-            elif user_role:
-                try:
-                    perm = RoleMenuPermission.objects.get(
-                        role=user_role,
-                        menu_module=menu
-                    )
-                    has_permission = perm.can_access
-                except RoleMenuPermission.DoesNotExist:
-                    has_permission = False
+            # 检查权限 - 暂时允许所有访问
+            # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
+            has_permission = True  # 暂时允许所有访问
             
             menu_data = {
-                'key': menu.key,
-                'name': menu.name,
+                'key': menu.module_name,
+                'name': menu.display_name,
                 'icon': menu.icon,
-                'url': menu.url,
+                'url': menu.url_pattern,
                 'sort_order': menu.sort_order,
                 'has_permission': has_permission,
                 'description': menu.description

@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from massadmin.massadmin import MassEditMixin
 from .models import Word, WordEntry, ImportRecord, VocabularyList, VocabularySource, WordSet, WordResource, WordGrader, WordGradeLevel
 from utils.admin_mixins import AdminDynamicPaginationMixin
+from .forms import WordEntryForm, ImportRecordForm
 import csv
 import uuid
 from io import StringIO
@@ -1031,6 +1032,7 @@ class WordResourceAdmin(AdminDynamicPaginationMixin, BaseBatchImportAdmin):
     # WordEntry Admin
 @admin.register(WordEntry)
 class WordEntryAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
+    form = WordEntryForm
     """词条管理"""
     list_display = [
         'word', 'phonetic', 'part_of_speech', 'textbook_version', 
@@ -1068,6 +1070,7 @@ class WordEntryAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
 # ImportRecord Admin
 @admin.register(ImportRecord)
 class ImportRecordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
+    form = ImportRecordForm
     """导入记录管理"""
     list_display = [
         'word_entry', 'import_type', 'import_source', 

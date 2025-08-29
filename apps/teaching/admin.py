@@ -6,6 +6,7 @@ from .models import (
     LearningGoal, GoalWord, LearningSession, WordLearningRecord, LearningPlan,
     DailyStudyRecord, GuidedPracticeSession, GuidedPracticeQuestion, GuidedPracticeAnswer
 )
+from .forms import LearningPlanAdminForm, LearningGoalForm, DailyStudyRecordForm
 
 
 class GoalWordInline(admin.TabularInline):
@@ -20,6 +21,7 @@ class GoalWordInline(admin.TabularInline):
 class LearningPlanInline(admin.TabularInline):
     """学习计划内联编辑"""
     model = LearningPlan
+    form = LearningPlanAdminForm
     extra = 0
     fields = ['plan_type', 'words_per_day', 'review_interval', 'is_active']
     
@@ -53,6 +55,7 @@ class LearningPlanInline(admin.TabularInline):
 @admin.register(LearningGoal)
 class LearningGoalAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """学习目标管理"""
+    form = LearningGoalForm
     list_display = [
         'name', 'user', 'goal_type', 'target_words_count',
         'progress_display', 'is_active', 'start_date', 'end_date'
@@ -278,6 +281,7 @@ class WordLearningRecordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
 @admin.register(LearningPlan)
 class LearningPlanAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """学习计划管理"""
+    form = LearningPlanAdminForm
     list_display = [
         'goal', 'plan_type_display', 'words_per_day',
         'review_interval', 'is_active', 'created_at'
@@ -375,6 +379,7 @@ class LearningPlanAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
 @admin.register(DailyStudyRecord)
 class DailyStudyRecordAdmin(AdminDynamicPaginationMixin, admin.ModelAdmin):
     """每日学习记录管理"""
+    form = DailyStudyRecordForm
     list_display = [
         'user', 'learning_plan', 'study_date', 'target_words', 'completed_words',
         'completion_rate_display', 'study_duration_display', 'created_at'

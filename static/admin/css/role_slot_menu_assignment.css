@@ -1,0 +1,342 @@
+/**
+ * 角色槽位菜单分配管理页面样式
+ * 提供根据角色和槽位数值进行菜单配置的视觉反馈
+ */
+
+/* 角色槽位菜单分配表单样式 */
+.role-slot-menu-assignment-form {
+    max-width: 900px;
+}
+
+/* 角色依赖菜单选择器样式 */
+.role-dependent-menu {
+    transition: all 0.3s ease;
+}
+
+.role-dependent-menu:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* 字段组样式 */
+.field-role,
+.field-slot_position,
+.field-root_menu,
+.field-menu_status {
+    margin-bottom: 20px;
+}
+
+.field-role .form-row,
+.field-slot_position .form-row,
+.field-root_menu .form-row,
+.field-menu_status .form-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.field-role label,
+.field-slot_position label,
+.field-root_menu label,
+.field-menu_status label {
+    min-width: 120px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* 槽位位置字段特殊样式 */
+.field-slot_position input[type="number"] {
+    width: 100px;
+    text-align: center;
+}
+
+.field-slot_position input[type="number"].is-invalid {
+    border-color: #d63384;
+    box-shadow: 0 0 0 0.2rem rgba(214, 51, 132, 0.25);
+}
+
+/* 槽位位置警告样式 */
+.slot-position-warning {
+    color: #d63384 !important;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 5px;
+    padding: 5px 8px;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* 帮助文本样式 */
+.help {
+    font-size: 11px;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.field-slot_position .help {
+    color: #28a745;
+    font-weight: 500;
+}
+
+/* 菜单配置面板样式 */
+#menu-config-panel {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+#menu-config-panel h3 {
+    color: #495057;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+/* 快速配置表单样式 */
+#quick-config-form {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+#quick-config-form .form-row {
+    display: flex;
+    gap: 15px;
+    align-items: end;
+    margin-bottom: 10px;
+}
+
+#quick-config-form .form-group {
+    flex: 1;
+}
+
+#quick-config-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #495057;
+}
+
+#quick-config-form select,
+#quick-config-form input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+#quick-config-form button {
+    padding: 8px 16px;
+    background: #007cba;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#quick-config-form button:hover {
+    background: #005a87;
+}
+
+/* 功能按钮组样式 */
+.function-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.function-buttons button {
+    padding: 10px 16px;
+    border: 1px solid #007cba;
+    background: white;
+    color: #007cba;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.function-buttons button:hover {
+    background: #007cba;
+    color: white;
+}
+
+.function-buttons button.primary {
+    background: #007cba;
+    color: white;
+}
+
+.function-buttons button.primary:hover {
+    background: #005a87;
+}
+
+.function-buttons button.success {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.function-buttons button.success:hover {
+    background: #28a745;
+    color: white;
+}
+
+.function-buttons button.warning {
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.function-buttons button.warning:hover {
+    background: #ffc107;
+    color: #856404;
+}
+
+/* 状态显示区域样式 */
+#config-status {
+    background: white;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+#config-status h4 {
+    color: #495057;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+#config-status p {
+    margin: 5px 0;
+    color: #6c757d;
+}
+
+/* 加载状态样式 */
+.loading-indicator {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007cba;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 消息提示样式增强 */
+.messagelist {
+    margin: 0 0 20px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.messagelist .success,
+.messagelist .error,
+.messagelist .warning,
+.messagelist .info {
+    padding: 10px 15px;
+    margin: 5px 0;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.messagelist .success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.messagelist .error {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.messagelist .warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.messagelist .info {
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    #quick-config-form .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .function-buttons {
+        flex-direction: column;
+    }
+    
+    .function-buttons button {
+        width: 100%;
+    }
+}
+
+/* 表格样式增强 */
+.results table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.results th,
+.results td {
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.results th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.results tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* 状态标签样式 */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.status-badge.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.backup {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.disabled {
+    background-color: #f8d7da;
+    color: #721c24;
+}

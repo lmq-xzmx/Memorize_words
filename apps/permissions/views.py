@@ -13,7 +13,8 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
-from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping
+from .models import MenuModuleConfig, RoleGroupMapping
+# RoleMenuPermission 模型已废弃，请使用 MenuValidity 和 RoleMenuAssignment 替代
 from .models_optimized import PermissionSyncLog
 from apps.accounts.models import CustomUser, UserRole
 
@@ -42,7 +43,6 @@ class PermissionIndexView(LoginRequiredMixin, RolePermissionMixin, TemplateView)
         context = super().get_context_data(**kwargs)
         context.update({
             'menu_modules_count': MenuModuleConfig.objects.count(),
-            'role_permissions_count': RoleMenuPermission.objects.count(),
             'role_mappings_count': RoleGroupMapping.objects.count(),
             'sync_logs_count': PermissionSyncLog.objects.count(),
             'recent_logs': PermissionSyncLog.objects.order_by('-created_at')[:5],
@@ -61,22 +61,52 @@ class MenuModuleListView(LoginRequiredMixin, RolePermissionMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset()
         search = self.request.GET.get('search')
+        role_filter = self.request.GET.get('role')
+        menu_level = self.request.GET.get('menu_level')
+        
         if search:
             queryset = queryset.filter(
-                Q(module_name__icontains=search) |
-                Q(display_name__icontains=search)
+                Q(name__icontains=search) |
+                Q(key__icontains=search) |
+                Q(description__icontains=search)
             )
-        return queryset.order_by('module_name')
+        
+        if role_filter:
+            # 筛选指定角色可访问的菜单
+            queryset = queryset.filter(
+                menuvalidity__role=role_filter,
+                menuvalidity__is_valid=True
+            ).distinct()
+        
+        if menu_level:
+            queryset = queryset.filter(menu_level=menu_level)
+            
+        return queryset.order_by('menu_level', 'sort_order', 'name')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # 添加筛选选项
+        from .models import MenuValidity
+        context['available_roles'] = MenuValidity.objects.values_list('role', flat=True).distinct()
+        context['menu_level_choices'] = MenuModuleConfig.MENU_LEVEL_CHOICES
+        context['current_role'] = self.request.GET.get('role', '')
+        context['current_menu_level'] = self.request.GET.get('menu_level', '')
+        context['current_search'] = self.request.GET.get('search', '')
+        return context
 
 
 class MenuModuleCreateView(LoginRequiredMixin, RolePermissionMixin, CreateView):
     """创建菜单模块"""
     model = MenuModuleConfig
     template_name = 'permissions/menu_module_form.html'
-    fields = ['module_name', 'display_name', 'icon', 'url_pattern', 'parent_module', 
-              'sort_order', 'is_active', 'description']
+    fields = ['name', 'key', 'menu_level', 'icon', 'url', 'sort_order', 'is_active', 'description']
     success_url = reverse_lazy('permissions:menu_module_list')
     required_roles = [UserRole.ADMIN]
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = '创建菜单模块'
+        return context
     
     def form_valid(self, form):
         messages.success(self.request, '菜单模块创建成功！')
@@ -95,10 +125,14 @@ class MenuModuleUpdateView(LoginRequiredMixin, RolePermissionMixin, UpdateView):
     """更新菜单模块"""
     model = MenuModuleConfig
     template_name = 'permissions/menu_module_form.html'
-    fields = ['module_name', 'display_name', 'icon', 'url_pattern', 'parent_module', 
-              'sort_order', 'is_active', 'description']
+    fields = ['name', 'key', 'menu_level', 'icon', 'url', 'sort_order', 'is_active', 'description']
     success_url = reverse_lazy('permissions:menu_module_list')
     required_roles = [UserRole.ADMIN]
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = '编辑菜单模块'
+        return context
     
     def form_valid(self, form):
         messages.success(self.request, '菜单模块更新成功！')
@@ -117,66 +151,24 @@ class MenuModuleDeleteView(LoginRequiredMixin, RolePermissionMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-class RoleMenuPermissionListView(LoginRequiredMixin, RolePermissionMixin, ListView):
-    """角色菜单权限列表"""
-    model = RoleMenuPermission
-    template_name = 'permissions/role_menu_permission_list.html'
-    context_object_name = 'role_permissions'
-    paginate_by = 20
-    required_roles = [UserRole.ADMIN]
-    
-    def get_queryset(self):
-        queryset = super().get_queryset().select_related('menu_module')
-        role = self.request.GET.get('role')
-        if role:
-            queryset = queryset.filter(role=role)
-        return queryset.order_by('role', 'menu_module__module_name')
+# RoleMenuPermissionListView 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
 
 
-class RoleMenuPermissionCreateView(LoginRequiredMixin, RolePermissionMixin, CreateView):
-    """创建角色菜单权限"""
-    model = RoleMenuPermission
-    template_name = 'permissions/role_menu_permission_form.html'
-    fields = ['role', 'menu_module', 'can_view', 'can_add', 'can_change', 'can_delete']
-    success_url = reverse_lazy('permissions:role_menu_permission_list')
-    required_roles = [UserRole.ADMIN]
-    
-    def form_valid(self, form):
-        messages.success(self.request, '角色菜单权限创建成功！')
-        return super().form_valid(form)
+# RoleMenuPermissionCreateView 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
 
 
-class RoleMenuPermissionDetailView(LoginRequiredMixin, RolePermissionMixin, DetailView):
-    """角色菜单权限详情"""
-    model = RoleMenuPermission
-    template_name = 'permissions/role_menu_permission_detail.html'
-    context_object_name = 'role_permission'
-    required_roles = [UserRole.ADMIN]
+# RoleMenuPermissionDetailView 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
 
 
-class RoleMenuPermissionUpdateView(LoginRequiredMixin, RolePermissionMixin, UpdateView):
-    """更新角色菜单权限"""
-    model = RoleMenuPermission
-    template_name = 'permissions/role_menu_permission_form.html'
-    fields = ['role', 'menu_module', 'can_view', 'can_add', 'can_change', 'can_delete']
-    success_url = reverse_lazy('permissions:role_menu_permission_list')
-    required_roles = [UserRole.ADMIN]
-    
-    def form_valid(self, form):
-        messages.success(self.request, '角色菜单权限更新成功！')
-        return super().form_valid(form)
+# RoleMenuPermissionUpdateView 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
 
 
-class RoleMenuPermissionDeleteView(LoginRequiredMixin, RolePermissionMixin, DeleteView):
-    """删除角色菜单权限"""
-    model = RoleMenuPermission
-    template_name = 'permissions/role_menu_permission_confirm_delete.html'
-    success_url = reverse_lazy('permissions:role_menu_permission_list')
-    required_roles = [UserRole.ADMIN]
-    
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, '角色菜单权限删除成功！')
-        return super().delete(request, *args, **kwargs)
+# RoleMenuPermissionDeleteView 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
 
 
 class RoleGroupMappingListView(LoginRequiredMixin, RolePermissionMixin, ListView):
@@ -262,59 +254,12 @@ class PermissionSyncLogDetailView(LoginRequiredMixin, RolePermissionMixin, Detai
     required_roles = [UserRole.ADMIN]
 
 
-class BatchAssignPermissionsView(LoginRequiredMixin, RolePermissionMixin, TemplateView):
-    """批量分配权限"""
-    template_name = 'permissions/batch_assign_permissions.html'
-    required_roles = [UserRole.ADMIN]
-    
-    def post(self, request, *args, **kwargs):
-        role = request.POST.get('role')
-        module_ids = request.POST.getlist('module_ids')
-        permissions = {
-            'can_view': request.POST.get('can_view') == 'on',
-            'can_add': request.POST.get('can_add') == 'on',
-            'can_change': request.POST.get('can_change') == 'on',
-            'can_delete': request.POST.get('can_delete') == 'on',
-        }
-        
-        try:
-            for module_id in module_ids:
-                module = get_object_or_404(MenuModuleConfig, id=module_id)
-                role_permission, created = RoleMenuPermission.objects.get_or_create(
-                    role=role,
-                    menu_module=module,
-                    defaults=permissions
-                )
-                if not created:
-                    for key, value in permissions.items():
-                        setattr(role_permission, key, value)
-                    role_permission.save()
-            
-            messages.success(request, f'成功为角色 {role} 批量分配了 {len(module_ids)} 个模块的权限！')
-        except Exception as e:
-            messages.error(request, f'批量分配权限失败：{str(e)}')
-        
-        return redirect('permissions:role_menu_permission_list')
+# BatchAssignPermissionsView 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
 
 
-class BatchRemovePermissionsView(LoginRequiredMixin, RolePermissionMixin, TemplateView):
-    """批量移除权限"""
-    template_name = 'permissions/batch_remove_permissions.html'
-    required_roles = [UserRole.ADMIN]
-    
-    def post(self, request, *args, **kwargs):
-        permission_ids = request.POST.getlist('permission_ids')
-        
-        try:
-            deleted_count = RoleMenuPermission.objects.filter(
-                id__in=permission_ids
-            ).delete()[0]
-            
-            messages.success(request, f'成功删除了 {deleted_count} 个权限配置！')
-        except Exception as e:
-            messages.error(request, f'批量删除权限失败：{str(e)}')
-        
-        return redirect('permissions:role_menu_permission_list')
+# BatchRemovePermissionsView 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
 
 
 # AJAX视图
@@ -334,63 +279,51 @@ def sync_permissions_ajax(request):
 
 
 @login_required
-def check_permission_ajax(request):
-    """检查权限AJAX接口"""
+@require_http_methods(["GET"])
+def get_menus_by_role_ajax(request):
+    """AJAX获取指定角色的菜单列表"""
     role = request.GET.get('role')
-    module_name = request.GET.get('module_name')
-    permission_type = request.GET.get('permission_type', 'can_view')
-    
-    if not all([role, module_name]):
-        return JsonResponse({'success': False, 'message': '参数不完整'})
-    
-    try:
-        module = MenuModuleConfig.objects.get(module_name=module_name)
-        role_permission = RoleMenuPermission.objects.filter(
-            role=role,
-            menu_module=module
-        ).first()
-        
-        has_permission = False
-        if role_permission:
-            has_permission = getattr(role_permission, permission_type, False)
-        
-        return JsonResponse({
-            'success': True,
-            'has_permission': has_permission,
-            'role': role,
-            'module_name': module_name,
-            'permission_type': permission_type
-        })
-    except MenuModuleConfig.DoesNotExist:
-        return JsonResponse({'success': False, 'message': '菜单模块不存在'})
-    except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
-
-
-@login_required
-def get_role_permissions_ajax(request):
-    """获取角色权限AJAX接口"""
-    role = request.GET.get('role')
-    
     if not role:
-        return JsonResponse({'success': False, 'message': '角色参数缺失'})
+        return JsonResponse({'success': False, 'message': '角色参数缺失'}, status=400)
     
     try:
-        permissions = RoleMenuPermission.objects.filter(
-            role=role
-        ).select_related('menu_module').values(
-            'menu_module__module_name',
-            'menu_module__display_name',
-            'can_view',
-            'can_add',
-            'can_change',
-            'can_delete'
-        )
+        from .models import MenuValidity
+        # 获取该角色有效的菜单
+        valid_menus = MenuValidity.objects.filter(
+            role=role, 
+            is_valid=True
+        ).select_related('menu_module')
+        
+        menus_data = []
+        for validity in valid_menus:
+            menu = validity.menu_module
+            menus_data.append({
+                'id': menu.id,
+                'name': menu.name,
+                'key': menu.key,
+                'menu_level': menu.menu_level,
+                'menu_level_display': menu.get_menu_level_display(),
+                'icon': menu.icon,
+                'url': menu.url,
+                'sort_order': menu.sort_order,
+                'is_active': menu.is_active
+            })
         
         return JsonResponse({
             'success': True,
-            'permissions': list(permissions),
-            'role': role
+            'menus': menus_data,
+            'count': len(menus_data)
         })
     except Exception as e:
-        return JsonResponse({'success': False, 'message': str(e)})
+        return JsonResponse({
+            'success': False,
+            'message': f'获取菜单失败：{str(e)}'
+        }, status=500)
+
+
+# check_permission_ajax 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代
+
+
+# get_role_permissions_ajax 已被移除，因为依赖于已废弃的 RoleMenuPermission 模型
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from apps.permissions.models import MenuModuleConfig, RoleMenuPermission
+from apps.permissions.models import MenuModuleConfig
 from apps.accounts.models import UserRole
 import logging
 
@@ -23,7 +23,7 @@ class Command(BaseCommand):
         if reset:
             self.stdout.write('正在重置菜单配置和权限...')
             MenuModuleConfig.objects.all().delete()
-            RoleMenuPermission.objects.all().delete()
+            # RoleMenuPermission 已被废弃，跳过删除
         
         with transaction.atomic():
             self.create_menu_configs()
@@ -378,28 +378,6 @@ class Command(BaseCommand):
             },
         }
         
-        for role, permissions in role_permissions.items():
-            for menu_key, can_access in permissions.items():
-                try:
-                    menu = MenuModuleConfig.objects.get(key=menu_key)
-                    permission, created = RoleMenuPermission.objects.get_or_create(
-                        role=role,
-                        menu_module=menu,
-                        defaults={'can_access': can_access}
-                    )
-                    if created:
-                        self.stdout.write(
-                            f'创建权限: {role} -> {menu_key}: {can_access}'
-                        )
-                    else:
-                        # 更新现有权限
-                        if permission.can_access != can_access:
-                            permission.can_access = can_access
-                            permission.save()
-                            self.stdout.write(
-                                f'更新权限: {role} -> {menu_key}: {can_access}'
-                            )
-                except MenuModuleConfig.DoesNotExist:
-                    self.stdout.write(
-                        self.style.WARNING(f'菜单不存在: {menu_key}')
-                    )
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        # 请使用 MenuValidity 和 RoleMenuAssignment 替代
+        self.stdout.write('跳过角色权限配置（RoleMenuPermission 已废弃）')

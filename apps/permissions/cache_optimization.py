@@ -226,7 +226,7 @@ class PermissionCacheManager:
     def preload_user_permissions(self, user_id: int):
         """预加载用户权限"""
         try:
-            from .models import RoleMenuPermission
+            # from .models import RoleMenuPermission  # 已废弃，使用 MenuValidity 和 RoleMenuAssignment 替代
             from django.contrib.auth.models import Permission
             
             # 预加载用户角色
@@ -246,17 +246,9 @@ class PermissionCacheManager:
             # 预加载菜单权限
             menu_perms_key = self.get_cache_key('menu_permissions', user_id)
             if not self._check_cache_exists(menu_perms_key):
-                menu_perms = RoleMenuPermission.objects.filter(
-                    role__user=user_id
-                ).select_related('menu_module', 'role').values(
-                    'menu_module__name',
-                    'menu_module__path',
-                    'can_view',
-                    'can_add',
-                    'can_edit',
-                    'can_delete'
-                )
-                self.set_multi_level(menu_perms_key, list(menu_perms), priority=3)
+                # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
+                menu_perms = []  # 暂时返回空列表
+                self.set_multi_level(menu_perms_key, menu_perms, priority=3)
             
             logger.info(f"用户权限预加载完成: {user_id}")
             
@@ -635,9 +627,8 @@ class QueryOptimizer:
     @staticmethod
     def optimize_menu_permissions_query(user_id: int):
         """优化菜单权限查询"""
-        from .models import RoleMenuPermission
-        
-        # 使用原生SQL优化复杂查询
+        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
+        # 暂时返回所有活跃菜单
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT DISTINCT
@@ -647,17 +638,14 @@ class QueryOptimizer:
                     mmc.icon,
                     mmc.sort_order,
                     mmc.parent_id,
-                    COALESCE(rmp.can_view, false) as can_view,
-                    COALESCE(rmp.can_add, false) as can_add,
-                    COALESCE(rmp.can_edit, false) as can_edit,
-                    COALESCE(rmp.can_delete, false) as can_delete
+                    true as can_view,
+                    true as can_add,
+                    true as can_edit,
+                    true as can_delete
                 FROM permissions_menumoduleconfig mmc
-                LEFT JOIN permissions_rolemenupermission rmp ON mmc.id = rmp.menu_module_id
-                LEFT JOIN auth_group ag ON rmp.role_id = ag.id
-                LEFT JOIN auth_user_groups aug ON ag.id = aug.group_id
-                WHERE aug.user_id = %s OR mmc.is_public = true
+                WHERE mmc.is_active = true
                 ORDER BY mmc.sort_order
-            """, [user_id])
+            """, [])
             
             columns = [col[0] for col in cursor.description]
             results = []

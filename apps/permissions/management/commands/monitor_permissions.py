@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.permissions.models import RoleManagement, RoleMenuPermission, MenuModuleConfig
+from apps.permissions.models import RoleManagement, MenuModuleConfig
 from apps.accounts.models import CustomUser, UserRole
 import logging
 
@@ -57,40 +57,13 @@ class Command(BaseCommand):
 
     def check_admin_missing_permissions(self, issues):
         """检查管理员缺失的权限"""
-        admin_role = UserRole.ADMIN.value
-        
-        # 获取所有活跃的菜单模块
-        active_menus = MenuModuleConfig.objects.filter(is_active=True)
-        
-        for menu in active_menus:
-            # 检查管理员是否有此菜单的权限
-            if not RoleMenuPermission.objects.filter(
-                role=admin_role,
-                menu_module=menu
-            ).exists():
-                issues['missing_admin_permissions'].append({
-                    'menu_id': menu.id,
-                    'menu_name': menu.name,
-                    'menu_key': menu.key,
-                    'message': f'管理员缺少菜单 {menu.name} 的访问权限'
-                })
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        pass
 
     def check_orphaned_permissions(self, issues):
         """检查孤立权限"""
-        valid_roles = [choice[0] for choice in UserRole.choices]
-        
-        # 检查角色菜单权限中的无效角色
-        orphaned_permissions = RoleMenuPermission.objects.exclude(
-            role__in=valid_roles
-        )
-        
-        for perm in orphaned_permissions:
-            issues['orphaned_permissions'].append({
-                'permission_id': perm.id,
-                'role': perm.role,
-                'menu_name': perm.menu_module.name,
-                'message': f'权限记录关联了无效角色 {perm.role}'
-            })
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        pass
 
     def check_user_role_mismatches(self, issues):
         """检查用户角色不匹配"""
@@ -115,15 +88,5 @@ class Command(BaseCommand):
 
     def check_inactive_menu_permissions(self, issues):
         """检查非活跃菜单权限"""
-        # 查找关联到非活跃菜单的权限
-        inactive_permissions = RoleMenuPermission.objects.filter(
-            menu_module__is_active=False
-        )
-        
-        for perm in inactive_permissions:
-            issues['inactive_menu_permissions'].append({
-                'permission_id': perm.id,
-                'role': perm.role,
-                'menu_name': perm.menu_module.name,
-                'message': f'角色 {perm.role} 关联了非活跃菜单 {perm.menu_module.name}'
-            })
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        pass

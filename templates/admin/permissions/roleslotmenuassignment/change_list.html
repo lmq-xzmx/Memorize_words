@@ -1,0 +1,34 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block content_title %}
+    <h1>角色槽位菜单分配管理</h1>
+    <p class="help">管理角色的根级菜单槽位分配，支持实时同步核心配置数据</p>
+{% endblock %}
+
+{% block result_list %}
+    {% include "admin/permissions/sync_info_panel.html" %}
+    {% include "admin/permissions/roleslotmenuassignment/cascade_selector.html" %}
+    {{ block.super }}
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .sync-info-panel .sync-stat:hover,
+        .sync-info-panel .role-stat:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+        
+        .sync-info-panel a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .sync-info-panel a:hover {
+            text-decoration: underline;
+        }
+    </style>
+{% endblock %}

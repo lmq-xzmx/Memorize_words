@@ -1,0 +1,129 @@
+{% load i18n %}
+
+<div class="sync-info-panel" style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+    <h3 style="color: #495057; margin-top: 0;">📊 实时数据同步状态</h3>
+    
+    {% if sync_info %}
+    <div class="row" style="display: flex; gap: 20px; flex-wrap: wrap;">
+        <div class="sync-stat" style="background: white; padding: 10px; border-radius: 3px; min-width: 150px;">
+            <strong style="color: #28a745;">菜单配置</strong><br>
+            <span style="font-size: 1.2em;">{{ sync_info.menu_configs_count }}</span> 项激活
+        </div>
+        
+        <div class="sync-stat" style="background: white; padding: 10px; border-radius: 3px; min-width: 150px;">
+            <strong style="color: #007bff;">槽位配置</strong><br>
+            <span style="font-size: 1.2em;">{{ sync_info.slot_configs_count }}</span> 项激活
+        </div>
+        
+        <div class="sync-stat" style="background: white; padding: 10px; border-radius: 3px; min-width: 150px;">
+            <strong style="color: #6f42c1;">菜单有效性</strong><br>
+            <span style="font-size: 1.2em;">{{ sync_info.menu_validities_count }}</span> 项有效
+        </div>
+        
+        <div class="sync-stat" style="background: white; padding: 10px; border-radius: 3px; min-width: 200px;">
+            <strong style="color: #6c757d;">最后同步</strong><br>
+            <span style="font-size: 0.9em;">{{ sync_info.last_sync }}</span>
+        </div>
+    </div>
+    
+    {% if sync_info.role_slot_stats %}
+    <div style="margin-top: 15px;">
+        <h4 style="color: #495057; margin-bottom: 10px;">🎯 角色槽位使用统计</h4>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            {% for role, stats in sync_info.role_slot_stats.items %}
+            <div class="role-stat" style="background: white; padding: 8px 12px; border-radius: 3px; border-left: 3px solid {% if stats.used_slots <= stats.total_slots %}#28a745{% else %}#dc3545{% endif %};">
+                <strong>{{ role }}</strong><br>
+                <span style="font-size: 0.9em;">
+                    使用: {{ stats.used_slots }}/{{ stats.total_slots }} 槽位
+                    {% if stats.used_slots > stats.total_slots %}
+                    <span style="color: #dc3545;">⚠️ 超出</span>
+                    {% endif %}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <p style="color: #6c757d; margin: 0;">⏳ 正在加载同步信息...</p>
+    {% endif %}
+    
+    <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #dee2e6; font-size: 0.85em; color: #6c757d;">
+        💡 <strong>提示:</strong> 此页面数据实时同步自 
+        <a href="/admin/permissions/menumoduleconfig/" target="_blank">菜单配置</a>、
+        <a href="/admin/permissions/slotconfig/" target="_blank">槽位配置</a> 和 
+        <a href="/admin/permissions/menuvalidity/" target="_blank">菜单有效性</a> 页面
+    </div>
+</div>
+
+<style>
+.sync-panel { 
+    background: #f8f9fa; 
+    border: 1px solid #dee2e6; 
+    border-radius: 8px; 
+    padding: 20px; 
+    margin: 20px 0; 
+} 
+.sync-header { 
+    font-size: 18px; 
+    font-weight: bold; 
+    color: #495057; 
+    margin-bottom: 15px; 
+    border-bottom: 2px solid #007bff; 
+    padding-bottom: 8px; 
+} 
+.sync-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 15px; 
+    margin-bottom: 20px; 
+} 
+.sync-item { 
+    background: white; 
+    border: 1px solid #e9ecef; 
+    border-radius: 6px; 
+    padding: 15px; 
+} 
+.sync-item h4 { 
+    margin: 0 0 10px 0; 
+    color: #343a40; 
+    font-size: 14px; 
+} 
+.sync-count { 
+    font-size: 24px; 
+    font-weight: bold; 
+    color: #28a745; 
+} 
+.sync-time { 
+    font-size: 12px; 
+    color: #6c757d; 
+    margin-top: 10px; 
+} 
+.role-stats { 
+    background: #e3f2fd; 
+    border-left: 4px solid #2196f3; 
+    padding: 10px; 
+    margin-top: 15px; 
+} 
+.role-stats h4 { 
+    color: #1976d2; 
+    margin-bottom: 8px; 
+}
+
+.sync-info-panel .sync-stat:hover,
+.sync-info-panel .role-stat:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.sync-info-panel a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.sync-info-panel a:hover {
+    text-decoration: underline;
+}
+</style>

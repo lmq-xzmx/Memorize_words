@@ -1,0 +1,792 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}角色槽位二级菜单分配管理 - 瀑布流配置{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+/* 主容器布局 */
+.main-container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+/* 角色区域 */
+.roles-section {
+    flex: 1;
+}
+
+.roles-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+/* 角色卡片样式 */
+.role-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.role-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.role-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.role-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.role-badge {
+    background: #007bff;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* 一级菜单容器 */
+#level1-menus-container {
+    padding: 0;
+    margin: 0;
+}
+
+.level1-menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.level1-menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-icon {
+    width: 20px;
+    height: 20px;
+    color: #6c757d;
+}
+
+.menu-name {
+    font-weight: 500;
+    color: #495057;
+}
+
+.config-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.config-btn:hover {
+    background: #218838;
+    transform: scale(1.05);
+}
+
+/* 配置侧边栏 */
+.config-sidebar {
+    width: 400px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 20px;
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    display: none;
+}
+
+.config-sidebar.active {
+    display: block;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+/* 学生槽位4数据显示区域 */
+.student-slot4-data {
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.student-slot4-data h4 {
+    color: #1976d2;
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+.student-slot4-menus {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.student-slot4-menus li {
+    padding: 5px 0;
+    border-bottom: 1px solid #bbdefb;
+}
+
+.student-slot4-menus li:last-child {
+    border-bottom: none;
+}
+
+.refresh-btn {
+    background: #2196f3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.refresh-btn:hover {
+    background: #1976d2;
+}
+
+.alert-container {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+.alert-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+/* 双列选择器样式 */
+.menu-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.selector-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.selector-section h4 {
+    margin: 0 0 15px 0;
+    color: #495057;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 8px;
+}
+
+.selector-list {
+    width: 100%;
+    height: 200px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    background: white;
+    font-size: 14px;
+    padding: 5px;
+}
+
+.selector-list option {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.selector-list option:hover {
+    background-color: #f8f9fa;
+}
+
+.selector-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.selector-buttons .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.selector-buttons .btn-primary {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.selector-buttons .btn-primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+}
+
+.selector-buttons .btn-secondary {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.selector-buttons .btn-secondary:hover {
+    background: #545b62;
+    border-color: #545b62;
+}
+
+.menu-item span {
+    flex: 1;
+    color: #495057;
+    font-weight: 500;
+}
+
+.move-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    min-width: 30px;
+}
+
+.move-btn:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+
+.action-buttons .btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.action-buttons .btn-success {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.action-buttons .btn-success:hover {
+    background: #218838;
+    border-color: #1e7e34;
+}
+
+.action-buttons .btn-secondary {
+    background: #6c757d;
+    color: white;
+    border-color: #6c757d;
+}
+
+.action-buttons .btn-secondary:hover {
+    background: #545b62;
+    border-color: #545b62;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="alert-container" id="alert-container"></div>
+
+<div class="main-container">
+    <div class="roles-section">
+        <!-- Student Slot 4 数据显示区域 -->
+        <div class="student-slot4-data" id="student-slot4-data">
+            <h4>🎯 Student 角色 Slot 4 一级目录数据</h4>
+            <ul class="student-slot4-menus" id="student-slot4-menus">
+                <li>正在加载数据...</li>
+            </ul>
+            <button class="refresh-btn" onclick="loadStudentSlot4Data()">🔄 刷新数据</button>
+        </div>
+        
+        <div class="roles-container" id="roles-container">
+        <!-- 角色卡片将在这里动态生成 -->
+    </div>
+</div>
+
+<div class="level1-menus-section">
+    <h2 id="level1-menus-title">请先选择左侧角色</h2>
+    <div id="level1-menus-container">
+        <div class="text-muted">点击左侧角色卡片查看对应的一级菜单分配</div>
+    </div>
+</div>
+    
+    <div class="config-sidebar" id="config-sidebar">
+        <div class="sidebar-header">
+            <h3>配置二级菜单</h3>
+            <button class="close-btn" onclick="closeSidebar()">&times;</button>
+        </div>
+        <div id="sidebar-content">
+            <!-- 侧边栏内容将在这里动态生成 -->
+        </div>
+    </div>
+</div>
+
+<script>
+// 全局变量
+let currentRole = null;
+let currentLevel1MenuId = null;
+let currentAssignmentId = null;
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', function() {
+    loadRoles();
+    loadStudentSlot4Data();
+});
+
+// 加载Student角色Slot4数据
+function loadStudentSlot4Data() {
+    fetch('/admin/permissions/roleslotlevel2menuassignment/get-student-slot4-data/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayStudentSlot4Data(data.data);
+            } else {
+                showAlert('获取Student Slot4数据失败: ' + data.error, 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading student slot4 data:', error);
+            showAlert('网络错误，无法获取Student Slot4数据', 'warning');
+        });
+}
+
+// 显示Student角色Slot4数据
+function displayStudentSlot4Data(data) {
+    const container = document.getElementById('student-slot4-menus');
+    
+    if (data.level1_menus && data.level1_menus.length > 0) {
+        container.innerHTML = data.level1_menus.map(menu => 
+            `<li><i class="${menu.icon || 'fas fa-folder'}"></i> ${menu.name} (${menu.key})</li>`
+        ).join('');
+    } else {
+        container.innerHTML = '<li>暂无数据</li>';
+    }
+    
+    showAlert(`✅ Student Slot4数据已更新，共 ${data.total_count} 个一级菜单`, 'success');
+}
+
+// 加载所有角色数据
+function loadRoles() {
+    fetch('/admin/permissions/roleslotlevel2menuassignment/get-roles/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayRoles(data.roles);
+            } else {
+                showAlert('加载角色数据失败: ' + data.error, 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading roles:', error);
+            showAlert('网络错误，无法加载角色数据', 'warning');
+        });
+}
+
+// 显示角色列表
+function displayRoles(roles) {
+    const container = document.getElementById('roles-container');
+    container.innerHTML = '';
+    
+    roles.forEach(role => {
+        const roleCard = document.createElement('div');
+        roleCard.className = 'role-card';
+        roleCard.dataset.role = role.role;
+        roleCard.innerHTML = `
+            <div class="role-header">
+                <h3 class="role-name">${role.role_display}</h3>
+                <span class="role-badge">${role.level1_assignments.length} 个一级菜单</span>
+            </div>
+        `;
+        
+        // 添加点击事件
+        roleCard.addEventListener('click', () => {
+            // 移除其他角色的选中状态
+            document.querySelectorAll('.role-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 添加当前角色的选中状态
+            roleCard.classList.add('selected');
+            
+            // 显示对应的一级菜单
+            displayLevel1Menus(role);
+        });
+        
+        container.appendChild(roleCard);
+    });
+}
+
+// 显示一级菜单列表
+function displayLevel1Menus(role) {
+    const container = document.getElementById('level1-menus-container');
+    const title = document.getElementById('level1-menus-title');
+    
+    title.textContent = `${role.role_display} - 一级菜单分配`;
+    
+    if (role.level1_assignments && role.level1_assignments.length > 0) {
+        container.innerHTML = role.level1_assignments.map(menu => `
+            <div class="level1-menu-item">
+                <div class="menu-info">
+                    <i class="menu-icon ${menu.icon || 'fas fa-folder'}"></i>
+                    <span class="menu-name">${menu.menu_name}</span>
+                </div>
+                <button class="config-btn" onclick="configureLevel2Menus('${role.role}', ${menu.menu_id}, ${menu.id}, '${menu.menu_name}')">
+                    配置二级菜单
+                </button>
+            </div>
+        `).join('');
+    } else {
+        container.innerHTML = '<div class="text-muted">该角色暂无一级菜单分配</div>';
+    }
+}
+
+// 配置二级菜单
+function configureLevel2Menus(role, level1MenuId, assignmentId, menuName) {
+    currentRole = role;
+    currentLevel1MenuId = level1MenuId;
+    currentAssignmentId = assignmentId;
+    
+    // 更新侧边栏信息
+    const roleInfo = document.getElementById('current-role-info');
+    const menuInfo = document.getElementById('current-menu-info');
+    if (roleInfo) roleInfo.textContent = role;
+    if (menuInfo) menuInfo.textContent = menuName || '未知菜单';
+    
+    // 显示侧边栏
+    const sidebar = document.getElementById('config-sidebar');
+    sidebar.classList.add('active');
+    
+    // 调整主容器布局
+    const rolesSection = document.querySelector('.roles-section');
+    rolesSection.style.flex = '0 0 calc(70% - 10px)';
+    
+    // 加载二级菜单数据
+    loadLevel2Menus(assignmentId);
+}
+
+// 加载二级菜单数据
+function loadLevel2Menus(assignmentId) {
+    const sidebarContent = document.getElementById('sidebar-content');
+    sidebarContent.innerHTML = '<div>正在加载...</div>';
+    
+    fetch(`/admin/permissions/roleslotlevel2menuassignment/get-level2-menus/?assignment_id=${assignmentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayLevel2MenuSelector(data.available_menus, data.selected_menus);
+            } else {
+                sidebarContent.innerHTML = '<div class="alert alert-warning">加载失败: ' + data.error + '</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading level2 menus:', error);
+            sidebarContent.innerHTML = '<div class="alert alert-warning">网络错误</div>';
+        });
+}
+
+// 显示二级菜单选择器
+function displayLevel2MenuSelector(availableMenus, selectedMenus) {
+    const sidebarContent = document.getElementById('sidebar-content');
+    sidebarContent.innerHTML = `
+        <div class="menu-selector">
+            <div class="selector-section">
+                <h4>可用菜单</h4>
+                <select id="available-menus" class="form-control selector-list" multiple size="10" ondblclick="moveToSelected()">
+                    ${availableMenus.map(menu => `
+                        <option value="${menu.id}">${menu.name}</option>
+                    `).join('')}
+                </select>
+                <div class="selector-buttons">
+                    <button onclick="moveToSelected()" class="btn btn-sm btn-primary">添加 →</button>
+                    <button onclick="moveAllToSelected()" class="btn btn-sm btn-secondary">全部添加 →→</button>
+                </div>
+            </div>
+            
+            <div class="selector-section">
+                <h4>已选择菜单</h4>
+                <select id="selected-menus" class="form-control selector-list" multiple size="10" ondblclick="moveToAvailable()">
+                    ${selectedMenus.map(menu => `
+                        <option value="${menu.id}">${menu.name}</option>
+                    `).join('')}
+                </select>
+                <div class="selector-buttons">
+                    <button onclick="moveToAvailable()" class="btn btn-sm btn-primary">← 移除</button>
+                    <button onclick="moveAllToAvailable()" class="btn btn-sm btn-secondary">←← 全部移除</button>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button onclick="saveConfiguration()" class="btn btn-success">保存配置</button>
+                <button onclick="closeSidebar()" class="btn btn-secondary">取消</button>
+            </div>
+        </div>
+    `;
+}
+
+// 移动菜单到已选择
+function moveToSelected() {
+    console.log('moveToSelected 函数被调用');
+    const availableSelect = document.getElementById('available-menus');
+    const selectedSelect = document.getElementById('selected-menus');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    const selectedOptions = Array.from(availableSelect.selectedOptions);
+    console.log('选中的选项数量:', selectedOptions.length);
+    
+    selectedOptions.forEach(option => {
+        selectedSelect.appendChild(option.cloneNode(true));
+        option.remove();
+    });
+}
+
+// 移动菜单到可用
+function moveToAvailable() {
+    console.log('moveToAvailable 函数被调用');
+    const availableSelect = document.getElementById('available-menus');
+    const selectedSelect = document.getElementById('selected-menus');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    const selectedOptions = Array.from(selectedSelect.selectedOptions);
+    console.log('选中的选项数量:', selectedOptions.length);
+    
+    selectedOptions.forEach(option => {
+        availableSelect.appendChild(option.cloneNode(true));
+        option.remove();
+    });
+}
+
+// 移动所有菜单到已选择
+function moveAllToSelected() {
+    console.log('moveAllToSelected 函数被调用');
+    const availableSelect = document.getElementById('available-menus');
+    const selectedSelect = document.getElementById('selected-menus');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    const allOptions = Array.from(availableSelect.options);
+    console.log('移动所有选项数量:', allOptions.length);
+    
+    allOptions.forEach(option => {
+        selectedSelect.appendChild(option.cloneNode(true));
+        option.remove();
+    });
+}
+
+// 移动所有菜单到可用
+function moveAllToAvailable() {
+    console.log('moveAllToAvailable 函数被调用');
+    const availableSelect = document.getElementById('available-menus');
+    const selectedSelect = document.getElementById('selected-menus');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    const allOptions = Array.from(selectedSelect.options);
+    console.log('移动所有选项数量:', allOptions.length);
+    
+    allOptions.forEach(option => {
+        availableSelect.appendChild(option.cloneNode(true));
+        option.remove();
+    });
+}
+
+// 保存配置
+function saveConfiguration() {
+    if (!currentRole || !currentLevel1MenuId || !currentAssignmentId) {
+        showAlert('缺少必要的配置信息', 'danger');
+        return;
+    }
+    
+    const selectedSelect = document.getElementById('selected-menus');
+    
+    // 获取所有已选择的菜单ID
+    const selectedMenuIds = Array.from(selectedSelect.options).map(option => option.value).filter(id => id);
+    
+    console.log('保存配置:', {
+        role: currentRole,
+        level1_menu_id: currentLevel1MenuId,
+        assignment_id: currentAssignmentId,
+        selected_menus: selectedMenuIds
+    });
+    
+    // 发送AJAX请求保存二级菜单配置
+    fetch('{% url "admin:permissions_roleslotlevel2menuassignment_save_config" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams({
+            'level1_assignment': currentAssignmentId,
+            'selected_menus': JSON.stringify(selectedMenuIds)
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`成功为角色 ${currentRole} 配置二级菜单`);
+            closeSidebar();
+            // 刷新页面或更新UI
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert(data.error || '二级菜单配置失败', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('网络错误，请重试', 'danger');
+    });
+}
+
+// 关闭侧边栏
+function closeSidebar() {
+    const sidebar = document.getElementById('config-sidebar');
+    sidebar.classList.remove('active');
+    
+    const rolesSection = document.querySelector('.roles-section');
+    rolesSection.style.flex = '1';
+    
+    currentRole = null;
+    currentLevel1MenuId = null;
+    currentAssignmentId = null;
+}
+
+// 显示提示信息
+function showAlert(message, type = 'info') {
+    const alertContainer = document.getElementById('alert-container');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.innerHTML = `
+        ${message}
+        <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; cursor: pointer;">&times;</button>
+    `;
+    alertContainer.appendChild(alert);
+    
+    // 3秒后自动移除
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.remove();
+        }
+    }, 3000);
+}
+
+// 页面加载时检查URL参数
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const assignmentId = urlParams.get('assignment_id');
+    const role = urlParams.get('role');
+    const slotPosition = urlParams.get('slot_position');
+    
+    if (assignmentId) {
+        // 自动打开侧边栏并加载二级菜单配置
+        setTimeout(() => {
+            configureLevel2Menus(role, null, assignmentId);
+        }, 100);
+    }
+});
+</script>
+{% endblock %}
+
+{% block result_list %}
+<!-- 隐藏默认的结果列表 -->
+{% endblock %}

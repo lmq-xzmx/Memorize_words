@@ -8,10 +8,10 @@ from django.shortcuts import get_object_or_404
 from django.core.cache import cache
 import logging
 
-from .models import MenuModuleConfig, RoleMenuPermission, RoleGroupMapping, RoleManagement
+from .models import MenuModuleConfig, RoleGroupMapping, RoleManagement
 from .models_optimized import PermissionSyncLog
 from .serializers import (
-    MenuModuleConfigSerializer, RoleMenuPermissionSerializer, GroupSerializer,
+    MenuModuleConfigSerializer, GroupSerializer,
     PermissionSerializer, RoleGroupMappingSerializer, PermissionSyncLogSerializer,
     RolePermissionSerializer, MenuAccessCheckSerializer, BulkPermissionUpdateSerializer
 )
@@ -42,14 +42,12 @@ class MenuModuleConfigViewSet(viewsets.ModelViewSet):
         if getattr(user, 'is_superuser', False):
             return MenuModuleConfig.objects.filter(is_active=True)
         
-        # 根据用户角色过滤菜单
+        # 根据用户角色过滤菜单 (RoleMenuPermission 已废弃)
+        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代
         user_role = getattr(user, 'role', None)
         if user_role:
-            accessible_menus = RoleMenuPermission.objects.filter(
-                role=user_role,
-                can_access=True
-            ).values_list('menu_module_id', flat=True)
-            return MenuModuleConfig.objects.filter(id__in=accessible_menus, is_active=True)
+            # 临时返回所有活跃菜单，待新权限系统实现后更新
+            return MenuModuleConfig.objects.filter(is_active=True)
         
         return MenuModuleConfig.objects.none()
     
@@ -77,15 +75,12 @@ class MenuModuleConfigViewSet(viewsets.ModelViewSet):
         if not user_role:
             return Response({'menus': []})
         
-        accessible_menus = RoleMenuPermission.objects.filter(
-            role=user_role,
-            can_access=True,
-            menu_module__is_active=True
-        ).select_related('menu_module').order_by('menu_module__sort_order')
+        # RoleMenuPermission 已废弃，临时返回所有活跃菜单
+        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代
+        accessible_menus = MenuModuleConfig.objects.filter(is_active=True).order_by('sort_order')
         
         menus = []
-        for perm in accessible_menus:
-            menu = perm.menu_module
+        for menu in accessible_menus:
             menus.append({
                 'key': menu.key,
                 'name': menu.name,
@@ -109,93 +104,13 @@ class MenuModuleConfigViewSet(viewsets.ModelViewSet):
         if getattr(user, 'is_superuser', False):
             return Response({'has_permission': True})
         
-        # 检查角色权限
-        user_role = getattr(user, 'role', None)
-        if user_role:
-            try:
-                permission = RoleMenuPermission.objects.get(
-                    role=user_role,
-                    menu_module=menu
-                )
-                return Response({'has_permission': permission.can_access})
-            except RoleMenuPermission.DoesNotExist:
-                pass
-        
-        return Response({'has_permission': False})
+        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
+        # 暂时允许所有访问
+        return Response({'has_permission': True})
 
 
-class RoleMenuPermissionViewSet(viewsets.ModelViewSet):
-    """角色菜单权限配置视图集"""
-    queryset = RoleMenuPermission.objects.all()
-    serializer_class = RoleMenuPermissionSerializer
-    permission_classes = [IsAuthenticated]
-    
-    @action(detail=False, methods=['post'])
-    def check_access(self, request):
-        """检查菜单访问权限"""
-        serializer = MenuAccessCheckSerializer(data=request.data)
-        if serializer.is_valid():
-            role = request.data.get('role')
-            menu_key = request.data.get('menu_key')
-            
-            try:
-                menu = MenuModuleConfig.objects.get(key=menu_key, is_active=True)
-                permission = RoleMenuPermission.objects.get(
-                    role=role,
-                    menu_module=menu
-                )
-                return Response({
-                    'has_access': permission.can_access,
-                    'menu_name': menu.name
-                })
-            except (MenuModuleConfig.DoesNotExist, RoleMenuPermission.DoesNotExist):
-                return Response({'has_access': False})
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(detail=False, methods=['post'])
-    def bulk_update(self, request):
-        """批量更新角色菜单权限"""
-        serializer = BulkPermissionUpdateSerializer(data=request.data)
-        if serializer.is_valid():
-            role = request.data.get('role')
-            menu_permissions = request.data.get('menu_permissions', {})
-            
-            with transaction.atomic():
-                updated_count = 0
-                for menu_key, can_access in menu_permissions.items():
-                    try:
-                        menu = MenuModuleConfig.objects.get(key=menu_key)
-                        permission, created = RoleMenuPermission.objects.get_or_create(
-                            role=role,
-                            menu_module=menu,
-                            defaults={'can_access': can_access}
-                        )
-                        if not created and permission.can_access != can_access:
-                            permission.can_access = can_access
-                            permission.save()
-                            updated_count += 1
-                        elif created:
-                            updated_count += 1
-                    except MenuModuleConfig.DoesNotExist:
-                        continue
-                
-                # 记录同步日志
-                PermissionSyncLog.objects.create(
-                    sync_type='manual',
-                    target_type='role',
-                    target_id=role,
-                    action=f'批量更新菜单权限',
-                    result=f'更新了{updated_count}个权限配置',
-                    success=True
-                )
-            
-            return Response({
-                'message': f'成功更新{updated_count}个权限配置',
-                'updated_count': updated_count
-            })
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# RoleMenuPermissionViewSet 已被移除（RoleMenuPermission 模型已废弃）
+# 请使用 MenuValidity 和 RoleMenuAssignment 替代相关功能
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -295,6 +210,254 @@ def get_menu_version(request):
             'changes': [],
             'author': 'system',
             'description': f'获取版本信息失败: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_frontend_menus_for_user(request):
+    """
+    获取当前用户可访问的前台菜单列表
+    基于新的 FrontendMenuConfig 和 FrontendMenuRoleAssignment 模型
+    """
+    try:
+        user = request.user
+        user_role = getattr(user, 'role', None)
+        
+        if not user_role:
+            return Response({
+                'success': False,
+                'message': '用户角色未设置',
+                'menus': []
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 获取该角色已分配且有效的菜单
+        from .models import FrontendMenuRoleAssignment
+        
+        assignments = FrontendMenuRoleAssignment.objects.filter(
+            role=user_role,
+            is_active=True,
+            can_view=True
+        ).select_related('menu').order_by('menu__position', 'sort_order_override', 'menu__sort_order')
+        
+        # 按位置分组菜单
+        menus_by_position = {
+            'header': [],
+            'sidebar': [],
+            'footer': [],
+            'floating': []
+        }
+        
+        for assignment in assignments:
+            # 检查时间有效性
+            if not assignment.is_valid_now():
+                continue
+                
+            menu = assignment.menu
+            if not menu.is_active:
+                continue
+                
+            menu_data = {
+                'id': menu.id,
+                'key': menu.key,
+                'name': assignment.get_display_name(),
+                'icon': assignment.get_display_icon(),
+                'url': menu.url,
+                'menu_type': menu.menu_type,
+                'position': menu.position,
+                'sort_order': assignment.get_sort_order(),
+                'is_external': menu.is_external,
+                'target': menu.target,
+                'can_access': assignment.can_access,
+                'parent_id': menu.parent.id if menu.parent else None,
+                'description': menu.description
+            }
+            
+            menus_by_position[menu.position].append(menu_data)
+        
+        # 构建层级结构
+        def build_menu_tree(menu_list):
+            """构建菜单树结构"""
+            menu_dict = {menu['id']: menu for menu in menu_list}
+            tree = []
+            
+            for menu in menu_list:
+                if menu['parent_id'] is None:
+                    # 根菜单
+                    menu['children'] = []
+                    tree.append(menu)
+                else:
+                    # 子菜单
+                    parent = menu_dict.get(menu['parent_id'])
+                    if parent:
+                        if 'children' not in parent:
+                            parent['children'] = []
+                        parent['children'].append(menu)
+            
+            return tree
+        
+        # 为每个位置构建树结构
+        structured_menus = {}
+        for position, menu_list in menus_by_position.items():
+            structured_menus[position] = build_menu_tree(menu_list)
+        
+        return Response({
+            'success': True,
+            'user_role': user_role,
+            'menus': structured_menus,
+            'total_count': sum(len(menus) for menus in menus_by_position.values())
+        })
+        
+    except Exception as e:
+        logger.error(f"获取前台菜单失败: {str(e)}")
+        return Response({
+            'success': False,
+            'message': f'获取菜单失败: {str(e)}',
+            'menus': {}
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_menu_by_position(request):
+    """
+    根据位置获取菜单
+    支持的位置: header, sidebar, footer, floating
+    """
+    try:
+        position = request.GET.get('position', 'sidebar')
+        user = request.user
+        user_role = getattr(user, 'role', None)
+        
+        if not user_role:
+            return Response({
+                'success': False,
+                'message': '用户角色未设置',
+                'menus': []
+            })
+        
+        from .models import FrontendMenuRoleAssignment
+        
+        assignments = FrontendMenuRoleAssignment.objects.filter(
+            role=user_role,
+            is_active=True,
+            can_view=True,
+            menu__position=position,
+            menu__is_active=True
+        ).select_related('menu').order_by('sort_order_override', 'menu__sort_order')
+        
+        menus = []
+        for assignment in assignments:
+            if assignment.is_valid_now():
+                menu = assignment.menu
+                menus.append({
+                    'id': menu.id,
+                    'key': menu.key,
+                    'name': assignment.get_display_name(),
+                    'icon': assignment.get_display_icon(),
+                    'url': menu.url,
+                    'menu_type': menu.menu_type,
+                    'sort_order': assignment.get_sort_order(),
+                    'is_external': menu.is_external,
+                    'target': menu.target,
+                    'can_access': assignment.can_access,
+                    'parent_id': menu.parent.id if menu.parent else None
+                })
+        
+        return Response({
+            'success': True,
+            'position': position,
+            'menus': menus,
+            'count': len(menus)
+        })
+        
+    except Exception as e:
+        logger.error(f"根据位置获取菜单失败: {str(e)}")
+        return Response({
+            'success': False,
+            'message': f'获取菜单失败: {str(e)}',
+            'menus': []
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def check_menu_access(request):
+    """
+    检查用户对特定菜单的访问权限
+    """
+    try:
+        menu_key = request.data.get('menu_key')
+        action = request.data.get('action', 'view')  # view 或 access
+        
+        if not menu_key:
+            return Response({
+                'success': False,
+                'message': '缺少菜单键值'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = request.user
+        user_role = getattr(user, 'role', None)
+        
+        if not user_role:
+            return Response({
+                'success': True,
+                'has_permission': False,
+                'message': '用户角色未设置'
+            })
+        
+        from .models import FrontendMenuConfig, FrontendMenuRoleAssignment
+        
+        try:
+            menu = FrontendMenuConfig.objects.get(key=menu_key, is_active=True)
+            assignment = FrontendMenuRoleAssignment.objects.get(
+                menu=menu,
+                role=user_role,
+                is_active=True
+            )
+            
+            # 检查时间有效性
+            if not assignment.is_valid_now():
+                return Response({
+                    'success': True,
+                    'has_permission': False,
+                    'message': '菜单访问时间已过期'
+                })
+            
+            # 根据动作检查权限
+            if action == 'view':
+                has_permission = assignment.can_view
+            elif action == 'access':
+                has_permission = assignment.can_access
+            else:
+                has_permission = assignment.can_view  # 默认检查查看权限
+            
+            return Response({
+                'success': True,
+                'has_permission': has_permission,
+                'menu_key': menu_key,
+                'action': action,
+                'user_role': user_role
+            })
+            
+        except FrontendMenuConfig.DoesNotExist:
+            return Response({
+                'success': True,
+                'has_permission': False,
+                'message': '菜单不存在或已禁用'
+            })
+        except FrontendMenuRoleAssignment.DoesNotExist:
+            return Response({
+                'success': True,
+                'has_permission': False,
+                'message': '用户角色无此菜单权限'
+            })
+        
+    except Exception as e:
+        logger.error(f"检查菜单访问权限失败: {str(e)}")
+        return Response({
+            'success': False,
+            'message': f'权限检查失败: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -499,14 +662,9 @@ def get_frontend_menu_config(request):
         if user.is_superuser:
             menus = MenuModuleConfig.objects.filter(is_active=True)
         elif user_role:
-            accessible_menu_ids = RoleMenuPermission.objects.filter(
-                role=user_role,
-                can_access=True
-            ).values_list('menu_module_id', flat=True)
-            menus = MenuModuleConfig.objects.filter(
-                id__in=accessible_menu_ids,
-                is_active=True
-            )
+            # RoleMenuPermission 已废弃，临时返回所有活跃菜单
+            # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代
+            menus = MenuModuleConfig.objects.filter(is_active=True)
         else:
             menus = MenuModuleConfig.objects.none()
         
@@ -562,6 +720,7 @@ def get_user_permissions(request):
     """
     获取当前用户的权限信息
     返回格式与前端permission.js中的ROLE_PERMISSIONS保持一致
+    使用角色映射机制获取权限
     """
     try:
         user = request.user
@@ -569,12 +728,21 @@ def get_user_permissions(request):
         # 获取用户角色权限
         role_permissions = []
         
-        # 根据用户角色获取默认权限
-        default_permissions = UserRole.get_role_permissions(user.role)
-        role_permissions.extend(default_permissions)
+        # 使用角色映射机制获取权限
+        from .services import RoleMappingService
+        mapped_permissions = RoleMappingService.get_user_permissions(user)
         
-        # 获取用户的具体权限
+        # 获取用户的具体权限（保持兼容性）
         user_permissions = user.get_all_permissions()
+        
+        # 处理映射权限
+        if mapped_permissions:
+            # 将映射权限添加到角色权限中
+            role_permissions.extend(mapped_permissions)
+        else:
+            # 如果没有映射权限，回退到默认权限
+            default_permissions = UserRole.get_role_permissions(user.role)
+            role_permissions.extend(default_permissions)
         
         # 权限映射：Django权限 -> 前端权限
         permission_mapping = {
@@ -620,7 +788,16 @@ def get_user_permissions(request):
             'manage_users': 'manage_users',
         }
         
-        # 添加用户的具体权限
+        # 处理映射权限
+        if mapped_permissions:
+            for perm in mapped_permissions:
+                perm_code = perm.split('.')[-1] if '.' in perm else perm
+                if perm_code in permission_mapping:
+                    frontend_perm = permission_mapping[perm_code]
+                    if frontend_perm not in role_permissions:
+                        role_permissions.append(frontend_perm)
+        
+        # 添加用户的具体权限（保持兼容性）
         for perm in user_permissions:
             perm_code = perm.split('.')[-1] if '.' in perm else perm
             if perm_code in permission_mapping:

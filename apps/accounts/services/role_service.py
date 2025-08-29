@@ -5,6 +5,8 @@ from apps.accounts.models import UserRole
 from asgiref.sync import sync_to_async
 import logging
 
+logger = logging.getLogger(__name__)
+
 # 动态导入，避免循环导入
 try:
     from apps.permissions.models import RoleManagement
@@ -34,9 +36,20 @@ class RoleService:
             # 1. 添加预定义角色
             predefined_roles = {choice[0]: choice[1] for choice in UserRole.choices}
             
-            # 2. 获取角色管理数据（暂时禁用以避免异步上下文问题）
+            # 2. 获取角色管理数据
             role_management_data = []
-            # TODO: 重新启用RoleManagement查询，需要解决异步上下文问题
+            if RoleManagement and hasattr(RoleManagement, 'objects'):
+                try:
+                    queryset = RoleManagement.objects.all()
+                    if not include_inactive:
+                        queryset = queryset.filter(is_active=True)
+                    
+                    role_management_data = list(queryset.values(
+                        'role', 'display_name', 'description', 'is_active', 'sort_order'
+                    ))
+                except Exception as e:
+                    logger.error(f"获取角色管理数据失败: {e}")
+                    role_management_data = []
             
             # 3. 合并角色数据
             processed_roles = set()

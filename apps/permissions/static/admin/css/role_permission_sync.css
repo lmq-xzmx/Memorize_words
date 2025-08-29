@@ -1,0 +1,125 @@
+/* 角色权限同步样式 */
+.role-permission-sync {
+    margin: 10px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+}
+
+.sync-button {
+    background: #007cba;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.sync-button:hover {
+    background: #005a87;
+}
+
+.sync-status {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.sync-status.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.sync-status.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.sync-status.warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.permission-count {
+    font-weight: bold;
+    color: #495057;
+}
+
+.sync-progress {
+    display: none;
+    margin-top: 10px;
+}
+
+.sync-progress.active {
+    display: block;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #007cba;
+    transition: width 0.3s ease;
+}
+
+.sync-log {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+    padding: 2px 0;
+}
+
+.log-entry.success {
+    color: #28a745;
+}
+
+.log-entry.error {
+    color: #dc3545;
+}
+
+.log-entry.info {
+    color: #17a2b8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .role-permission-sync {
+        margin: 5px 0;
+        padding: 10px;
+    }
+    
+    .sync-button {
+        display: block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .sync-status {
+        display: block;
+        margin-left: 0;
+        margin-top: 5px;
+    }
+}

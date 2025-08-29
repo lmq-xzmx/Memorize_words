@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.contrib.auth.models import Permission, Group
-from apps.permissions.models import RoleManagement, RoleMenuPermission, MenuModuleConfig
+from apps.permissions.models import RoleManagement, MenuModuleConfig
 from apps.permissions.models_optimized import PermissionSyncLog, AutoSyncConfig
 from apps.accounts.models import CustomUser, UserRole
 from datetime import datetime, timedelta
@@ -183,62 +183,25 @@ class Command(BaseCommand):
         """检查孤立权限"""
         self.stdout.write('  检查孤立权限...')
         
-        # 检查没有关联角色的菜单权限
-        menu_permissions = RoleMenuPermission.objects.all()
-        valid_roles = [choice[0] for choice in UserRole.choices]
-        
-        for menu_perm in menu_permissions:
-            if menu_perm.role not in valid_roles:
-                audit_results['orphaned_permissions'].append({
-                    'type': 'orphaned_menu_permission',
-                    'role': menu_perm.role,
-                    'menu': menu_perm.menu_module.name,
-                    'message': f'菜单权限关联了无效角色 {menu_perm.role}'
-                })
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        # 请使用 MenuValidity 和 RoleMenuAssignment 替代
+        pass
 
     def check_missing_permissions(self, audit_results, specific_role):
         """检查缺失权限"""
         self.stdout.write('  检查缺失权限...')
         
-        # 检查角色是否缺少基本菜单权限
-        roles_to_check = [specific_role] if specific_role else [choice[0] for choice in UserRole.choices]
-        
-        for role in roles_to_check:
-            # 检查是否有基本菜单权限
-            basic_menus = ['dashboard', 'profile_management']
-            for menu_key in basic_menus:
-                try:
-                    menu_module = MenuModuleConfig.objects.get(key=menu_key)
-                    if not RoleMenuPermission.objects.filter(role=role, menu_module=menu_module).exists():
-                        audit_results['missing_permissions'].append({
-                            'type': 'missing_basic_menu',
-                            'role': role,
-                            'menu': menu_key,
-                            'message': f'角色 {role} 缺少基本菜单权限 {menu_key}'
-                        })
-                except Exception:
-                    continue
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        # 请使用 MenuValidity 和 RoleMenuAssignment 替代
+        pass
 
     def check_menu_access_issues(self, audit_results, specific_role):
         """检查菜单访问问题"""
         self.stdout.write('  检查菜单访问问题...')
         
-        # 检查菜单模块是否存在但没有权限配置
-        menu_modules = MenuModuleConfig.objects.filter(is_active=True)
-        roles_to_check = [specific_role] if specific_role else [choice[0] for choice in UserRole.choices]
-        
-        for menu_module in menu_modules:
-            for role in roles_to_check:
-                if not RoleMenuPermission.objects.filter(role=role, menu_module=menu_module).exists():
-                    # 检查是否应该有权限但缺失
-                    if self.should_have_menu_access(role, menu_module.key):
-                        audit_results['menu_access_issues'].append({
-                            'type': 'missing_menu_access',
-                            'role': role,
-                            'menu': menu_module.name,
-                            'menu_key': menu_module.key,
-                            'message': f'角色 {role} 应该有菜单 {menu_module.name} 的访问权限但缺失'
-                        })
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        # 请使用 MenuValidity 和 RoleMenuAssignment 替代
+        pass
 
     def should_have_menu_access(self, role, menu_key):
         """判断角色是否应该有特定菜单的访问权限"""

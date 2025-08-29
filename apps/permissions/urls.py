@@ -2,12 +2,14 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 from .api_views import (
-    MenuModuleConfigViewSet, RoleMenuPermissionViewSet, GroupViewSet,
+    MenuModuleConfigViewSet, GroupViewSet,
     PermissionViewSet, RoleGroupMappingViewSet, PermissionSyncLogViewSet,
     get_user_permissions, get_role_permissions_config,
     sync_frontend_menus, get_frontend_menu_config,
-    get_available_roles, get_role_fields, get_menu_version
+    get_available_roles, get_role_fields, get_menu_version,
+    get_frontend_menus_for_user, get_menu_by_position, check_menu_access
 )
+# RoleMenuPermissionViewSet 已废弃，请使用 MenuValidity 和 RoleMenuAssignment 替代
 from .operation_log_views import OperationLogViewSet
 from .api.menu_api import (
     get_user_menu_permissions, check_menu_permission, 
@@ -17,7 +19,7 @@ from .api.menu_api import (
 # API路由配置
 router = DefaultRouter()
 router.register(r'menu-modules', MenuModuleConfigViewSet, basename='menumoduleconfig')
-router.register(r'role-menu-permissions', RoleMenuPermissionViewSet, basename='rolemenupermission')
+# router.register(r'role-menu-permissions', RoleMenuPermissionViewSet, basename='rolemenupermission')  # 已废弃
 router.register(r'groups', GroupViewSet, basename='group')
 router.register(r'permissions', PermissionViewSet, basename='permission')
 router.register(r'role-group-mappings', RoleGroupMappingViewSet, basename='rolegroupmapping')
@@ -27,6 +29,9 @@ router.register(r'operation-logs', OperationLogViewSet, basename='operationlog')
 app_name = 'permissions'
 
 urlpatterns = [
+    # 统一AJAX API（推荐使用）
+    path('unified/', include('apps.permissions.api_urls')),
+    
     # 优化后的权限API（优先使用）
     path('optimized/', include('apps.permissions.optimized_urls')),
     
@@ -47,6 +52,11 @@ urlpatterns = [
     path('sync-frontend-menus/', sync_frontend_menus, name='sync_frontend_menus'),
     path('frontend-menu-config/', get_frontend_menu_config, name='get_frontend_menu_config'),
     
+    # 新的前台菜单API（基于角色配置）
+    path('api/frontend-menus/', get_frontend_menus_for_user, name='get_frontend_menus_for_user'),
+    path('api/menus-by-position/', get_menu_by_position, name='get_menu_by_position'),
+    path('api/check-menu-access/', check_menu_access, name='check_menu_access'),
+    
     # 菜单版本控制API
     path('api/menu/version/', get_menu_version, name='get_menu_version'),
     
@@ -64,12 +74,12 @@ urlpatterns = [
     path('menu-modules/<int:pk>/edit/', views.MenuModuleUpdateView.as_view(), name='menu_module_update'),
     path('menu-modules/<int:pk>/delete/', views.MenuModuleDeleteView.as_view(), name='menu_module_delete'),
     
-    # 角色菜单权限
-    path('role-menu-permissions/', views.RoleMenuPermissionListView.as_view(), name='role_menu_permission_list'),
-    path('role-menu-permissions/create/', views.RoleMenuPermissionCreateView.as_view(), name='role_menu_permission_create'),
-    path('role-menu-permissions/<int:pk>/', views.RoleMenuPermissionDetailView.as_view(), name='role_menu_permission_detail'),
-    path('role-menu-permissions/<int:pk>/edit/', views.RoleMenuPermissionUpdateView.as_view(), name='role_menu_permission_update'),
-    path('role-menu-permissions/<int:pk>/delete/', views.RoleMenuPermissionDeleteView.as_view(), name='role_menu_permission_delete'),
+    # 角色菜单权限管理 - 已废弃，请使用 MenuValidity 和 RoleMenuAssignment 替代
+    # path('role-menu-permissions/', views.RoleMenuPermissionListView.as_view(), name='role_menu_permission_list'),
+    # path('role-menu-permissions/create/', views.RoleMenuPermissionCreateView.as_view(), name='role_menu_permission_create'),
+    # path('role-menu-permissions/<int:pk>/', views.RoleMenuPermissionDetailView.as_view(), name='role_menu_permission_detail'),
+    # path('role-menu-permissions/<int:pk>/edit/', views.RoleMenuPermissionUpdateView.as_view(), name='role_menu_permission_update'),
+    # path('role-menu-permissions/<int:pk>/delete/', views.RoleMenuPermissionDeleteView.as_view(), name='role_menu_permission_delete'),
     
     # 角色组映射
     path('role-group-mappings/', views.RoleGroupMappingListView.as_view(), name='role_group_mapping_list'),
@@ -84,10 +94,10 @@ urlpatterns = [
     
     # AJAX接口
     path('ajax/sync-permissions/', views.sync_permissions_ajax, name='sync_permissions_ajax'),
-    path('ajax/check-permission/', views.check_permission_ajax, name='check_permission_ajax'),
-    path('ajax/get-role-permissions/', views.get_role_permissions_ajax, name='get_role_permissions_ajax'),
+    # path('ajax/check-permission/', views.check_permission_ajax, name='check_permission_ajax'),  # 已废弃
+    # path('ajax/get-role-permissions/', views.get_role_permissions_ajax, name='get_role_permissions_ajax'),  # 已废弃
     
-    # 批量操作
-    path('batch/assign-permissions/', views.BatchAssignPermissionsView.as_view(), name='batch_assign_permissions'),
-    path('batch/remove-permissions/', views.BatchRemovePermissionsView.as_view(), name='batch_remove_permissions'),
+    # 批量操作 - 已废弃，请使用 MenuValidity 和 RoleMenuAssignment 替代
+    # path('batch/assign-permissions/', views.BatchAssignPermissionsView.as_view(), name='batch_assign_permissions'),
+    # path('batch/remove-permissions/', views.BatchRemovePermissionsView.as_view(), name='batch_remove_permissions'),
 ]

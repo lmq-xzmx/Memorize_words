@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Permission, Group
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
-from apps.permissions.models import RoleManagement, RoleGroupMapping, RoleMenuPermission, MenuModuleConfig
+from apps.permissions.models import RoleManagement, RoleGroupMapping, MenuModuleConfig
 from apps.accounts.models import UserRole
 
 
@@ -41,8 +41,7 @@ class Command(BaseCommand):
     def reset_all_permissions(self):
         """重置所有角色权限"""
         with transaction.atomic():
-            # 清除所有角色菜单权限
-            RoleMenuPermission.objects.all().delete()
+            # RoleMenuPermission 已被废弃，跳过清除菜单权限
             # 清除所有角色管理权限
             for role_mgmt in RoleManagement.objects.all():
                 role_mgmt.permissions.clear()
@@ -136,31 +135,9 @@ class Command(BaseCommand):
 
     def setup_menu_permissions(self, role_code):
         """配置菜单权限"""
-        menu_configs = self.get_role_menu_configs(role_code)
-        
-        # 删除现有菜单权限
-        RoleMenuPermission.objects.filter(role=role_code).delete()
-        
-        # 创建新的菜单权限
-        menu_permissions = []
-        for menu_key, can_access in menu_configs.items():
-            try:
-                menu_module = MenuModuleConfig.objects.get(key=menu_key)
-                menu_permissions.append(
-                    RoleMenuPermission(
-                        role=role_code,
-                        menu_module=menu_module,
-                        can_access=can_access
-                    )
-                )
-            except MenuModuleConfig.DoesNotExist:
-                self.stdout.write(
-                    self.style.WARNING(f'  菜单模块不存在: {menu_key}')
-                )
-        
-        if menu_permissions:
-            RoleMenuPermission.objects.bulk_create(menu_permissions)
-            self.stdout.write(f'  配置菜单权限: {len(menu_permissions)} 个菜单')
+        # RoleMenuPermission 已被废弃，此功能暂时跳过
+        # 请使用 MenuValidity 和 RoleMenuAssignment 替代
+        self.stdout.write(f'  跳过菜单权限配置（RoleMenuPermission 已废弃）')
 
     def get_role_sort_order(self, role_code):
         """获取角色排序"""

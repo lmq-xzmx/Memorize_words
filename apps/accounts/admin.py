@@ -10,9 +10,11 @@ from .models import (
     RoleTemplate, RoleExtension, RoleUserGroup, UserExtensionData
 )
 from django.contrib.auth.models import Group
+from apps.permissions.role_selector_config import StandardRoleAdminMixin
 
 
-class CustomUserAdmin(UserAdmin):
+@admin.register(CustomUser)
+class CustomUserAdmin(StandardRoleAdminMixin, UserAdmin):
     """自定义用户管理"""
     model = CustomUser
     list_display = [
@@ -409,7 +411,7 @@ class UserExtensionDataAdmin(admin.ModelAdmin):
 
 
 # 注册模型到admin
-admin.site.register(CustomUser, CustomUserAdmin)
+# CustomUser已通过@admin.register装饰器注册，无需重复注册
 
 # 自定义admin站点标题
 admin.site.site_header = '英语学习平台管理系统'

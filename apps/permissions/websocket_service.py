@@ -19,7 +19,7 @@ from django.conf import settings
 
 from .models import (
     RoleManagement, 
-    RoleMenuPermission, 
+    # RoleMenuPermission,  # 已废弃，使用 MenuValidity 和 RoleMenuAssignment 替代
     MenuModuleConfig
 )
 from .models_optimized import PermissionSyncLog

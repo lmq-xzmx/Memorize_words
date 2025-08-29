@@ -1,0 +1,74 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/role_permission_sync.css' %}">
+{% endblock %}
+
+{% block content_title %}
+    {{ block.super }}
+    {% if show_sync_buttons %}
+    <div class="role-sync-actions" style="margin: 15px 0; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h3 style="margin: 0 0 12px 0; color: #495057; font-size: 16px; font-weight: 600;">🔄 权限同步管理</h3>
+        <p style="margin: 0 0 15px 0; color: #6c757d; font-size: 14px; line-height: 1.5;">
+            角色权限将单向同步到Django组中，组管理中可创建独立的特殊控制组。
+        </p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <form method="post" action="{{ sync_all_url }}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary" 
+                        onclick="return confirm('确定要同步所有角色的权限到对应的Django组吗？\n\n这个操作将：\n1. 为每个角色创建或更新对应的Django组\n2. 同步角色的所有权限到组中\n3. 记录同步日志');"
+                        style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; cursor: pointer; transition: background-color 0.2s;">
+                    🔄 同步所有角色权限到组
+                </button>
+            </form>
+            <a href="{{ sync_logs_url }}" target="_blank" 
+               style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; text-decoration: none; display: inline-block; transition: background-color 0.2s;">
+                📋 查看同步日志
+            </a>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 处理同步按钮的响应
+        const syncForm = document.querySelector('form[action*="sync_all_roles_to_groups"]');
+        if (syncForm) {
+            syncForm.addEventListener('submit', function(e) {
+                const button = this.querySelector('button[type="submit"]');
+                const originalText = button.textContent;
+                
+                // 禁用按钮并显示加载状态
+                button.disabled = true;
+                button.textContent = '🔄 同步中...';
+                
+                // 如果同步失败，恢复按钮状态
+                setTimeout(function() {
+                    if (button.disabled) {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                    }
+                }, 30000); // 30秒超时
+            });
+        }
+        
+        // 添加按钮悬停效果
+        const buttons = document.querySelectorAll('.role-sync-actions button, .role-sync-actions a');
+        buttons.forEach(function(btn) {
+            btn.addEventListener('mouseenter', function() {
+                this.style.opacity = '0.9';
+                this.style.transform = 'translateY(-1px)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.opacity = '1';
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+    </script>
+{% endblock %}

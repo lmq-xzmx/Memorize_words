@@ -44,9 +44,9 @@ class StandardRoleSelectWidget(forms.Select):
     
     class Media:
         css = {
-            'all': ('admin/css/dynamic_role_selector.css',)
+            'all': ('admin/css/unified_admin_styles.css',)
         }
-        js = ('admin/js/dynamic_role_selector.js',)
+        js = ('admin/js/unified_role_selector.js',)
 
 
 class StandardRoleChoiceField(forms.ChoiceField):
@@ -98,30 +98,10 @@ class RoleTextInputWidget(forms.TextInput):
     def render(self, name, value, attrs=None, renderer=None):
         """渲染Widget"""
         html = super().render(name, value, attrs, renderer)
-        
-        # 添加实时验证JavaScript
-        js_code = """
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const roleInput = document.querySelector('.role-text-input');
-            if (roleInput && !roleInput.hasAttribute('data-validated')) {
-                roleInput.setAttribute('data-validated', 'true');
-                
-                roleInput.addEventListener('input', function(e) {
-                    const value = e.target.value;
-                    const isValid = /^[a-z_][a-z0-9_]*$/.test(value);
-                    
-                    if (value && !isValid) {
-                        e.target.style.borderColor = '#dc3545';
-                        e.target.style.backgroundColor = '#fff5f5';
-                    } else {
-                        e.target.style.borderColor = '';
-                        e.target.style.backgroundColor = '';
-                    }
-                });
-            }
-        });
-        </script>
-        """
-        
-        return format_html('{0}{1}', html, js_code)
+        return html
+    
+    class Media:
+        css = {
+            'all': ('admin/css/unified_admin_styles.css',)
+        }
+        js = ('admin/js/role_text_input_validator.js',)

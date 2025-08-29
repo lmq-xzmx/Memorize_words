@@ -1,0 +1,127 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block content_title %}
+    <h1>{{ title }}</h1>
+{% endblock %}
+
+{% block result_list %}
+    {% if show_role_grouping and role_groups %}
+        <div class="role-grouped-list">
+            {% for role_name, group_data in role_groups.items %}
+                <div class="role-group" style="margin-bottom: 30px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden;">
+                    <div class="role-header" style="background-color: #f8f9fa; padding: 10px 15px; border-bottom: 1px solid #ddd; font-weight: bold; color: #495057;">
+                        <h3 style="margin: 0; font-size: 16px;">
+                            {{ group_data.display_name }}
+                            <span style="font-size: 12px; color: #6c757d; font-weight: normal;">
+                                ({{ group_data.configs|length }} 项配置，{{ group_data.active_count }} 项已激活)
+                            </span>
+                            {% if group_data.active_count > 1 %}
+                                <span style="color: #dc3545; font-size: 12px; font-weight: normal;">⚠️ 警告：该角色有多个激活的配置</span>
+                            {% endif %}
+                        </h3>
+                    </div>
+                    <div class="role-configs" style="padding: 0;">
+                        <table class="table table-striped" style="margin: 0; width: 100%;">
+                            <thead style="background-color: #e9ecef;">
+                                <tr>
+                                    <th style="padding: 8px 12px;">选择</th>
+                                    <th style="padding: 8px 12px;">配置名称</th>
+                                    <th style="padding: 8px 12px;">槽位数量</th>
+                                    <th style="padding: 8px 12px;">激活状态</th>
+                                    <th style="padding: 8px 12px;">创建时间</th>
+                                    <th style="padding: 8px 12px;">更新时间</th>
+                                    <th style="padding: 8px 12px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in group_data.configs %}
+                                    <tr {% if config.is_active %}style="background-color: #d4edda;"{% endif %}>
+                                        <td style="padding: 8px 12px;">
+                                            <input type="checkbox" name="_selected_action" value="{{ config.pk }}" class="action-select">
+                                        </td>
+                                        <td style="padding: 8px 12px;">
+                                            <a href="{% url 'admin:permissions_slotconfig_change' config.pk %}">{{ config.name }}</a>
+                                        </td>
+                                        <td style="padding: 8px 12px;">{{ config.slot_count }}</td>
+                                        <td style="padding: 8px 12px;">
+                                            {% if config.is_active %}
+                                                <span style="color: #28a745; font-weight: bold;">✓ 已激活</span>
+                                            {% else %}
+                                                <span style="color: #6c757d;">未激活</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="padding: 8px 12px;">{{ config.created_at|date:"Y-m-d H:i" }}</td>
+                                        <td style="padding: 8px 12px;">{{ config.updated_at|date:"Y-m-d H:i" }}</td>
+                                        <td style="padding: 8px 12px;">
+                                            <a href="{% url 'admin:permissions_slotconfig_change' config.pk %}" class="btn btn-sm btn-outline-primary">编辑</a>
+                                            {% if config.is_active %}
+                                                <form method="post" style="display: inline-block; margin-left: 5px;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="deactivate_selected">
+                                                    <input type="hidden" name="_selected_action" value="{{ config.pk }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('确定要停用此配置吗？');">停用</button>
+                                                </form>
+                                            {% else %}
+                                                <form method="post" style="display: inline-block; margin-left: 5px;">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="action" value="activate_selected">
+                                                    <input type="hidden" name="_selected_action" value="{{ config.pk }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-success" onclick="return confirm('确定要激活此配置吗？这将停用该角色的其他配置。');">激活</button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- 批量操作表单 -->
+        <form method="post" id="changelist-form">
+            {% csrf_token %}
+            <div class="actions" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px;">
+                <label>批量操作: 
+                    <select name="action" required>
+                        <option value="">---------</option>
+                        <option value="activate_selected">激活选中的槽位配置</option>
+                        <option value="deactivate_selected">停用选中的槽位配置</option>
+                    </select>
+                </label>
+                <button type="submit" class="btn btn-primary" onclick="return confirm('确定要执行此批量操作吗？');">执行</button>
+            </div>
+        </form>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 全选功能
+            const selectAllCheckbox = document.getElementById('action-toggle');
+            const actionCheckboxes = document.querySelectorAll('.action-select');
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    actionCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                });
+            }
+            
+            // 单个复选框变化时更新全选状态
+            actionCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (selectAllCheckbox) {
+                        const checkedCount = document.querySelectorAll('.action-select:checked').length;
+                        selectAllCheckbox.checked = checkedCount === actionCheckboxes.length;
+                        selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < actionCheckboxes.length;
+                    }
+                });
+            });
+        });
+        </script>
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}

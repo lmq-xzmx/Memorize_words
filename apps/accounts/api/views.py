@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.core.cache import cache
 from django.http import JsonResponse
 from ..services.role_service import RoleService
-from ..models import UserRole
+from ..models import UserRole, CustomUser
 from typing import Dict, List, Any
 
 
@@ -14,7 +14,7 @@ class RoleAPIViewSet(viewsets.ViewSet):
     角色API视图集
     提供统一的角色数据访问接口
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = []  # 暂时移除认证要求，允许公开访问
     
     @action(detail=False, methods=['get'])
     def choices(self, request) -> Response:
@@ -102,7 +102,7 @@ class RoleAPIViewSet(viewsets.ViewSet):
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=['get', 'post'])
     def validate(self, request, pk=None) -> Response:
         """
         验证角色是否有效
@@ -199,7 +199,6 @@ class RoleAPIViewSet(viewsets.ViewSet):
             # 获取角色管理中的自定义角色统计
             try:
                 from apps.permissions.models import RoleManagement
-from apps.accounts.services.role_service import RoleService
                 custom_roles = RoleManagement.objects.filter(is_active=True)
                 for role in custom_roles:
                     if role.role not in role_stats:

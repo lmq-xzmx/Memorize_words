@@ -1,0 +1,90 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'admin/css/role_permission_sync.css' %}">
+{% endblock %}
+
+{% block field_sets %}
+    {% if show_single_sync_button and role_id %}
+    <div class="role-sync-single" style="margin: 15px 0; padding: 15px; background: #e7f3ff; border: 1px solid #b3d7ff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+        <h4 style="margin: 0 0 10px 0; color: #0056b3; font-size: 15px; font-weight: 600;">🔄 权限同步操作</h4>
+        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+            <form method="post" action="{{ sync_single_url }}" style="display: inline;">
+                {% csrf_token %}
+                <input type="hidden" name="role_id" value="{{ role_id }}">
+                <button type="submit" class="btn btn-primary" 
+                        onclick="return confirm('确定要同步此角色的权限到对应的Django组吗？');"
+                        style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-size: 14px; cursor: pointer; transition: all 0.2s;">
+                    🔄 同步此角色权限到组
+                </button>
+            </form>
+            <span style="color: #0056b3; font-size: 13px; line-height: 1.4;">
+                权限将自动同步到对应的Django组
+            </span>
+        </div>
+    </div>
+    {% endif %}
+    
+    {{ block.super }}
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    
+    {% if show_single_sync_button and role_id %}
+    <div class="permission-sync-notice" style="margin: 15px 0; padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px;">
+        <h4 style="margin: 0 0 10px 0; color: #856404; font-size: 14px; font-weight: 600;">🔄 权限同步说明</h4>
+        <ul style="margin: 0; padding-left: 20px; color: #856404; font-size: 13px; line-height: 1.5;">
+            <li>此处配置的权限将<strong>单向同步</strong>到对应的Django组中</li>
+            <li>角色管理中的所有权限都会在组管理中创建对应的权限</li>
+            <li>组管理中可以创建独立于角色管理的组，用于特殊控制</li>
+            <li>权限同步是单向的（角色→组），组中的权限修改不会影响角色配置</li>
+        </ul>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 处理单个角色同步按钮
+        const syncForm = document.querySelector('form[action*="sync_role_to_groups"]');
+        if (syncForm) {
+            syncForm.addEventListener('submit', function(e) {
+                const button = this.querySelector('button[type="submit"]');
+                const originalText = button.textContent;
+                
+                // 禁用按钮并显示加载状态
+                button.disabled = true;
+                button.textContent = '🔄 同步中...';
+                
+                // 如果同步失败，恢复按钮状态
+                setTimeout(function() {
+                    if (button.disabled) {
+                        button.disabled = false;
+                        button.textContent = originalText;
+                    }
+                }, 30000); // 30秒超时
+            });
+        }
+        
+        // 添加按钮悬停效果
+        const syncButton = document.querySelector('.role-sync-single button');
+        if (syncButton) {
+            syncButton.addEventListener('mouseenter', function() {
+                this.style.opacity = '0.9';
+                this.style.transform = 'translateY(-1px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,123,255,0.3)';
+            });
+            syncButton.addEventListener('mouseleave', function() {
+                this.style.opacity = '1';
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        }
+    });
+    </script>
+{% endblock %}

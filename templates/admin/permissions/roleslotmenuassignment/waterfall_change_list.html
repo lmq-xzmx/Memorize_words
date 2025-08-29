@@ -1,0 +1,1292 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}角色槽位菜单分配管理 - 瀑布流配置{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+{% if show_update_effect %}
+<div id="update-success-message" class="alert alert-success" style="position: fixed; top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 8px; animation: slideInRight 0.5s ease-out;">
+    <strong>✅ {{ update_message|default:"更新成功！" }}</strong>
+    <button type="button" class="btn-close" onclick="this.parentElement.style.display='none'" style="float: right; background: none; border: none; font-size: 18px; cursor: pointer;">&times;</button>
+</div>
+<script>
+// 3秒后自动隐藏更新提示
+setTimeout(function() {
+    const message = document.getElementById('update-success-message');
+    if (message) {
+        message.style.animation = 'slideOutRight 0.5s ease-in';
+        setTimeout(() => message.style.display = 'none', 500);
+    }
+}, 3000);
+</script>
+{% endif %}
+<style>
+/* 更新提示动画 */
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* 拉伸内容区域至最大宽度 */
+#changelist {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+#content-start {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* 主容器布局 */
+.main-layout {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.waterfall-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+    flex: 1;
+    transition: all 0.3s ease;
+}
+
+.waterfall-container.with-sidebar {
+    flex: 0 0 calc(70% - 10px);
+}
+
+/* 右侧配置面板 */
+.config-sidebar {
+    width: 30%;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 20px;
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.config-sidebar.active {
+    display: block;
+}
+
+/* 侧边栏样式 */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    color: #495057;
+    font-size: 18px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.config-form .form-group {
+    margin-bottom: 15px;
+}
+
+.config-form label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.config-form .form-control {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.config-form .form-control:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.config-form .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+/* 槽位点击效果 */
+.slot-item {
+    cursor: pointer;
+}
+
+.slot-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.slot-item.selected {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.role-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.role-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.role-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 20px;
+    position: relative;
+}
+
+.role-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.role-stats {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 4px;
+}
+
+.slots-container {
+    padding: 20px;
+}
+
+.slot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.slot-item.assigned {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.slot-item.empty {
+    border-color: #ffc107;
+    background: #fff3cd;
+    border-style: dashed;
+}
+
+.slot-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.slot-number {
+    background: #6c757d;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.slot-item.assigned .slot-number {
+    background: #28a745;
+}
+
+.slot-item.empty .slot-number {
+    background: #ffc107;
+}
+
+.menu-info {
+    flex: 1;
+}
+
+.menu-name {
+    font-weight: 500;
+    color: #495057;
+    margin: 0;
+}
+
+.menu-status {
+    font-size: 12px;
+    color: #6c757d;
+    margin: 2px 0 0 0;
+}
+
+.slot-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.empty-slot-form {
+    display: none;
+    margin-top: 8px;
+    padding: 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 12px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: #495057;
+}
+
+.form-control {
+    width: 100%;
+    padding: 6px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.alert {
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.alert-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.stats-summary {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box;
+}
+
+/* Django管理界面适配 - 确保在不同显示模式下都能拉伸至最大宽度 */
+#changelist .stats-summary {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* 当Django左侧菜单栏显示时的适配 */
+body.sidebar-enabled #changelist .stats-summary,
+body:not(.sidebar-collapsed) #changelist .stats-summary {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* 当Django左侧菜单栏隐藏时的适配 */
+body.sidebar-collapsed #changelist .stats-summary,
+body.sidebar-disabled #changelist .stats-summary {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* 针对Django管理界面的容器适配 */
+#changelist > div:first-child {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* 确保在所有Django管理界面状态下的响应式适配 */
+@media screen and (min-width: 768px) {
+    .stats-summary {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    #changelist .stats-summary {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* 配置侧边栏样式优化 */
+#config-role {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* 当前根目录显示样式 */
+.current-root-info {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.root-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.root-name {
+    font-weight: 500;
+    color: #495057;
+    flex: 1;
+}
+
+.root-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: #6c757d;
+    color: white;
+    margin-left: 10px;
+}
+
+.root-status.active {
+    background: #28a745;
+}
+
+.root-status.inactive {
+    background: #dc3545;
+}
+
+.root-status.pending {
+    background: #ffc107;
+    color: #212529;
+}
+
+/* 双列选择器样式 */
+.selector-container {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    margin-top: 10px;
+}
+
+.selector-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.selector-column h4 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.selector-list {
+    height: 200px !important;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 12px;
+    background: white;
+}
+
+.selector-list option {
+    padding: 4px 8px;
+    border-radius: 2px;
+    margin-bottom: 1px;
+}
+
+.selector-list option:hover {
+    background-color: #e3f2fd;
+}
+
+.selector-list option:selected {
+    background-color: #2196f3 !important;
+    color: white !important;
+}
+
+.selector-controls {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    padding: 0 5px;
+}
+
+.btn-move {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: bold;
+    color: #495057;
+    transition: all 0.2s ease;
+    min-width: 30px;
+}
+
+.btn-move:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #212529;
+}
+
+.btn-move:active {
+    background: #dee2e6;
+    transform: translateY(1px);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="changelist" class="module filtered">
+    <div class="results">
+        <div class="stats-summary">
+            <h2>角色槽位菜单分配概览</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number" id="total-roles">{{ total_roles }}</div>
+                    <div class="stat-label">总角色数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="total-slots">{{ total_slots }}</div>
+                    <div class="stat-label">总槽位数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="assigned-slots">{{ assigned_slots }}</div>
+                    <div class="stat-label">已分配槽位</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" id="available-menus">{{ available_menus }}</div>
+                    <div class="stat-label">可用根菜单</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="alert-container"></div>
+
+        <div class="main-layout">
+            <div class="waterfall-container" id="waterfall-container">
+            {% for role_data in roles_with_slots %}
+            <div class="role-card" data-role="{{ role_data.role_code }}">
+                <div class="role-header">
+                    <h3 class="role-title">
+                        <span>👤</span>
+                        {{ role_data.role_name }}
+                    </h3>
+                    <div class="role-stats">
+                        {{ role_data.assigned_count }}/{{ role_data.total_slots }} 槽位已分配
+                    </div>
+                </div>
+                
+                <div class="slots-container">
+                    {% for slot in role_data.slots %}
+                    <div class="slot-item {% if slot.assignment %}assigned{% else %}empty{% endif %}" 
+                         data-slot="{{ slot.position }}" data-role="{{ role_data.role_code }}"
+                         {% if slot.assignment %}data-menu-id="{{ slot.assignment.root_menu.id }}" data-menu-status="{{ slot.assignment.menu_status }}"{% endif %}
+                         onclick="openSlotConfigFromData(this)">
+                        <div class="slot-info">
+                            <div class="slot-number">{{ slot.position }}</div>
+                            <div class="menu-info">
+                                {% if slot.assignment %}
+                                    <p class="menu-name">{{ slot.assignment.root_menu.name }}</p>
+                                    <p class="menu-status">
+                                        状态: {{ slot.assignment.get_menu_status_display }}
+                                        {% if slot.assignment.is_active %}
+                                            <span style="color: #28a745;">✓ 激活</span>
+                                        {% else %}
+                                            <span style="color: #dc3545;">✗ 未激活</span>
+                                        {% endif %}
+                                    </p>
+                                {% else %}
+                                    <p class="menu-name">空槽位</p>
+                                    <p class="menu-status">点击配置根菜单</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="slot-actions">
+                            {% if slot.assignment %}
+                                <button class="btn-sm btn-primary" onclick="configureLevel2Menus('{{ role_data.role_code }}', '{{ slot.position }}', '{{ slot.assignment.id }}')">
+                                    二级菜单
+                                </button>
+                                <button class="btn-sm btn-warning" onclick="editSlot('{{ role_data.role_code }}', '{{ slot.position }}')">
+                                    编辑
+                                </button>
+                                <button class="btn-sm btn-danger" onclick="removeSlot('{{ role_data.role_code }}', '{{ slot.position }}')">
+                                    移除
+                                </button>
+                            {% else %}
+                                <button class="btn-sm btn-primary" onclick="configureSlot('{{ role_data.role_code }}', '{{ slot.position }}')">
+                                    配置
+                                </button>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- 空槽位配置表单 -->
+                        {% if not slot.assignment %}
+                        <div class="empty-slot-form" id="form-{{ role_data.role_code }}-{{ slot.position }}">
+                            <div class="form-group">
+                                <label>选择根菜单:</label>
+                                <select class="form-control" name="root_menu">
+                                    <option value="">请选择...</option>
+                                    {% for menu in available_root_menus %}
+                                    <option value="{{ menu.id }}">{{ menu.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>菜单状态:</label>
+                                <select class="form-control" name="menu_status">
+                                    <option value="active">激活</option>
+                                    <option value="backup">备用</option>
+                                    <option value="disabled">禁用</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-sm btn-primary" onclick="saveSlotConfig('{{ role_data.role_code }}', '{{ slot.position }}')">
+                                    保存
+                                </button>
+                                <button class="btn-sm btn-warning" onclick="cancelSlotConfig('{{ role_data.role_code }}', '{{ slot.position }}')">
+                                    取消
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            </div>
+            
+            <!-- 右侧配置面板 -->
+            <div class="config-sidebar" id="config-sidebar">
+                <div class="sidebar-header">
+                    <h3 id="sidebar-title">槽位配置</h3>
+                    <button class="close-btn" onclick="closeSidebar()">✕</button>
+                </div>
+                
+                <div class="sidebar-content" id="sidebar-content">
+                    <div class="config-form">
+                        <div class="form-group">
+                            <label>角色:</label>
+                            <input type="text" id="config-role" class="form-control" readonly disabled>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>当前根目录:</label>
+                            <div id="current-root-directory" class="current-root-info">
+                                <div class="root-item" id="root-display">
+                                    <span class="root-name">未配置</span>
+                                    <span class="root-status">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>配置一级目录:</label>
+                            <div class="selector-container">
+                                <div class="selector-column">
+                                    <h4>可用菜单</h4>
+                                    <select id="config-menu-available" class="form-control selector-list" multiple size="10" ondblclick="moveToSelected()">
+                                        <!-- 动态加载所有一级目录 -->
+                                    </select>
+                                </div>
+                                <div class="selector-controls">
+                                    <button type="button" class="btn-move" onclick="moveToSelected()" title="添加到已选择">&gt;</button>
+                                    <button type="button" class="btn-move" onclick="moveToAvailable()" title="移除选择">&lt;</button>
+                                    <button type="button" class="btn-move" onclick="moveAllToSelected()" title="全部添加">&gt;&gt;</button>
+                                    <button type="button" class="btn-move" onclick="moveAllToAvailable()" title="全部移除">&lt;&lt;</button>
+                                </div>
+                                <div class="selector-column">
+                                    <h4>已选择菜单</h4>
+                                    <select id="config-menu-selected" class="form-control selector-list" multiple size="10">
+                                        <!-- 动态加载该角色已设定的一级目录 -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn-primary" onclick="saveSidebarConfig()">保存配置</button>
+                            <button class="btn-secondary" onclick="closeSidebar()">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 全局变量
+let isLoading = false;
+let currentSlotConfig = null;
+
+// 强制移除loading状态
+function forceRemoveLoading() {
+    document.body.classList.remove('loading');
+    console.log('强制移除loading类');
+}
+
+// 显示提示信息
+function showAlert(message, type = 'success') {
+    const container = document.getElementById('alert-container');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
+    container.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+
+// 配置槽位
+function configureSlot(role, slotPosition) {
+    const form = document.getElementById(`form-${role}-${slotPosition}`);
+    form.style.display = 'block';
+}
+
+// 取消配置
+function cancelSlotConfig(role, slotPosition) {
+    const form = document.getElementById(`form-${role}-${slotPosition}`);
+    form.style.display = 'none';
+    // 重置表单
+    form.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+}
+
+// 保存槽位配置
+function saveSlotConfig(role, slotPosition) {
+    if (isLoading) return;
+    
+    const form = document.getElementById(`form-${role}-${slotPosition}`);
+    const rootMenuSelect = form.querySelector('select[name="root_menu"]');
+    const statusSelect = form.querySelector('select[name="menu_status"]');
+    
+    const rootMenuId = rootMenuSelect.value;
+    const menuStatus = statusSelect.value;
+    
+    if (!rootMenuId) {
+        showAlert('请选择根菜单', 'danger');
+        return;
+    }
+    
+    isLoading = true;
+    document.body.classList.add('loading');
+    
+    // 发送AJAX请求
+    fetch('{% url "admin:permissions_roleslotmenuassignment_configure" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams({
+            'role': role,
+            'slot_position': slotPosition,
+            'root_menu': rootMenuId,
+            'menu_status': menuStatus
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`成功为角色 ${role} 的槽位 ${slotPosition} 配置菜单`);
+            // 刷新页面或更新UI
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert(data.error || '配置失败', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('网络错误，请重试', 'danger');
+    })
+    .finally(() => {
+        isLoading = false;
+        document.body.classList.remove('loading');
+    });
+}
+
+// 编辑槽位
+function editSlot(role, slotPosition) {
+    // 跳转到编辑页面
+    const editUrl = '{% url "admin:permissions_roleslotmenuassignment_changelist" %}' + '?role=' + role + '&slot_position=' + slotPosition;
+    window.location.href = editUrl;
+}
+
+// 移除槽位
+function removeSlot(role, slotPosition) {
+    if (!confirm('确定要移除此槽位的菜单配置吗？')) {
+        return;
+    }
+    
+    if (isLoading) return;
+    
+    isLoading = true;
+    document.body.classList.add('loading');
+    
+    // 这里需要实现移除逻辑的API
+    fetch('{% url "admin:permissions_roleslotmenuassignment_remove" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams({
+            'role': role,
+            'slot_position': slotPosition
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`成功移除角色 ${role} 的槽位 ${slotPosition} 配置`);
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert(data.error || '移除失败', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('网络错误，请重试', 'danger');
+    })
+    .finally(() => {
+        isLoading = false;
+        document.body.classList.remove('loading');
+    });
+}
+
+// 从data属性打开槽位配置侧边栏
+function openSlotConfigFromData(element) {
+    const role = element.getAttribute('data-role');
+    const slotPosition = element.getAttribute('data-slot');
+    const currentMenuId = element.getAttribute('data-menu-id');
+    const currentStatus = element.getAttribute('data-menu-status');
+    
+    openSlotConfig(role, slotPosition, currentMenuId, currentStatus);
+}
+
+// 打开槽位配置侧边栏
+function openSlotConfig(role, slotPosition, currentMenuId, currentStatus) {
+    const sidebar = document.getElementById('config-sidebar');
+    const mainLayout = document.querySelector('.main-layout');
+    
+    // 移除所有槽位的选中状态
+    document.querySelectorAll('.slot-item.selected').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // 添加当前槽位的选中状态
+    const currentSlot = document.querySelector(`[data-role="${role}"][data-slot="${slotPosition}"]`);
+    if (currentSlot) {
+        currentSlot.classList.add('selected');
+    }
+    
+    // 设置当前配置信息（移除槽位概念）
+    currentSlotConfig = { role, slot_position: slotPosition };
+    
+    // 填充表单
+    document.getElementById('config-role').value = role;
+    
+    // 加载并显示当前根目录信息
+    loadCurrentRootDirectory(role, slotPosition);
+    
+    // 根据角色动态加载一级目录
+    loadMenusByRole(role, currentMenuId);
+    
+    // 显示侧边栏
+    mainLayout.classList.add('with-sidebar');
+    sidebar.classList.add('active');
+}
+
+// 关闭侧边栏
+function closeSidebar() {
+    const sidebar = document.getElementById('config-sidebar');
+    const mainLayout = document.querySelector('.main-layout');
+    
+    // 移除所有槽位的选中状态
+    document.querySelectorAll('.slot-item.selected').forEach(item => {
+        item.classList.remove('selected');
+    });
+    
+    // 隐藏侧边栏
+    mainLayout.classList.remove('with-sidebar');
+    sidebar.classList.remove('active');
+    
+    // 清空当前配置
+    currentSlotConfig = null;
+}
+
+// 根据角色加载一级目录到双列选择器
+function loadMenusByRole(role, currentMenuId) {
+    const availableSelect = document.getElementById('config-menu-available');
+    const selectedSelect = document.getElementById('config-menu-selected');
+    
+    // 清空现有选项
+    availableSelect.innerHTML = '<option value="">加载中...</option>';
+    selectedSelect.innerHTML = '';
+    
+    // 同时获取所有一级目录和该角色已选择的目录
+    Promise.all([
+        // 获取所有一级目录
+        fetch(`/admin/permissions/roleslotmenuassignment/configure-menu-by-role-slot/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }),
+        // 获取该角色已选择的目录
+        fetch(`/admin/permissions/roleslotmenuassignment/get-selected-menus/?role=${encodeURIComponent(role)}&slot_position=${encodeURIComponent(currentSlotConfig.slot_position || '1')}&format=json`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([allMenusData, selectedMenusData]) => {
+        // 清空选项
+        availableSelect.innerHTML = '';
+        selectedSelect.innerHTML = '';
+        
+        const allMenus = allMenusData.level1_menus || [];
+        const selectedMenuIds = (selectedMenusData.selected_menus || []).map(m => m.id.toString());
+        
+        // 填充可用菜单列表（排除已选择的）
+        allMenus.forEach(menu => {
+            if (!selectedMenuIds.includes(menu.id.toString())) {
+                const option = document.createElement('option');
+                option.value = menu.id;
+                option.textContent = menu.name;
+                availableSelect.appendChild(option);
+            }
+        });
+        
+        // 填充已选择菜单列表
+        (selectedMenusData.selected_menus || []).forEach(menu => {
+            const option = document.createElement('option');
+            option.value = menu.id;
+            option.textContent = menu.name;
+            selectedSelect.appendChild(option);
+        });
+        
+        if (allMenus.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '暂无可用的一级目录';
+            option.disabled = true;
+            availableSelect.appendChild(option);
+        }
+    })
+    .catch(error => {
+        console.error('加载一级菜单失败:', error);
+        availableSelect.innerHTML = '<option value="">加载失败，请重试</option>';
+    });
+}
+
+// 双列选择器操作函数
+function moveToSelected() {
+    console.log('moveToSelected 函数被调用');
+    const availableSelect = document.getElementById('config-menu-available');
+    const selectedSelect = document.getElementById('config-menu-selected');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    const selectedOptions = Array.from(availableSelect.selectedOptions);
+    console.log('选中的选项数量:', selectedOptions.length);
+    
+    selectedOptions.forEach(option => {
+        selectedSelect.appendChild(option.cloneNode(true));
+        option.remove();
+    });
+}
+
+function moveToAvailable() {
+    console.log('moveToAvailable 函数被调用');
+    const availableSelect = document.getElementById('config-menu-available');
+    const selectedSelect = document.getElementById('config-menu-selected');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    const selectedOptions = Array.from(selectedSelect.selectedOptions);
+    console.log('选中的选项数量:', selectedOptions.length);
+    
+    selectedOptions.forEach(option => {
+        availableSelect.appendChild(option.cloneNode(true));
+        option.remove();
+    });
+}
+
+function moveAllToSelected() {
+    console.log('moveAllToSelected 函数被调用');
+    const availableSelect = document.getElementById('config-menu-available');
+    const selectedSelect = document.getElementById('config-menu-selected');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    console.log('可用选项数量:', availableSelect.options.length);
+    
+    Array.from(availableSelect.options).forEach(option => {
+        if (option.value) {
+            selectedSelect.appendChild(option.cloneNode(true));
+        }
+    });
+    availableSelect.innerHTML = '';
+}
+
+function moveAllToAvailable() {
+    console.log('moveAllToAvailable 函数被调用');
+    const availableSelect = document.getElementById('config-menu-available');
+    const selectedSelect = document.getElementById('config-menu-selected');
+    
+    if (!availableSelect || !selectedSelect) {
+        console.error('找不到选择器元素');
+        return;
+    }
+    
+    console.log('已选选项数量:', selectedSelect.options.length);
+    
+    Array.from(selectedSelect.options).forEach(option => {
+        if (option.value) {
+            availableSelect.appendChild(option.cloneNode(true));
+        }
+    });
+    selectedSelect.innerHTML = '';
+}
+
+// 加载当前根目录信息
+function loadCurrentRootDirectory(role, slotPosition) {
+    const rootDisplay = document.getElementById('root-display');
+    const rootName = rootDisplay.querySelector('.root-name');
+    const rootStatus = rootDisplay.querySelector('.root-status');
+    
+    // 重置显示
+    rootName.textContent = '加载中...';
+    rootStatus.textContent = '-';
+    rootStatus.className = 'root-status';
+    
+    // 从当前选中的菜单项获取根目录信息
+    const selectedSlotItem = document.querySelector(`[data-role="${role}"][data-slot="${slotPosition}"]`);
+    
+    if (selectedSlotItem && selectedSlotItem.classList.contains('assigned')) {
+        // 从slot-item的data属性和内容中获取菜单信息
+        const menuNameElement = selectedSlotItem.querySelector('.menu-name');
+        const menuStatusElement = selectedSlotItem.querySelector('.menu-status');
+        
+        if (menuNameElement && menuStatusElement) {
+            rootName.textContent = menuNameElement.textContent.trim();
+            
+            // 解析状态信息
+            const statusText = menuStatusElement.textContent;
+            const isActive = statusText.includes('✓ 激活');
+            
+            if (isActive) {
+                rootStatus.textContent = '激活';
+                rootStatus.classList.add('active');
+            } else {
+                rootStatus.textContent = '未激活';
+                rootStatus.classList.add('inactive');
+            }
+        } else {
+            rootName.textContent = '数据获取失败';
+            rootStatus.textContent = '错误';
+        }
+    } else {
+        rootName.textContent = '未配置';
+        rootStatus.textContent = '-';
+    }
+}
+
+// 保存侧边栏配置
+function saveSidebarConfig() {
+    if (!currentSlotConfig || isLoading) return;
+    
+    const selectedSelect = document.getElementById('config-menu-selected');
+    
+    // 获取所有已选择的菜单ID
+    const selectedMenuIds = Array.from(selectedSelect.options).map(option => option.value).filter(id => id);
+    
+    isLoading = true;
+    document.body.classList.add('loading');
+    
+    // 发送AJAX请求保存角色的一级菜单配置
+    fetch('{% url "admin:permissions_roleslotmenuassignment_configure" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams({
+            'role': currentSlotConfig.role,
+            'slot_position': currentSlotConfig.slot_position || '1',
+            'selected_level1_menus': JSON.stringify(selectedMenuIds),
+            'action': 'bulk_update'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`成功为角色 ${currentSlotConfig.role} 配置一级菜单`);
+            closeSidebar();
+            // 刷新页面或更新UI
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showAlert(data.error || '一级菜单配置失败', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('网络错误，请重试', 'danger');
+    })
+    .finally(() => {
+        isLoading = false;
+        document.body.classList.remove('loading');
+    });
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    // 强制移除loading状态，确保按钮可以点击
+    document.body.classList.remove('loading');
+    console.log('页面加载完成，移除loading状态');
+    
+    // 添加CSRF token到页面
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfInput);
+    }
+    
+    // 检查URL参数，如果存在role和slot_position，自动打开双列选择器
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role');
+    const slotPosition = urlParams.get('slot_position');
+    
+    if (role && slotPosition) {
+        // 延迟一下确保页面完全加载
+        setTimeout(() => {
+            openSlotConfig(role, parseInt(slotPosition));
+        }, 100);
+    }
+    
+    // 点击侧边栏外部区域关闭侧边栏
+    document.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('config-sidebar');
+        const mainLayout = document.querySelector('.main-layout');
+        
+        if (sidebar.classList.contains('active') && 
+            !sidebar.contains(e.target) && 
+            !e.target.closest('.slot-item')) {
+            closeSidebar();
+        }
+    });
+});
+
+// 配置二级菜单函数
+function configureLevel2Menus(role, slotPosition, assignmentId) {
+    // 跳转到二级菜单分配页面，传递assignment_id参数
+    const url = `/admin/permissions/roleslotlevel2menuassignment/?assignment_id=${assignmentId}&role=${role}&slot_position=${slotPosition}`;
+    window.location.href = url;
+}
+</script>
+{% endblock %}

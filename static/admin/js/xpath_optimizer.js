@@ -10,20 +10,23 @@
             this.selectors = {
                 // CustomUser表单的优化选择器
                 customUserForm: {
-                    // 原始XPath: //*[@id="customuser_form"]/div/fieldset/div[4]/div/div/text()
+                    // 更新的XPath: /html/body/div/div[2]/div/div[1]/div/form/div/fieldset/div[1]/div/div/select
                     // 优化后的多重选择器策略
                     permissions: {
                         // 策略1: 基于fieldset标题定位
-                        byFieldsetTitle: '//fieldset[contains(.//h2, "权限")]//div[@class="form-row"]',
+                        byFieldsetTitle: '//fieldset[contains(.//h2, "权限")]//div[@class="form-row"]//select',
                         
                         // 策略2: 基于字段名定位
-                        byFieldName: '//div[contains(@class, "field-is_active") or contains(@class, "field-is_staff") or contains(@class, "field-is_superuser")]',
+                        byFieldName: '//div[contains(@class, "field-is_active") or contains(@class, "field-is_staff") or contains(@class, "field-is_superuser")]//select',
                         
                         // 策略3: 基于表单ID和相对位置
-                        byFormStructure: '#customuser_form fieldset:nth-child(4) .form-row',
+                        byFormStructure: '#customuser_form fieldset:nth-child(1) .form-row select',
                         
                         // 策略4: 更稳定的CSS选择器
-                        byCSS: '#customuser_form .fieldset:has(h2:contains("权限")) .form-row'
+                        byCSS: '#customuser_form .fieldset:has(h2:contains("权限")) .form-row select',
+                        
+                        // 策略5: 新的XPath路径
+                        byNewXPath: '/html/body/div/div[2]/div/div[1]/div/form/div/fieldset/div[1]/div/div/select'
                     }
                 }
             };
@@ -49,6 +52,7 @@
          */
         findElementWithFallback(selectors) {
             const strategies = [
+                'byNewXPath',
                 'byFieldName',
                 'byFieldsetTitle', 
                 'byFormStructure',
@@ -63,8 +67,18 @@
                         if (strategy === 'byFormStructure' || strategy === 'byCSS') {
                             // CSS选择器
                             element = document.querySelector(selectors[strategy]);
+                        } else if (strategy === 'byNewXPath') {
+                            // 新的XPath选择器 - 使用绝对路径
+                            const result = document.evaluate(
+                                selectors[strategy],
+                                document,
+                                null,
+                                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                                null
+                            );
+                            element = result.singleNodeValue;
                         } else {
-                            // XPath选择器
+                            // 其他XPath选择器
                             const result = document.evaluate(
                                 selectors[strategy],
                                 document,
@@ -159,8 +173,13 @@
             };
             
             // 分析原始XPath的问题
-            if (originalXPath.includes('/div[4]/')) {
-                suggestions.issues.push('使用了硬编码的位置索引 [4]，容易因DOM结构变化而失效');
+            if (originalXPath.includes('/div[2]/div/div[1]/input')) {
+                suggestions.issues.push('旧的input元素路径已过时，应更新为select元素');
+                suggestions.recommendations.push('使用新的select元素路径: /html/body/div/div[2]/div/div[1]/div/form/div/fieldset/div[1]/div/div/select');
+            }
+            
+            if (originalXPath.includes('/div[2]/') || originalXPath.includes('/div[1]/')) {
+                suggestions.issues.push('使用了硬编码的位置索引，容易因DOM结构变化而失效');
                 suggestions.recommendations.push('使用基于内容或属性的定位方式');
             }
             
