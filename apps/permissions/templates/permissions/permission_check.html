@@ -1,0 +1,8 @@
+{% comment %}
+权限检查模板
+用于 permission_required 包含标签
+{% endcomment %}
+
+{% if has_permission %}
+    {{ content }}
+{% endif %}

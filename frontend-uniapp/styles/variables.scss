@@ -1,0 +1,1219 @@
+// 颜色变量
+$primary-color: #007aff;
+$secondary-color: #6c757d;
+$success-color: #28a745;
+$warning-color: #ffc107;
+$danger-color: #dc3545;
+$info-color: #17a2b8;
+$light-color: #f8f9fa;
+$dark-color: #343a40;
+
+// 背景颜色
+$bg-color-base: #f8f9fa;
+$bg-color-white: #ffffff;
+$bg-color-gray: #f5f5f5;
+$bg-color-dark: #2c3e50;
+
+// 文本颜色
+$text-color-base: #333333;
+$text-color-secondary: #666666;
+$text-color-muted: #999999;
+$text-color-light: #cccccc;
+$text-color-white: #ffffff;
+$text-color-primary: #007aff;
+
+// 边框颜色
+$border-color-base: #e5e5e5;
+$border-color-light: #f0f0f0;
+$border-color-dark: #d0d0d0;
+
+// 字体大小
+$font-size-xs: 20rpx;
+$font-size-sm: 24rpx;
+$font-size-base: 28rpx;
+$font-size-lg: 32rpx;
+$font-size-xl: 36rpx;
+$font-size-xxl: 40rpx;
+
+// 字体粗细
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-bold: 600;
+$font-weight-bolder: 700;
+
+// 行高
+$line-height-base: 1.5;
+$line-height-sm: 1.25;
+$line-height-lg: 1.75;
+
+// 间距
+$spacing-xs: 10rpx;
+$spacing-sm: 15rpx;
+$spacing-base: 20rpx;
+$spacing-lg: 30rpx;
+$spacing-xl: 40rpx;
+$spacing-xxl: 50rpx;
+
+// 圆角
+$border-radius-xs: 4rpx;
+$border-radius-sm: 8rpx;
+$border-radius-base: 12rpx;
+$border-radius-lg: 16rpx;
+$border-radius-xl: 20rpx;
+$border-radius-circle: 50%;
+
+// 阴影
+$box-shadow-sm: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+$box-shadow-base: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+$box-shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.15);
+$box-shadow-xl: 0 12rpx 36rpx rgba(0, 0, 0, 0.2);
+
+// 动画时间
+$transition-base: 0.3s;
+$transition-fast: 0.2s;
+$transition-slow: 0.5s;
+
+// Z-index层级
+$z-index-dropdown: 1000;
+$z-index-sticky: 1020;
+$z-index-fixed: 1030;
+$z-index-modal-backdrop: 1040;
+$z-index-modal: 1050;
+$z-index-popover: 1060;
+$z-index-tooltip: 1070;
+$z-index-toast: 1080;
+
+// 屏幕断点
+$screen-xs: 480rpx;
+$screen-sm: 750rpx;
+$screen-md: 1024rpx;
+$screen-lg: 1200rpx;
+$screen-xl: 1440rpx;
+
+// 容器最大宽度
+$container-max-width: 750rpx;
+
+// 导航栏高度
+$navbar-height: 88rpx;
+$tabbar-height: 100rpx;
+
+// 状态栏高度（动态获取）
+$status-bar-height: var(--status-bar-height);
+
+// 安全区域
+$safe-area-top: var(--window-top);
+$safe-area-bottom: var(--window-bottom);
+$safe-area-left: var(--window-left);
+$safe-area-right: var(--window-right);
+
+// 主题色彩
+$theme-colors: (
+  primary: $primary-color,
+  secondary: $secondary-color,
+  success: $success-color,
+  warning: $warning-color,
+  danger: $danger-color,
+  info: $info-color,
+  light: $light-color,
+  dark: $dark-color
+);
+
+// 渐变色
+$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+$gradient-warning: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+$gradient-danger: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+
+// 卡片样式
+$card-bg: $bg-color-white;
+$card-border-radius: $border-radius-base;
+$card-shadow: $box-shadow-base;
+$card-padding: $spacing-lg;
+
+// 按钮样式
+$btn-height: 80rpx;
+$btn-padding-horizontal: $spacing-lg;
+$btn-border-radius: $border-radius-sm;
+$btn-font-size: $font-size-base;
+$btn-font-weight: $font-weight-medium;
+
+// 输入框样式
+$input-height: 80rpx;
+$input-padding: $spacing-base;
+$input-border-radius: $border-radius-sm;
+$input-border-color: $border-color-base;
+$input-focus-border-color: $primary-color;
+$input-bg: $bg-color-white;
+$input-font-size: $font-size-base;
+
+// 列表样式
+$list-item-height: 100rpx;
+$list-item-padding: $spacing-base;
+$list-item-border-color: $border-color-light;
+
+// 头像尺寸
+$avatar-size-xs: 60rpx;
+$avatar-size-sm: 80rpx;
+$avatar-size-base: 100rpx;
+$avatar-size-lg: 120rpx;
+$avatar-size-xl: 160rpx;
+
+// 图标尺寸
+$icon-size-xs: 32rpx;
+$icon-size-sm: 40rpx;
+$icon-size-base: 48rpx;
+$icon-size-lg: 56rpx;
+$icon-size-xl: 64rpx;
+
+// 加载动画
+$loading-spinner-size: 60rpx;
+$loading-spinner-border-width: 4rpx;
+$loading-spinner-color: $primary-color;
+
+// 遮罩层
+$overlay-bg: rgba(0, 0, 0, 0.5);
+$modal-bg: $bg-color-white;
+$modal-border-radius: $border-radius-lg;
+$modal-shadow: $box-shadow-xl;
+
+// 消息提示
+$toast-bg: rgba(0, 0, 0, 0.8);
+$toast-color: $text-color-white;
+$toast-border-radius: $border-radius-base;
+$toast-padding: $spacing-base $spacing-lg;
+
+// 徽章
+$badge-height: 32rpx;
+$badge-padding: 0 12rpx;
+$badge-border-radius: $border-radius-circle;
+$badge-font-size: $font-size-xs;
+$badge-font-weight: $font-weight-medium;
+
+// 分割线
+$divider-color: $border-color-light;
+$divider-thickness: 1rpx;
+
+// 空状态
+$empty-icon-size: 200rpx;
+$empty-text-color: $text-color-muted;
+$empty-text-size: $font-size-base;
+
+// 骨架屏
+$skeleton-bg: #f2f2f2;
+$skeleton-shimmer: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+
+// 下拉刷新
+$refresh-height: 120rpx;
+$refresh-icon-size: $icon-size-lg;
+$refresh-text-size: $font-size-sm;
+$refresh-text-color: $text-color-secondary;
+
+// 上拉加载
+$loadmore-height: 100rpx;
+$loadmore-text-size: $font-size-sm;
+$loadmore-text-color: $text-color-muted;
+
+// 搜索框
+$search-height: 72rpx;
+$search-bg: #f5f5f5;
+$search-border-radius: $border-radius-xl;
+$search-padding: 0 $spacing-base;
+$search-icon-size: $icon-size-sm;
+$search-placeholder-color: $text-color-muted;
+
+// 标签
+$tag-height: 56rpx;
+$tag-padding: 0 $spacing-base;
+$tag-border-radius: $border-radius-base;
+$tag-font-size: $font-size-sm;
+$tag-font-weight: $font-weight-normal;
+
+// 步骤条
+$steps-icon-size: 60rpx;
+$steps-line-height: 2rpx;
+$steps-text-size: $font-size-sm;
+$steps-active-color: $primary-color;
+$steps-inactive-color: $text-color-muted;
+
+// 进度条
+$progress-height: 8rpx;
+$progress-bg: $bg-color-gray;
+$progress-color: $primary-color;
+$progress-border-radius: $border-radius-xs;
+
+// 评分
+$rate-icon-size: $icon-size-base;
+$rate-active-color: #ffca3e;
+$rate-inactive-color: $border-color-base;
+$rate-spacing: 8rpx;
+
+// 时间轴
+$timeline-line-width: 2rpx;
+$timeline-line-color: $border-color-base;
+$timeline-dot-size: 20rpx;
+$timeline-dot-color: $primary-color;
+$timeline-content-padding: $spacing-base;
+
+// 折叠面板
+$collapse-header-height: 100rpx;
+$collapse-header-padding: $spacing-base $spacing-lg;
+$collapse-header-bg: $bg-color-white;
+$collapse-content-padding: $spacing-lg;
+$collapse-border-color: $border-color-light;
+
+// 抽屉
+$drawer-bg: $bg-color-white;
+$drawer-shadow: $box-shadow-xl;
+$drawer-border-radius: $border-radius-lg;
+
+// 气泡
+$popover-bg: $bg-color-white;
+$popover-shadow: $box-shadow-lg;
+$popover-border-radius: $border-radius-base;
+$popover-arrow-size: 16rpx;
+
+// 日历
+$calendar-cell-size: 80rpx;
+$calendar-cell-border-radius: $border-radius-sm;
+$calendar-today-color: $primary-color;
+$calendar-selected-bg: $primary-color;
+$calendar-selected-color: $text-color-white;
+
+// 选择器
+$picker-item-height: 88rpx;
+$picker-item-font-size: $font-size-lg;
+$picker-mask-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4));
+
+// 滑块
+$slider-height: 4rpx;
+$slider-bg: $bg-color-gray;
+$slider-active-bg: $primary-color;
+$slider-thumb-size: 40rpx;
+$slider-thumb-bg: $bg-color-white;
+$slider-thumb-shadow: $box-shadow-base;
+
+// 开关
+$switch-width: 100rpx;
+$switch-height: 60rpx;
+$switch-border-radius: $border-radius-circle;
+$switch-bg: $bg-color-gray;
+$switch-active-bg: $primary-color;
+$switch-thumb-size: 56rpx;
+$switch-thumb-bg: $bg-color-white;
+
+// 复选框
+$checkbox-size: 40rpx;
+$checkbox-border-radius: $border-radius-xs;
+$checkbox-border-color: $border-color-base;
+$checkbox-active-bg: $primary-color;
+$checkbox-active-border-color: $primary-color;
+$checkbox-check-color: $text-color-white;
+
+// 单选框
+$radio-size: 40rpx;
+$radio-border-color: $border-color-base;
+$radio-active-color: $primary-color;
+$radio-dot-size: 20rpx;
+
+// 输入框组
+$input-group-addon-bg: $bg-color-gray;
+$input-group-addon-border-color: $border-color-base;
+$input-group-addon-color: $text-color-secondary;
+
+// 表格
+$table-border-color: $border-color-light;
+$table-header-bg: $bg-color-gray;
+$table-header-color: $text-color-base;
+$table-cell-padding: $spacing-base;
+$table-stripe-bg: #fafafa;
+
+// 分页
+$pagination-item-size: 64rpx;
+$pagination-item-border-radius: $border-radius-sm;
+$pagination-item-border-color: $border-color-base;
+$pagination-active-bg: $primary-color;
+$pagination-active-color: $text-color-white;
+
+// 面包屑
+$breadcrumb-separator-color: $text-color-muted;
+$breadcrumb-link-color: $text-color-secondary;
+$breadcrumb-active-color: $text-color-base;
+
+// 返回顶部
+$backtop-size: 80rpx;
+$backtop-bg: rgba(0, 0, 0, 0.6);
+$backtop-color: $text-color-white;
+$backtop-border-radius: $border-radius-circle;
+$backtop-shadow: $box-shadow-base;
+
+// 悬浮按钮
+$fab-size: 112rpx;
+$fab-bg: $primary-color;
+$fab-color: $text-color-white;
+$fab-border-radius: $border-radius-circle;
+$fab-shadow: $box-shadow-lg;
+
+// 通知栏
+$notice-height: 80rpx;
+$notice-padding: 0 $spacing-lg;
+$notice-bg: #fffbe6;
+$notice-color: #8c6e00;
+$notice-border-color: #ffe58f;
+
+// 结果页
+$result-icon-size: 200rpx;
+$result-title-size: $font-size-xl;
+$result-title-color: $text-color-base;
+$result-desc-size: $font-size-base;
+$result-desc-color: $text-color-secondary;
+
+// 异常页
+$exception-icon-size: 300rpx;
+$exception-title-size: $font-size-xxl;
+$exception-desc-size: $font-size-lg;
+
+// 加载更多
+$load-more-height: 100rpx;
+$load-more-text-size: $font-size-sm;
+$load-more-text-color: $text-color-muted;
+$load-more-spinner-size: 32rpx;
+
+// 下拉菜单
+$dropdown-bg: $bg-color-white;
+$dropdown-shadow: $box-shadow-lg;
+$dropdown-border-radius: $border-radius-base;
+$dropdown-item-height: 88rpx;
+$dropdown-item-padding: 0 $spacing-lg;
+$dropdown-item-hover-bg: $bg-color-gray;
+
+// 工具提示
+$tooltip-bg: rgba(0, 0, 0, 0.8);
+$tooltip-color: $text-color-white;
+$tooltip-border-radius: $border-radius-sm;
+$tooltip-padding: $spacing-sm $spacing-base;
+$tooltip-font-size: $font-size-sm;
+$tooltip-arrow-size: 12rpx;
+
+// 图片预览
+$image-preview-bg: rgba(0, 0, 0, 0.9);
+$image-preview-close-size: 80rpx;
+$image-preview-close-color: $text-color-white;
+
+// 视频播放器
+$video-control-bg: rgba(0, 0, 0, 0.5);
+$video-control-color: $text-color-white;
+$video-progress-height: 6rpx;
+$video-progress-bg: rgba(255, 255, 255, 0.3);
+$video-progress-active-bg: $primary-color;
+
+// 音频播放器
+$audio-control-bg: $bg-color-white;
+$audio-control-shadow: $box-shadow-base;
+$audio-control-border-radius: $border-radius-lg;
+$audio-progress-height: 4rpx;
+
+// 地图
+$map-control-bg: $bg-color-white;
+$map-control-shadow: $box-shadow-base;
+$map-control-border-radius: $border-radius-base;
+$map-marker-size: 60rpx;
+
+// 二维码
+$qrcode-bg: $bg-color-white;
+$qrcode-border-radius: $border-radius-base;
+$qrcode-padding: $spacing-lg;
+
+// 条形码
+$barcode-bg: $bg-color-white;
+$barcode-border-radius: $border-radius-base;
+$barcode-padding: $spacing-lg;
+
+// 签名
+$signature-bg: $bg-color-white;
+$signature-border: 2rpx dashed $border-color-base;
+$signature-border-radius: $border-radius-base;
+$signature-min-height: 400rpx;
+
+// 画板
+$canvas-bg: $bg-color-white;
+$canvas-border: 1rpx solid $border-color-base;
+$canvas-border-radius: $border-radius-base;
+
+// 富文本编辑器
+$editor-border: 1rpx solid $border-color-base;
+$editor-border-radius: $border-radius-base;
+$editor-toolbar-bg: $bg-color-gray;
+$editor-toolbar-border-color: $border-color-base;
+
+// 代码高亮
+$code-bg: #f6f8fa;
+$code-border-radius: $border-radius-sm;
+$code-padding: $spacing-base;
+$code-font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+$code-font-size: $font-size-sm;
+
+// 数字输入框
+$number-input-button-size: 60rpx;
+$number-input-button-bg: $bg-color-gray;
+$number-input-button-color: $text-color-base;
+$number-input-button-border-radius: $border-radius-sm;
+
+// 颜色选择器
+$color-picker-item-size: 60rpx;
+$color-picker-item-border-radius: $border-radius-circle;
+$color-picker-item-border: 2rpx solid $bg-color-white;
+$color-picker-item-shadow: $box-shadow-sm;
+
+// 文件上传
+$upload-area-border: 2rpx dashed $border-color-base;
+$upload-area-border-radius: $border-radius-base;
+$upload-area-bg: $bg-color-gray;
+$upload-area-hover-border-color: $primary-color;
+$upload-area-hover-bg: rgba(0, 122, 255, 0.05);
+
+// 图片裁剪
+$cropper-mask-bg: rgba(0, 0, 0, 0.5);
+$cropper-guide-color: rgba(255, 255, 255, 0.3);
+$cropper-handle-size: 20rpx;
+$cropper-handle-bg: $primary-color;
+
+// 水印
+$watermark-opacity: 0.1;
+$watermark-color: $text-color-muted;
+$watermark-font-size: $font-size-base;
+$watermark-rotate: -20deg;
+
+// 骨架屏动画
+$skeleton-animation-duration: 1.5s;
+$skeleton-shimmer-color: rgba(255, 255, 255, 0.3);
+
+// 虚拟列表
+$virtual-list-item-height: 100rpx;
+$virtual-list-buffer-size: 5;
+
+// 瀑布流
+$waterfall-column-gap: $spacing-base;
+$waterfall-row-gap: $spacing-base;
+
+// 时间选择器
+$time-picker-item-height: 88rpx;
+$time-picker-item-font-size: $font-size-lg;
+$time-picker-selected-bg: rgba(0, 122, 255, 0.1);
+$time-picker-selected-color: $primary-color;
+
+// 日期选择器
+$date-picker-header-height: 100rpx;
+$date-picker-header-bg: $primary-color;
+$date-picker-header-color: $text-color-white;
+$date-picker-cell-size: 80rpx;
+$date-picker-today-color: $primary-color;
+$date-picker-selected-bg: $primary-color;
+$date-picker-selected-color: $text-color-white;
+
+// 城市选择器
+$city-picker-index-width: 60rpx;
+$city-picker-index-bg: $bg-color-gray;
+$city-picker-index-color: $text-color-secondary;
+$city-picker-index-active-color: $primary-color;
+
+// 省市区选择器
+$region-picker-item-height: 88rpx;
+$region-picker-item-padding: 0 $spacing-lg;
+$region-picker-selected-bg: rgba(0, 122, 255, 0.1);
+$region-picker-selected-color: $primary-color;
+
+// 键盘
+$keyboard-bg: $bg-color-gray;
+$keyboard-key-bg: $bg-color-white;
+$keyboard-key-active-bg: $border-color-base;
+$keyboard-key-border-radius: $border-radius-sm;
+$keyboard-key-shadow: $box-shadow-sm;
+
+// 密码输入框
+$password-input-dot-size: 20rpx;
+$password-input-dot-color: $text-color-base;
+$password-input-border-color: $border-color-base;
+$password-input-active-border-color: $primary-color;
+
+// 验证码输入框
+$code-input-item-size: 80rpx;
+$code-input-item-border-radius: $border-radius-sm;
+$code-input-item-border-color: $border-color-base;
+$code-input-item-active-border-color: $primary-color;
+$code-input-item-bg: $bg-color-white;
+
+// 搜索历史
+$search-history-item-height: 72rpx;
+$search-history-item-bg: $bg-color-gray;
+$search-history-item-border-radius: $border-radius-xl;
+$search-history-item-padding: 0 $spacing-base;
+$search-history-item-margin: $spacing-xs;
+
+// 热门搜索
+$hot-search-item-height: 64rpx;
+$hot-search-item-bg: $bg-color-white;
+$hot-search-item-border: 1rpx solid $border-color-base;
+$hot-search-item-border-radius: $border-radius-base;
+$hot-search-item-padding: 0 $spacing-base;
+$hot-search-item-margin: $spacing-xs;
+
+// 筛选器
+$filter-header-height: 88rpx;
+$filter-header-bg: $bg-color-white;
+$filter-header-border-color: $border-color-light;
+$filter-item-height: 80rpx;
+$filter-item-padding: 0 $spacing-lg;
+$filter-item-active-bg: rgba(0, 122, 255, 0.1);
+$filter-item-active-color: $primary-color;
+
+// 排序
+$sort-item-height: 88rpx;
+$sort-item-padding: 0 $spacing-lg;
+$sort-item-border-color: $border-color-light;
+$sort-active-color: $primary-color;
+
+// 商品卡片
+$product-card-border-radius: $border-radius-base;
+$product-card-shadow: $box-shadow-sm;
+$product-card-image-ratio: 1;
+$product-card-padding: $spacing-base;
+
+// 用户卡片
+$user-card-border-radius: $border-radius-base;
+$user-card-shadow: $box-shadow-sm;
+$user-card-padding: $spacing-lg;
+$user-card-avatar-size: $avatar-size-lg;
+
+// 文章卡片
+$article-card-border-radius: $border-radius-base;
+$article-card-shadow: $box-shadow-sm;
+$article-card-padding: $spacing-lg;
+$article-card-image-ratio: 16/9;
+
+// 评论
+$comment-avatar-size: $avatar-size-sm;
+$comment-padding: $spacing-base;
+$comment-border-color: $border-color-light;
+$comment-reply-bg: $bg-color-gray;
+$comment-reply-padding: $spacing-base;
+
+// 点赞
+$like-icon-size: $icon-size-base;
+$like-active-color: #ff4757;
+$like-count-color: $text-color-secondary;
+
+// 分享
+$share-item-size: 120rpx;
+$share-item-border-radius: $border-radius-base;
+$share-item-bg: $bg-color-white;
+$share-item-shadow: $box-shadow-sm;
+$share-icon-size: $icon-size-xl;
+
+// 收藏
+$favorite-icon-size: $icon-size-base;
+$favorite-active-color: #ffa502;
+$favorite-count-color: $text-color-secondary;
+
+// 关注
+$follow-button-height: 60rpx;
+$follow-button-padding: 0 $spacing-base;
+$follow-button-border-radius: $border-radius-base;
+$follow-button-bg: $primary-color;
+$follow-button-color: $text-color-white;
+$follow-button-active-bg: $bg-color-gray;
+$follow-button-active-color: $text-color-secondary;
+
+// 消息
+$message-item-height: 120rpx;
+$message-item-padding: $spacing-base $spacing-lg;
+$message-item-border-color: $border-color-light;
+$message-avatar-size: $avatar-size-base;
+$message-badge-size: 32rpx;
+$message-badge-bg: $danger-color;
+$message-badge-color: $text-color-white;
+
+// 通知
+$notification-item-padding: $spacing-lg;
+$notification-item-border-color: $border-color-light;
+$notification-icon-size: $icon-size-lg;
+$notification-time-color: $text-color-muted;
+
+// 设置
+$setting-item-height: 100rpx;
+$setting-item-padding: 0 $spacing-lg;
+$setting-item-border-color: $border-color-light;
+$setting-arrow-color: $text-color-muted;
+$setting-switch-size: 80rpx;
+
+// 个人资料
+$profile-avatar-size: 160rpx;
+$profile-item-height: 100rpx;
+$profile-item-padding: 0 $spacing-lg;
+$profile-item-border-color: $border-color-light;
+
+// 登录
+$login-logo-size: 200rpx;
+$login-input-height: 88rpx;
+$login-input-margin: $spacing-lg;
+$login-button-height: 88rpx;
+$login-button-margin: $spacing-xl;
+
+// 注册
+$register-step-height: 120rpx;
+$register-step-icon-size: $icon-size-lg;
+$register-step-line-height: 2rpx;
+
+// 忘记密码
+$forgot-icon-size: 200rpx;
+$forgot-input-margin: $spacing-lg;
+$forgot-button-margin: $spacing-xl;
+
+// 搜索结果
+$search-result-item-height: 120rpx;
+$search-result-item-padding: $spacing-base $spacing-lg;
+$search-result-item-border-color: $border-color-light;
+$search-result-highlight-color: $primary-color;
+$search-result-highlight-bg: rgba(0, 122, 255, 0.1);
+
+// 购物车
+$cart-item-height: 200rpx;
+$cart-item-padding: $spacing-lg;
+$cart-item-border-color: $border-color-light;
+$cart-checkbox-size: $checkbox-size;
+$cart-image-size: 160rpx;
+$cart-counter-size: 60rpx;
+
+// 订单
+$order-item-padding: $spacing-lg;
+$order-item-border-color: $border-color-light;
+$order-status-height: 60rpx;
+$order-status-padding: 0 $spacing-base;
+$order-status-border-radius: $border-radius-base;
+
+// 地址
+$address-item-padding: $spacing-lg;
+$address-item-border-color: $border-color-light;
+$address-default-bg: $primary-color;
+$address-default-color: $text-color-white;
+$address-default-border-radius: $border-radius-sm;
+
+// 优惠券
+$coupon-item-height: 200rpx;
+$coupon-item-border-radius: $border-radius-base;
+$coupon-item-shadow: $box-shadow-sm;
+$coupon-amount-color: $danger-color;
+$coupon-condition-color: $text-color-muted;
+
+// 积分
+$points-item-padding: $spacing-lg;
+$points-item-border-color: $border-color-light;
+$points-amount-color: $warning-color;
+$points-type-color: $text-color-secondary;
+
+// 钱包
+$wallet-balance-color: $danger-color;
+$wallet-item-height: 100rpx;
+$wallet-item-padding: 0 $spacing-lg;
+$wallet-item-border-color: $border-color-light;
+
+// 客服
+$service-avatar-size: $avatar-size-sm;
+$service-message-padding: $spacing-base;
+$service-message-border-radius: $border-radius-base;
+$service-message-bg: $bg-color-gray;
+$service-message-self-bg: $primary-color;
+$service-message-self-color: $text-color-white;
+
+// 帮助
+$help-item-height: 100rpx;
+$help-item-padding: 0 $spacing-lg;
+$help-item-border-color: $border-color-light;
+$help-content-padding: $spacing-lg;
+
+// 关于
+$about-logo-size: 200rpx;
+$about-version-color: $text-color-muted;
+$about-item-height: 100rpx;
+$about-item-padding: 0 $spacing-lg;
+$about-item-border-color: $border-color-light;
+
+// 反馈
+$feedback-textarea-height: 200rpx;
+$feedback-textarea-padding: $spacing-base;
+$feedback-image-size: 160rpx;
+$feedback-image-border-radius: $border-radius-base;
+
+// 举报
+$report-item-height: 100rpx;
+$report-item-padding: 0 $spacing-lg;
+$report-item-border-color: $border-color-light;
+$report-reason-padding: $spacing-lg;
+
+// 黑名单
+$blacklist-item-height: 120rpx;
+$blacklist-item-padding: $spacing-base $spacing-lg;
+$blacklist-item-border-color: $border-color-light;
+$blacklist-avatar-size: $avatar-size-base;
+
+// 隐私设置
+$privacy-item-height: 100rpx;
+$privacy-item-padding: 0 $spacing-lg;
+$privacy-item-border-color: $border-color-light;
+$privacy-switch-size: $switch-width;
+
+// 安全设置
+$security-item-height: 100rpx;
+$security-item-padding: 0 $spacing-lg;
+$security-item-border-color: $border-color-light;
+$security-status-color: $success-color;
+
+// 账号管理
+$account-item-height: 100rpx;
+$account-item-padding: 0 $spacing-lg;
+$account-item-border-color: $border-color-light;
+$account-bind-color: $success-color;
+$account-unbind-color: $text-color-muted;
+
+// 实名认证
+$verify-step-height: 120rpx;
+$verify-step-icon-size: $icon-size-lg;
+$verify-upload-size: 300rpx;
+$verify-upload-border-radius: $border-radius-base;
+
+// 银行卡
+$bankcard-item-height: 160rpx;
+$bankcard-item-padding: $spacing-lg;
+$bankcard-item-border-radius: $border-radius-base;
+$bankcard-item-shadow: $box-shadow-sm;
+$bankcard-logo-size: 80rpx;
+
+// 发票
+$invoice-item-padding: $spacing-lg;
+$invoice-item-border-color: $border-color-light;
+$invoice-type-height: 80rpx;
+$invoice-type-padding: 0 $spacing-base;
+$invoice-type-border-radius: $border-radius-base;
+
+// 物流
+$logistics-item-padding: $spacing-lg;
+$logistics-item-border-color: $border-color-light;
+$logistics-status-color: $primary-color;
+$logistics-time-color: $text-color-muted;
+
+// 退款
+$refund-item-padding: $spacing-lg;
+$refund-item-border-color: $border-color-light;
+$refund-amount-color: $danger-color;
+$refund-status-color: $warning-color;
+
+// 售后
+$service-item-padding: $spacing-lg;
+$service-item-border-color: $border-color-light;
+$service-type-height: 80rpx;
+$service-type-padding: 0 $spacing-base;
+$service-type-border-radius: $border-radius-base;
+
+// 评价
+$review-item-padding: $spacing-lg;
+$review-item-border-color: $border-color-light;
+$review-avatar-size: $avatar-size-sm;
+$review-star-size: $icon-size-sm;
+$review-star-color: #ffca3e;
+
+// 签到
+$checkin-calendar-cell-size: 80rpx;
+$checkin-calendar-border-radius: $border-radius-sm;
+$checkin-today-color: $primary-color;
+$checkin-checked-bg: $success-color;
+$checkin-checked-color: $text-color-white;
+
+// 任务
+$task-item-padding: $spacing-lg;
+$task-item-border-color: $border-color-light;
+$task-progress-height: 8rpx;
+$task-progress-bg: $bg-color-gray;
+$task-progress-color: $primary-color;
+$task-reward-color: $warning-color;
+
+// 等级
+$level-progress-height: 12rpx;
+$level-progress-bg: $bg-color-gray;
+$level-progress-color: $primary-color;
+$level-badge-size: 60rpx;
+$level-badge-border-radius: $border-radius-circle;
+
+// 会员
+$vip-card-height: 300rpx;
+$vip-card-border-radius: $border-radius-lg;
+$vip-card-shadow: $box-shadow-lg;
+$vip-privilege-item-height: 100rpx;
+$vip-privilege-item-padding: 0 $spacing-lg;
+$vip-privilege-icon-size: $icon-size-lg;
+
+// 活动
+$activity-banner-ratio: 16/9;
+$activity-banner-border-radius: $border-radius-base;
+$activity-item-padding: $spacing-lg;
+$activity-item-border-color: $border-color-light;
+$activity-tag-height: 40rpx;
+$activity-tag-padding: 0 $spacing-sm;
+$activity-tag-border-radius: $border-radius-base;
+
+// 直播
+$live-player-ratio: 16/9;
+$live-control-bg: rgba(0, 0, 0, 0.5);
+$live-control-color: $text-color-white;
+$live-chat-height: 400rpx;
+$live-chat-item-padding: $spacing-sm $spacing-base;
+$live-gift-size: 80rpx;
+
+// 短视频
+$video-player-ratio: 9/16;
+$video-control-size: 100rpx;
+$video-control-bg: rgba(0, 0, 0, 0.5);
+$video-control-color: $text-color-white;
+$video-info-padding: $spacing-lg;
+
+// 音乐
+$music-cover-size: 300rpx;
+$music-cover-border-radius: $border-radius-circle;
+$music-control-size: 120rpx;
+$music-control-bg: $bg-color-white;
+$music-control-shadow: $box-shadow-lg;
+$music-progress-height: 6rpx;
+
+// 电台
+$radio-cover-size: 200rpx;
+$radio-cover-border-radius: $border-radius-base;
+$radio-item-height: 120rpx;
+$radio-item-padding: $spacing-base $spacing-lg;
+$radio-item-border-color: $border-color-light;
+
+// 新闻
+$news-item-height: 200rpx;
+$news-item-padding: $spacing-lg;
+$news-item-border-color: $border-color-light;
+$news-image-size: 160rpx;
+$news-image-border-radius: $border-radius-base;
+$news-tag-height: 40rpx;
+$news-tag-padding: 0 $spacing-sm;
+$news-tag-border-radius: $border-radius-base;
+
+// 天气
+$weather-icon-size: 120rpx;
+$weather-temp-size: 120rpx;
+$weather-item-padding: $spacing-base;
+$weather-item-border-radius: $border-radius-base;
+$weather-item-bg: rgba(255, 255, 255, 0.1);
+
+// 日程
+$schedule-item-height: 120rpx;
+$schedule-item-padding: $spacing-base $spacing-lg;
+$schedule-item-border-color: $border-color-light;
+$schedule-time-width: 120rpx;
+$schedule-dot-size: 20rpx;
+$schedule-line-width: 2rpx;
+
+// 笔记
+$note-item-padding: $spacing-lg;
+$note-item-border-color: $border-color-light;
+$note-tag-height: 40rpx;
+$note-tag-padding: 0 $spacing-sm;
+$note-tag-border-radius: $border-radius-base;
+$note-image-size: 120rpx;
+$note-image-border-radius: $border-radius-base;
+
+// 相册
+$album-item-size: 240rpx;
+$album-item-border-radius: $border-radius-base;
+$album-item-margin: $spacing-xs;
+$album-select-size: 40rpx;
+$album-select-bg: $primary-color;
+$album-select-color: $text-color-white;
+
+// 文件
+$file-item-height: 120rpx;
+$file-item-padding: $spacing-base $spacing-lg;
+$file-item-border-color: $border-color-light;
+$file-icon-size: $icon-size-xl;
+$file-size-color: $text-color-muted;
+$file-time-color: $text-color-muted;
+
+// 下载
+$download-item-height: 120rpx;
+$download-item-padding: $spacing-base $spacing-lg;
+$download-item-border-color: $border-color-light;
+$download-progress-height: 6rpx;
+$download-progress-bg: $bg-color-gray;
+$download-progress-color: $primary-color;
+
+// 扫码
+$scan-frame-size: 500rpx;
+$scan-frame-border-width: 4rpx;
+$scan-frame-border-color: $primary-color;
+$scan-frame-corner-size: 60rpx;
+$scan-line-height: 4rpx;
+$scan-line-color: $primary-color;
+
+// 语音
+$voice-item-height: 100rpx;
+$voice-item-padding: $spacing-base $spacing-lg;
+$voice-item-border-radius: $border-radius-base;
+$voice-item-bg: $bg-color-gray;
+$voice-duration-color: $text-color-muted;
+$voice-wave-color: $primary-color;
+
+// 翻译
+$translate-input-height: 200rpx;
+$translate-input-padding: $spacing-base;
+$translate-input-border-color: $border-color-base;
+$translate-result-bg: $bg-color-gray;
+$translate-result-padding: $spacing-base;
+
+// 计算器
+$calculator-button-height: 120rpx;
+$calculator-button-bg: $bg-color-white;
+$calculator-button-border-color: $border-color-base;
+$calculator-button-active-bg: $bg-color-gray;
+$calculator-operator-bg: $primary-color;
+$calculator-operator-color: $text-color-white;
+
+// 日历
+$calendar-header-height: 100rpx;
+$calendar-header-bg: $primary-color;
+$calendar-header-color: $text-color-white;
+$calendar-cell-height: 80rpx;
+$calendar-today-bg: $primary-color;
+$calendar-today-color: $text-color-white;
+$calendar-selected-bg: rgba(0, 122, 255, 0.1);
+$calendar-selected-color: $primary-color;
+
+// 时钟
+$clock-size: 400rpx;
+$clock-bg: $bg-color-white;
+$clock-border: 4rpx solid $border-color-base;
+$clock-hour-hand-width: 8rpx;
+$clock-minute-hand-width: 6rpx;
+$clock-second-hand-width: 2rpx;
+$clock-center-size: 20rpx;
+
+// 秒表
+$stopwatch-time-size: 120rpx;
+$stopwatch-time-color: $primary-color;
+$stopwatch-button-size: 120rpx;
+$stopwatch-button-border-radius: $border-radius-circle;
+$stopwatch-start-bg: $success-color;
+$stopwatch-stop-bg: $danger-color;
+$stopwatch-reset-bg: $secondary-color;
+
+// 倒计时
+$countdown-item-size: 80rpx;
+$countdown-item-bg: $primary-color;
+$countdown-item-color: $text-color-white;
+$countdown-item-border-radius: $border-radius-sm;
+$countdown-separator-color: $text-color-base;
+
+// 抽奖
+$lottery-wheel-size: 600rpx;
+$lottery-wheel-border: 8rpx solid $primary-color;
+$lottery-pointer-size: 80rpx;
+$lottery-pointer-color: $danger-color;
+$lottery-prize-bg: $bg-color-white;
+$lottery-prize-border-color: $border-color-base;
+
+// 游戏
+$game-board-size: 600rpx;
+$game-cell-border-color: $border-color-base;
+$game-piece-size: 60rpx;
+$game-piece-border-radius: $border-radius-circle;
+$game-score-color: $primary-color;
+$game-time-color: $warning-color;
+
+// 图表
+$chart-legend-item-height: 60rpx;
+$chart-legend-item-padding: 0 $spacing-base;
+$chart-legend-dot-size: 20rpx;
+$chart-tooltip-bg: rgba(0, 0, 0, 0.8);
+$chart-tooltip-color: $text-color-white;
+$chart-tooltip-border-radius: $border-radius-sm;
+$chart-tooltip-padding: $spacing-sm $spacing-base;
+
+// 统计
+$stats-card-padding: $spacing-lg;
+$stats-card-border-radius: $border-radius-base;
+$stats-card-shadow: $box-shadow-sm;
+$stats-number-color: $primary-color;
+$stats-label-color: $text-color-secondary;
+$stats-trend-up-color: $success-color;
+$stats-trend-down-color: $danger-color;
+
+// 仪表盘
+$dashboard-widget-padding: $spacing-lg;
+$dashboard-widget-border-radius: $border-radius-base;
+$dashboard-widget-shadow: $box-shadow-sm;
+$dashboard-widget-margin: $spacing-base;
+$dashboard-title-color: $text-color-base;
+$dashboard-subtitle-color: $text-color-secondary;
+
+// 工作流
+$workflow-node-size: 120rpx;
+$workflow-node-border-radius: $border-radius-circle;
+$workflow-node-bg: $bg-color-white;
+$workflow-node-border-color: $border-color-base;
+$workflow-node-active-bg: $primary-color;
+$workflow-node-active-color: $text-color-white;
+$workflow-line-width: 2rpx;
+$workflow-line-color: $border-color-base;
+
+// 思维导图
+$mindmap-node-padding: $spacing-base $spacing-lg;
+$mindmap-node-border-radius: $border-radius-base;
+$mindmap-node-bg: $bg-color-white;
+$mindmap-node-border-color: $border-color-base;
+$mindmap-node-shadow: $box-shadow-sm;
+$mindmap-line-width: 2rpx;
+$mindmap-line-color: $primary-color;
+
+// 甘特图
+$gantt-header-height: 80rpx;
+$gantt-header-bg: $bg-color-gray;
+$gantt-row-height: 60rpx;
+$gantt-row-border-color: $border-color-light;
+$gantt-bar-height: 40rpx;
+$gantt-bar-border-radius: $border-radius-sm;
+$gantt-bar-bg: $primary-color;
+$gantt-milestone-size: 20rpx;
+$gantt-milestone-color: $warning-color;
+
+// 看板
+$kanban-column-width: 600rpx;
+$kanban-column-bg: $bg-color-gray;
+$kanban-column-border-radius: $border-radius-base;
+$kanban-column-padding: $spacing-base;
+$kanban-card-bg: $bg-color-white;
+$kanban-card-border-radius: $border-radius-base;
+$kanban-card-shadow: $box-shadow-sm;
+$kanban-card-padding: $spacing-base;
+$kanban-card-margin: $spacing-sm;
+
+// 时间轴
+$timeline-item-padding: $spacing-lg 0;
+$timeline-dot-size: 24rpx;
+$timeline-dot-border-width: 4rpx;
+$timeline-dot-bg: $bg-color-white;
+$timeline-dot-border-color: $primary-color;
+$timeline-line-width: 2rpx;
+$timeline-line-color: $border-color-base;
+$timeline-content-margin: 0 0 0 $spacing-xl;
+
+// 步骤条
+$steps-item-padding: $spacing-base 0;
+$steps-icon-size: 60rpx;
+$steps-icon-bg: $bg-color-gray;
+$steps-icon-color: $text-color-muted;
+$steps-icon-active-bg: $primary-color;
+$steps-icon-active-color: $text-color-white;
+$steps-line-height: 2rpx;
+$steps-line-color: $border-color-base;
+$steps-line-active-color: $primary-color;
+$steps-title-color: $text-color-base;
+$steps-description-color: $text-color-secondary;
+
+// 进度条
+$progress-track-height: 8rpx;
+$progress-track-bg: $bg-color-gray;
+$progress-track-border-radius: $border-radius-xs;
+$progress-bar-bg: $primary-color;
+$progress-text-color: $text-color-base;
+$progress-text-size: $font-size-sm;
+
+// 加载条
+$loading-bar-height: 4rpx;
+$loading-bar-bg: $primary-color;
+$loading-bar-shadow: 0 0 20rpx $primary-color;
+
+// 骨架屏
+$skeleton-bg: #f2f2f2;
+$skeleton-shimmer: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+$skeleton-border-radius: $border-radius-sm;
+$skeleton-animation-duration: 1.5s;
+
+// 空状态
+$empty-icon-size: 200rpx;
+$empty-icon-color: $text-color-light;
+$empty-text-color: $text-color-muted;
+$empty-text-size: $font-size-base;
+$empty-button-margin: $spacing-lg;
+
+// 错误状态
+$error-icon-size: 200rpx;
+$error-icon-color: $danger-color;
+$error-title-color: $text-color-base;
+$error-title-size: $font-size-lg;
+$error-description-color: $text-color-secondary;
+$error-description-size: $font-size-base;
+
+// 成功状态
+$success-icon-size: 200rpx;
+$success-icon-color: $success-color;
+$success-title-color: $text-color-base;
+$success-title-size: $font-size-lg;
+$success-description-color: $text-color-secondary;
+$success-description-size: $font-size-base;
+
+// 警告状态
+$warning-icon-size: 200rpx;
+$warning-icon-color: $warning-color;
+$warning-title-color: $text-color-base;
+$warning-title-size: $font-size-lg;
+$warning-description-color: $text-color-secondary;
+$warning-description-size: $font-size-base;
+
+// 信息状态
+$info-icon-size: 200rpx;
+$info-icon-color: $info-color;
+$info-title-color: $text-color-base;
+$info-title-size: $font-size-lg;
+$info-description-color: $text-color-secondary;
+$info-description-size: $font-size-base;
+
+// 维护状态
+$maintenance-icon-size: 200rpx;
+$maintenance-icon-color: $warning-color;
+$maintenance-title-color: $text-color-base;
+$maintenance-title-size: $font-size-lg;
+$maintenance-description-color: $text-color-secondary;
+$maintenance-description-size: $font-size-base;
+
+// 网络错误
+$network-error-icon-size: 200rpx;
+$network-error-icon-color: $danger-color;
+$network-error-title-color: $text-color-base;
+$network-error-title-size: $font-size-lg;
+$network-error-description-color: $text-color-secondary;
+$network-error-description-size: $font-size-base;
+
+// 404错误
+$not-found-icon-size: 200rpx;
+$not-found-icon-color: $text-color-light;
+$not-found-title-color: $text-color-base;
+$not-found-title-size: $font-size-lg;
+$not-found-description-color: $text-color-secondary;
+$not-found-description-size: $font-size-base;
+
+// 403错误
+$forbidden-icon-size: 200rpx;
+$forbidden-icon-color: $danger-color;
+$forbidden-title-color: $text-color-base;
+$forbidden-title-size: $font-size-lg;
+$forbidden-description-color: $text-color-secondary;
+$forbidden-description-size: $font-size-base;
+
+// 500错误
+$server-error-icon-size: 200rpx;
+$server-error-icon-color: $danger-color;
+$server-error-title-color: $text-color-base;
+$server-error-title-size: $font-size-lg;
+$server-error-description-color: $text-color-secondary;
+$server-error-description-size: $font-size-base;

@@ -421,8 +421,8 @@ class UserLoginLogViewSet(viewsets.ReadOnlyModelViewSet):
 class StudentListViewSet(viewsets.ReadOnlyModelViewSet):
     """学生列表视图集 - 用于获取学生数据"""
     serializer_class = UserListSerializer
-    permission_classes = []  # 允许所有已认证用户访问
-    authentication_classes = []  # 使用Django session认证
+    permission_classes = [AllowAny]  # 允许匿名访问
+    authentication_classes = []  # 不需要认证
     
     def get_queryset(self):
         """获取所有学生用户"""

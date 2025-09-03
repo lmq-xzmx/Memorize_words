@@ -65,6 +65,9 @@ MIDDLEWARE = [
     # 核心自定义中间件
     'apps.accounts.middleware.RolePermissionMiddleware',
     'apps.permissions.middleware.EnhancedRBACMiddleware',
+    # 增强权限中间件
+    'apps.permissions.enhanced_middleware.EnhancedPermissionMiddleware',
+    'apps.permissions.enhanced_middleware.PermissionContextMiddleware',
 ]
 
 ROOT_URLCONF = 'english_learning_platform.urls'

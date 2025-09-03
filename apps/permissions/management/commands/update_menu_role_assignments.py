@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils.termcolors import make_style
-from apps.permissions.models import MenuModuleConfig, FrontendMenuRoleAssignment, RoleSlotMenuAssignment, FrontendMenuConfig
+from apps.permissions.models import MenuModuleConfig, RoleSlotMenuAssignment, MenuValidity
 from apps.accounts.services.role_service import RoleService
 import logging
 from typing import TYPE_CHECKING
@@ -9,9 +9,8 @@ from typing import TYPE_CHECKING
 if not TYPE_CHECKING:
     # 为Django模型添加类型注释以解决linter错误
     MenuModuleConfig.objects = MenuModuleConfig.objects  # type: ignore
-    FrontendMenuRoleAssignment.objects = FrontendMenuRoleAssignment.objects  # type: ignore
     RoleSlotMenuAssignment.objects = RoleSlotMenuAssignment.objects  # type: ignore
-    FrontendMenuConfig.objects = FrontendMenuConfig.objects  # type: ignore
+    MenuValidity.objects = MenuValidity.objects  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -119,9 +118,10 @@ class Command(BaseCommand):
     
     def _analyze_menu_roles(self, menu, all_roles, specific_role=None):
         """分析菜单的角色分配情况"""
-        # 获取当前通过FrontendMenuRoleAssignment关联的角色
-        current_roles = set(FrontendMenuRoleAssignment.objects.filter(  # type: ignore
-            menu__key=menu.key
+        # 获取当前通过MenuValidity关联的角色
+        current_roles = set(MenuValidity.objects.filter(  # type: ignore
+            menu_module=menu,
+            is_valid=True
         ).values_list('role', flat=True).distinct())
         
         # 根据RoleSlotMenuAssignment获取推荐角色
@@ -129,23 +129,13 @@ class Command(BaseCommand):
         if menu.menu_level == 'root':
             # 查找在槽位分配中使用此菜单的角色
             slot_roles = set(RoleSlotMenuAssignment.objects.filter(  # type: ignore
-                root_menu__key=menu.key,
+                root_menu=menu,
                 is_active=True
             ).values_list('role', flat=True).distinct())
             recommended_roles = slot_roles
         elif menu.menu_level in ['level1', 'level2']:
-            # 对于子菜单，查找父菜单的角色分配
-            parent_menus = FrontendMenuConfig.objects.filter(  # type: ignore
-                key=menu.key
-            ).values_list('parent__key', flat=True).distinct()
-            
-            for parent_key in parent_menus:
-                if parent_key:
-                    parent_roles = set(RoleSlotMenuAssignment.objects.filter(  # type: ignore
-                        root_menu__key=parent_key,
-                        is_active=True
-                    ).values_list('role', flat=True).distinct())
-                    recommended_roles.update(parent_roles)
+            # 对于子菜单，MenuModuleConfig没有parent字段，跳过父菜单角色查找
+            pass
         
         # 如果指定了特定角色，只处理该角色
         if specific_role:
@@ -188,22 +178,13 @@ class Command(BaseCommand):
         """创建缺失的角色分配"""
         created_count = 0
         
-        # 获取对应的FrontendMenuConfig
-        try:
-            frontend_menu = FrontendMenuConfig.objects.get(key=menu.key)  # type: ignore
-        except FrontendMenuConfig.DoesNotExist:  # type: ignore
-            self.stdout.write(self.style_warning(f"  ⚠️  未找到对应的前端菜单配置: {menu.key}"))
-            return 0
-        
         for role in missing_roles:
             try:
-                assignment, created = FrontendMenuRoleAssignment.objects.get_or_create(  # type: ignore
-                    menu=frontend_menu,
+                assignment, created = MenuValidity.objects.get_or_create(  # type: ignore
+                    menu_module=menu,
                     role=role,
                     defaults={
-                        'is_active': True,
-                        'can_view': True,
-                        'can_access': True
+                        'is_valid': True
                     }
                 )
                 if created:

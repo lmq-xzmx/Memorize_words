@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% load permission_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.demo-page {
+    padding: 20px;
+}
+
+.permission-info {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.report-section {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    margin-bottom: 20px;
+}
+
+.report-item {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: white;
+}
+
+.report-preview {
+    background-color: #f1f3f4;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.export-options {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.progress-container {
+    margin-top: 15px;
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-page">
+    <h1>{{ page_title }}</h1>
+    
+    <div class="permission-info">
+        <h5><i class="fas fa-shield-alt"></i> 权限要求</h5>
+        <p>{{ required_permission }}</p>
+        <p><strong>恭喜！</strong> 您拥有导出报告的权限。</p>
+    </div>
+
+    <div class="report-section">
+        <h4><i class="fas fa-chart-bar"></i> 学习统计报告</h4>
+        
+        <div class="report-item">
+            <h5>用户学习进度报告</h5>
+            <p class="text-muted">包含用户学习时长、完成课程数、词汇掌握情况等统计数据</p>
+            
+            <div class="report-preview">
+用户学习进度报告
+==================
+总用户数: 1,234
+活跃用户: 856
+平均学习时长: 45分钟/天
+完成课程总数: 2,567
+词汇掌握率: 78.5%
+            </div>
+            
+            <div class="export-options">
+                {% permission_required 'report_management' 'export_excel' %}
+                <button class="btn btn-success btn-sm" onclick="exportReport('user_progress', 'excel')">
+                    <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+                {% endpermission_required %}
+                
+                {% permission_required 'report_management' 'export_pdf' %}
+                <button class="btn btn-danger btn-sm" onclick="exportReport('user_progress', 'pdf')">
+                    <i class="fas fa-file-pdf"></i> 导出PDF
+                </button>
+                {% endpermission_required %}
+                
+                {% permission_required 'report_management' 'export_csv' %}
+                <button class="btn btn-info btn-sm" onclick="exportReport('user_progress', 'csv')">
+                    <i class="fas fa-file-csv"></i> 导出CSV
+                </button>
+                {% endpermission_required %}
+            </div>
+            
+            <div class="progress-container" id="progress-user-progress">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted">导出进度: <span class="progress-text">0%</span></small>
+            </div>
+        </div>
+        
+        <div class="report-item">
+            <h5>课程效果分析报告</h5>
+            <p class="text-muted">分析各课程的完成率、用户评分、学习效果等数据</p>
+            
+            <div class="report-preview">
+课程效果分析报告
+==================
+总课程数: 156
+平均完成率: 67.3%
+用户满意度: 4.2/5.0
+热门课程TOP5:
+1. 基础英语语法 (完成率: 89%)
+2. 商务英语口语 (完成率: 78%)
+3. 雅思词汇突破 (完成率: 72%)
+4. 日常对话练习 (完成率: 69%)
+5. 英语写作技巧 (完成率: 65%)
+            </div>
+            
+            <div class="export-options">
+                {% permission_required 'report_management' 'export_excel' %}
+                <button class="btn btn-success btn-sm" onclick="exportReport('course_analysis', 'excel')">
+                    <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+                {% endpermission_required %}
+                
+                {% permission_required 'report_management' 'export_pdf' %}
+                <button class="btn btn-danger btn-sm" onclick="exportReport('course_analysis', 'pdf')">
+                    <i class="fas fa-file-pdf"></i> 导出PDF
+                </button>
+                {% endpermission_required %}
+            </div>
+            
+            <div class="progress-container" id="progress-course-analysis">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted">导出进度: <span class="progress-text">0%</span></small>
+            </div>
+        </div>
+        
+        <div class="report-item">
+            <h5>财务收入报告</h5>
+            <p class="text-muted">平台收入、用户付费情况、课程销售数据等财务统计</p>
+            
+            <div class="report-preview">
+财务收入报告
+==================
+本月总收入: ¥125,680
+付费用户数: 432
+平均客单价: ¥291
+课程销售排行:
+1. VIP会员套餐 - ¥45,200
+2. 雅思冲刺班 - ¥28,900
+3. 商务英语课程 - ¥21,340
+退款率: 2.1%
+            </div>
+            
+            <div class="export-options">
+                {% permission_required 'report_management' 'export_financial' %}
+                <button class="btn btn-warning btn-sm" onclick="exportReport('financial', 'excel')">
+                    <i class="fas fa-file-excel"></i> 导出Excel
+                </button>
+                {% endpermission_required %}
+                
+                {% if user|has_permission:'report_management.export_financial' %}
+                <button class="btn btn-outline-warning btn-sm" onclick="exportReport('financial', 'pdf')">
+                    <i class="fas fa-file-pdf"></i> 导出PDF (加密)
+                </button>
+                {% endif %}
+            </div>
+            
+            <div class="progress-container" id="progress-financial">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small class="text-muted">导出进度: <span class="progress-text">0%</span></small>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-section">
+        <h4><i class="fas fa-cogs"></i> 批量导出操作</h4>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="date-range">日期范围:</label>
+                    <select class="form-control" id="date-range">
+                        <option value="today">今天</option>
+                        <option value="week">本周</option>
+                        <option value="month" selected>本月</option>
+                        <option value="quarter">本季度</option>
+                        <option value="year">本年</option>
+                        <option value="custom">自定义</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="report-format">导出格式:</label>
+                    <select class="form-control" id="report-format">
+                        <option value="excel">Excel (.xlsx)</option>
+                        <option value="pdf">PDF (.pdf)</option>
+                        <option value="csv">CSV (.csv)</option>
+                        <option value="json">JSON (.json)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>选择报告类型:</label>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="check-user-progress" checked>
+                <label class="form-check-label" for="check-user-progress">
+                    用户学习进度报告
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="check-course-analysis" checked>
+                <label class="form-check-label" for="check-course-analysis">
+                    课程效果分析报告
+                </label>
+            </div>
+            {% permission_required 'report_management' 'export_financial' %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="check-financial">
+                <label class="form-check-label" for="check-financial">
+                    财务收入报告
+                </label>
+            </div>
+            {% endpermission_required %}
+        </div>
+        
+        <div class="mt-3">
+            {% permission_required 'report_management' 'batch_export' %}
+            <button class="btn btn-primary" onclick="batchExport()">
+                <i class="fas fa-download"></i> 批量导出
+            </button>
+            {% endpermission_required %}
+            
+            {% permission_required 'report_management' 'schedule_export' %}
+            <button class="btn btn-info" onclick="scheduleExport()">
+                <i class="fas fa-clock"></i> 定时导出
+            </button>
+            {% endpermission_required %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'permissions:permission_demo' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回演示首页
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportReport(reportType, format) {
+    const progressContainer = document.getElementById(`progress-${reportType}`);
+    const progressBar = progressContainer.querySelector('.progress-bar');
+    const progressText = progressContainer.querySelector('.progress-text');
+    
+    // 显示进度条
+    progressContainer.style.display = 'block';
+    
+    // 模拟导出进度
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress > 100) progress = 100;
+        
+        progressBar.style.width = progress + '%';
+        progressText.textContent = Math.round(progress) + '%';
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
+                
+                // 模拟下载
+                simulateDownload(`${reportType}_report.${format}`);
+            }, 500);
+        }
+    }, 200);
+    
+    simulateAction(`导出${getReportName(reportType)}为${format.toUpperCase()}格式`);
+}
+
+function batchExport() {
+    const dateRange = document.getElementById('date-range').value;
+    const format = document.getElementById('report-format').value;
+    
+    const selectedReports = [];
+    if (document.getElementById('check-user-progress').checked) {
+        selectedReports.push('用户学习进度报告');
+    }
+    if (document.getElementById('check-course-analysis').checked) {
+        selectedReports.push('课程效果分析报告');
+    }
+    if (document.getElementById('check-financial') && document.getElementById('check-financial').checked) {
+        selectedReports.push('财务收入报告');
+    }
+    
+    if (selectedReports.length === 0) {
+        alert('请至少选择一个报告类型');
+        return;
+    }
+    
+    const reportList = selectedReports.join('、');
+    simulateAction(`批量导出报告: ${reportList} (${dateRange}, ${format.toUpperCase()}格式)`);
+    
+    // 模拟批量导出
+    setTimeout(() => {
+        simulateDownload(`batch_reports_${dateRange}.zip`);
+    }, 2000);
+}
+
+function scheduleExport() {
+    const modal = `
+        <div class="modal fade" id="scheduleModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">定时导出设置</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>导出频率:</label>
+                            <select class="form-control" id="schedule-frequency">
+                                <option value="daily">每日</option>
+                                <option value="weekly">每周</option>
+                                <option value="monthly">每月</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>导出时间:</label>
+                            <input type="time" class="form-control" id="schedule-time" value="09:00">
+                        </div>
+                        <div class="form-group">
+                            <label>邮件通知:</label>
+                            <input type="email" class="form-control" id="schedule-email" placeholder="输入邮箱地址">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" onclick="confirmSchedule()">确认设置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modal);
+    $('#scheduleModal').modal('show');
+}
+
+function confirmSchedule() {
+    const frequency = document.getElementById('schedule-frequency').value;
+    const time = document.getElementById('schedule-time').value;
+    const email = document.getElementById('schedule-email').value;
+    
+    simulateAction(`设置定时导出: ${frequency} ${time}${email ? ', 邮件通知: ' + email : ''}`);
+    $('#scheduleModal').modal('hide');
+    
+    setTimeout(() => {
+        document.getElementById('scheduleModal').remove();
+    }, 500);
+}
+
+function getReportName(reportType) {
+    const names = {
+        'user_progress': '用户学习进度报告',
+        'course_analysis': '课程效果分析报告',
+        'financial': '财务收入报告'
+    };
+    return names[reportType] || reportType;
+}
+
+function simulateDownload(filename) {
+    const link = document.createElement('a');
+    link.href = '#';
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    
+    // 显示下载提示
+    const toast = document.createElement('div');
+    toast.className = 'alert alert-success alert-dismissible fade show';
+    toast.style.position = 'fixed';
+    toast.style.top = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <strong>下载完成!</strong> ${filename}
+        <button type="button" class="close" data-dismiss="alert">
+            <span>&times;</span>
+        </button>
+    `;
+    
+    document.body.appendChild(toast);
+    document.body.removeChild(link);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
+}
+
+function simulateAction(actionName) {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`报告导出操作: ${actionName} - ${timestamp}`);
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('报告导出演示页面已加载');
+    
+    // 如果有权限检查器，初始化权限检查
+    if (window.FrontendPermissionChecker) {
+        const permissionChecker = new FrontendPermissionChecker();
+        permissionChecker.initializePermissionChecks();
+    }
+});
+</script>
+{% endblock %}

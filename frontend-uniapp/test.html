@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动端组件测试</title>
+    <style>
+        /* 基础样式变量 */
+        :root {
+            --primary-color: #2196f3;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-disabled: #999999;
+            --background-color: #f5f5f5;
+            --card-background: #ffffff;
+            --border-color: #e0e0e0;
+            --border-radius: 8px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 375px;
+            margin: 0 auto;
+            background-color: var(--card-background);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 44px;
+            padding: 0 var(--spacing-md);
+            background-color: var(--card-background);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        
+        .navbar-left {
+            display: flex;
+            align-items: center;
+            min-width: 60px;
+        }
+        
+        .navbar-center {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .navbar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .navbar-right {
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--card-background);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            margin: var(--spacing-md);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-content {
+            padding: var(--spacing-md);
+        }
+        
+        /* 按钮样式 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin: var(--spacing-xs);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1976d2;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .btn-error {
+            background-color: var(--error-color);
+            color: white;
+        }
+        
+        /* 列表样式 */
+        .list {
+            background-color: var(--card-background);
+            margin: var(--spacing-md);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+        
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item:hover {
+            background-color: var(--background-color);
+        }
+        
+        .list-item-content {
+            flex: 1;
+        }
+        
+        .list-item-title {
+            font-size: 16px;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .list-item-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .list-item-arrow {
+            color: var(--text-disabled);
+            font-size: 16px;
+        }
+        
+        /* 表单样式 */
+        .form {
+            background-color: var(--card-background);
+            margin: var(--spacing-md);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+        }
+        
+        .form-item {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            background-color: var(--card-background);
+            color: var(--text-primary);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        /* 底部标签栏 */
+        .tabbar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 375px;
+            display: flex;
+            background-color: var(--card-background);
+            border-top: 1px solid var(--border-color);
+            height: 50px;
+        }
+        
+        .tabbar-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        
+        .tabbar-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+        
+        .tabbar-text {
+            font-size: 10px;
+        }
+        
+        .tabbar-item.active {
+            color: var(--primary-color);
+        }
+        
+        .tabbar-item:not(.active) {
+            color: var(--text-secondary);
+        }
+        
+        /* 内容区域 */
+        .content {
+            padding-bottom: 60px; /* 为底部标签栏留出空间 */
+        }
+        
+        /* 响应式 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --text-primary: #ffffff;
+                --text-secondary: #cccccc;
+                --text-disabled: #888888;
+                --background-color: #121212;
+                --card-background: #1e1e1e;
+                --border-color: #333333;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 导航栏 -->
+        <div class="navbar">
+            <div class="navbar-left">
+                <span>‹ 返回</span>
+            </div>
+            <div class="navbar-center">
+                <div class="navbar-title">移动端组件测试</div>
+            </div>
+            <div class="navbar-right">
+                <span>更多</span>
+            </div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="content">
+            <!-- 按钮组件测试 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">按钮组件</div>
+                </div>
+                <div class="card-content">
+                    <button class="btn btn-primary">主要按钮</button>
+                    <button class="btn btn-success">成功按钮</button>
+                    <button class="btn btn-warning">警告按钮</button>
+                    <button class="btn btn-error">错误按钮</button>
+                </div>
+            </div>
+            
+            <!-- 列表组件测试 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">列表组件</div>
+                </div>
+                <div class="list">
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">单词学习</div>
+                            <div class="list-item-subtitle">学习新单词和复习</div>
+                        </div>
+                        <div class="list-item-arrow">›</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">语法练习</div>
+                            <div class="list-item-subtitle">英语语法训练</div>
+                        </div>
+                        <div class="list-item-arrow">›</div>
+                    </div>
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">听力训练</div>
+                            <div class="list-item-subtitle">提升听力水平</div>
+                        </div>
+                        <div class="list-item-arrow">›</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 表单组件测试 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">表单组件</div>
+                </div>
+                <div class="form">
+                    <div class="form-item">
+                        <label class="form-label">用户名</label>
+                        <input type="text" class="form-input" placeholder="请输入用户名">
+                    </div>
+                    <div class="form-item">
+                        <label class="form-label">密码</label>
+                        <input type="password" class="form-input" placeholder="请输入密码">
+                    </div>
+                    <div class="form-item">
+                        <button class="btn btn-primary" style="width: 100%;">登录</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部标签栏 -->
+        <div class="tabbar">
+            <div class="tabbar-item active">
+                <div class="tabbar-icon">🏠</div>
+                <div class="tabbar-text">首页</div>
+            </div>
+            <div class="tabbar-item">
+                <div class="tabbar-icon">📚</div>
+                <div class="tabbar-text">学习</div>
+            </div>
+            <div class="tabbar-item">
+                <div class="tabbar-icon">📊</div>
+                <div class="tabbar-text">统计</div>
+            </div>
+            <div class="tabbar-item">
+                <div class="tabbar-icon">👤</div>
+                <div class="tabbar-text">我的</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 简单的交互逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            // 标签栏切换
+            const tabbarItems = document.querySelectorAll('.tabbar-item');
+            tabbarItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    tabbarItems.forEach(tab => tab.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+            
+            // 列表项点击
+            const listItems = document.querySelectorAll('.list-item');
+            listItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const title = this.querySelector('.list-item-title').textContent;
+                    alert('点击了: ' + title);
+                });
+            });
+            
+            // 按钮点击
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const text = this.textContent;
+                    console.log('点击了按钮: ' + text);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

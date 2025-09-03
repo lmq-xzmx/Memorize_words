@@ -3,7 +3,7 @@
 
 {% block extrahead %}
 {{ block.super }}
-<script src="{% static 'js/student_selector_unified.js' %}"></script>
+<script src="{% static 'js/student_selector_unified.js' %}?v={{ request.META.REQUEST_TIME|default:'1' }}"></script>
 {% endblock %}
 
 {% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
@@ -30,9 +30,13 @@
             <p><strong>解析时间:</strong> {{ article.updated_at }}</p>
             <div class="student-selection">
                 <label for="current-student-select"><strong>当前学生:</strong></label>
-                <select id="current-student-select" onchange="switchCurrentStudent(this.value)">
-                    <option value="">-- 加载中... --</option>
-                </select>
+                <div class="student-selector-container">
+                    <input type="text" id="student-search" placeholder="搜索学生姓名..." onkeyup="searchStudents()" />
+                    <select id="current-student-select" onchange="switchCurrentStudent(this.value)">
+                        <option value="">-- 加载中... --</option>
+                    </select>
+                    <button type="button" onclick="refreshStudentList()" class="refresh-btn">刷新</button>
+                </div>
                 <span id="student-status" class="student-status">请选择学生以显示个性化词汇标记</span>
             </div>
         </div>
@@ -418,23 +422,54 @@
         background: #f0f8ff;
         border: 1px solid #b3d9ff;
         border-radius: 4px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
     }
 
     .student-selection label {
         font-weight: bold;
         color: #333;
         white-space: nowrap;
+        margin-bottom: 5px;
+        display: block;
     }
 
-    .student-selection select {
+    .student-selector-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .student-selector-container input[type="text"] {
         padding: 5px 10px;
         border: 1px solid #ccc;
         border-radius: 3px;
         font-size: 13px;
-        min-width: 120px;
+        min-width: 150px;
+        flex: 1;
+    }
+
+    .student-selector-container select {
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        font-size: 13px;
+        min-width: 200px;
+        flex: 2;
+    }
+
+    .student-selector-container .refresh-btn {
+        padding: 5px 12px;
+        background: #007cba;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .student-selector-container .refresh-btn:hover {
+        background: #005a87;
     }
 
     .student-status {
@@ -3711,6 +3746,63 @@
     }
 
     // 学生选择器修复脚本已移除，现在使用统一的学生选择器模块
+    
+    // 学生搜索功能
+    function searchStudents() {
+        const searchInput = document.getElementById('student-search');
+        const studentSelect = document.getElementById('current-student-select');
+        
+        if (!searchInput || !studentSelect) return;
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const options = studentSelect.querySelectorAll('option');
+        
+        options.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block'; // 保持空选项可见
+                return;
+            }
+            
+            const text = option.textContent.toLowerCase();
+            const shouldShow = text.includes(searchTerm);
+            option.style.display = shouldShow ? 'block' : 'none';
+        });
+    }
+    
+    // 刷新学生列表功能
+    function refreshStudentList() {
+        if (window.UnifiedStudentSelector) {
+            window.UnifiedStudentSelector.loadStudents();
+        } else {
+            // 备用方案：重新加载页面
+            location.reload();
+        }
+    }
+    
+    // 设置默认学生
+    function setDefaultStudent() {
+        const studentSelect = document.getElementById('current-student-select');
+        if (!studentSelect) return;
+        
+        // 尝试选择student1作为默认学生
+        const defaultOption = studentSelect.querySelector('option[value="1"]') || 
+                              studentSelect.querySelector('option[value="student1"]');
+        
+        if (defaultOption) {
+            studentSelect.value = defaultOption.value;
+            if (window.switchCurrentStudent) {
+                window.switchCurrentStudent(defaultOption.value);
+            }
+        }
+    }
+    
+    // 监听学生数据加载完成事件
+    if (window.UnifiedStudentSelector) {
+        window.UnifiedStudentSelector.onDataLoad(() => {
+            // 数据加载完成后设置默认学生
+            setTimeout(setDefaultStudent, 100);
+        });
+    }
 
 </script>
 {% endblock %}

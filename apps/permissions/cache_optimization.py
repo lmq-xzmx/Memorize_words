@@ -246,8 +246,25 @@ class PermissionCacheManager:
             # 预加载菜单权限
             menu_perms_key = self.get_cache_key('menu_permissions', user_id)
             if not self._check_cache_exists(menu_perms_key):
-                # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
-                menu_perms = []  # 暂时返回空列表
+                # 使用 MenuValidity 和 RoleMenuAssignment 获取菜单权限
+                from apps.permissions.models import MenuValidity, RoleManagement
+                from apps.accounts.models import UserRole
+                
+                try:
+                    user = User.objects.get(id=user_id)
+                    user_role = getattr(user, 'role', None)
+                    
+                    if user_role:
+                        role_management = RoleManagement.objects.get(role_name=user_role)
+                        menu_perms = list(MenuValidity.objects.filter(
+                            role=role_management, 
+                            is_valid=True
+                        ).values('menu__module_name', 'menu__display_name'))
+                    else:
+                        menu_perms = []
+                except (User.DoesNotExist, RoleManagement.DoesNotExist):
+                    menu_perms = []
+                    
                 self.set_multi_level(menu_perms_key, menu_perms, priority=3)
             
             logger.info(f"用户权限预加载完成: {user_id}")
@@ -626,26 +643,29 @@ class QueryOptimizer:
     
     @staticmethod
     def optimize_menu_permissions_query(user_id: int):
-        """优化菜单权限查询"""
-        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
-        # 暂时返回所有活跃菜单
+        """优化菜单权限查询 - 使用 MenuValidity"""
         with connection.cursor() as cursor:
             cursor.execute("""
                 SELECT DISTINCT
                     mmc.id,
-                    mmc.name,
-                    mmc.path,
+                    mmc.module_name as name,
+                    mmc.url_pattern as path,
                     mmc.icon,
                     mmc.sort_order,
                     mmc.parent_id,
-                    true as can_view,
-                    true as can_add,
-                    true as can_edit,
-                    true as can_delete
+                    mv.is_valid as can_view,
+                    mv.is_valid as can_add,
+                    mv.is_valid as can_edit,
+                    mv.is_valid as can_delete
                 FROM permissions_menumoduleconfig mmc
-                WHERE mmc.is_active = true
+                INNER JOIN permissions_menuvalidity mv ON mmc.id = mv.menu_id
+                INNER JOIN permissions_rolemanagement rm ON mv.role_id = rm.id
+                INNER JOIN accounts_customuser u ON u.role = rm.role_name
+                WHERE mmc.is_active = true 
+                  AND mv.is_valid = true
+                  AND u.id = %s
                 ORDER BY mmc.sort_order
-            """, [])
+            """, [user_id])
             
             columns = [col[0] for col in cursor.description]
             results = []

@@ -1,19 +1,125 @@
-# 统一AJAX API文档
+# API接口文档
 
 ## 概述
 
-本文档描述了项目中统一AJAX API的使用方法，这些API替代了原有分散的JavaScript AJAX调用，提供了更加统一和标准化的接口。
+本文档描述了项目中所有API接口的使用方法，包括统一AJAX API和菜单权限API，提供了完整的接口规范和使用示例。
 
 ## 基础信息
 
-- **基础URL**: `/api/unified/`
-- **认证方式**: Django Session认证
+- **统一API基础URL**: `/api/unified/`
+- **菜单API基础URL**: `/api/permissions/`
+- **认证方式**: Django Session认证 / Token认证
 - **数据格式**: JSON
 - **错误处理**: 标准HTTP状态码 + JSON错误信息
 
 ## API端点列表
 
-### 1. 获取角色选择项
+### 一、菜单权限API
+
+#### 1. 获取用户菜单权限
+
+**端点**: `GET /api/permissions/user-menu-permissions/`
+
+**描述**: 获取当前用户可访问的菜单列表和权限信息。
+
+**认证**: Token认证 或 Session认证
+
+**请求参数**: 无
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "menus": [
+    {
+      "key": "user_management",
+      "name": "用户管理",
+      "menu_level": 1,
+      "icon": "user",
+      "url": "/admin/users/",
+      "sort_order": 1,
+      "can_access": true
+    }
+  ],
+  "all_permissions": {
+    "user_management": true
+  },
+  "user_role": "admin",
+  "is_superuser": false
+}
+```
+
+#### 2. 检查菜单权限
+
+**端点**: `POST /api/permissions/check-menu-permission/`
+
+**描述**: 检查用户对特定菜单的访问权限。
+
+**请求参数**:
+```json
+{
+  "menu_key": "user_management"
+}
+```
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "has_permission": true,
+  "menu_key": "user_management",
+  "menu_name": "用户管理"
+}
+```
+
+#### 3. 获取角色显示名称
+
+**端点**: `GET /api/permissions/role-display-name/`
+
+**描述**: 获取当前用户的角色显示名称。
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "role": "admin",
+  "role_display_name": "管理员",
+  "is_superuser": false
+}
+```
+
+#### 4. 获取菜单层级结构
+
+**端点**: `GET /api/permissions/menu-hierarchy/`
+
+**描述**: 获取完整的菜单层级结构，包含权限信息。
+
+**响应示例**:
+```json
+{
+  "success": true,
+  "menu_hierarchy": {
+    "root": [],
+    "level1": [
+      {
+        "key": "user_management",
+        "name": "用户管理",
+        "icon": "user",
+        "url": "/admin/users/",
+        "sort_order": 1,
+        "has_permission": true,
+        "description": "用户管理模块"
+      }
+    ],
+    "level2": []
+  },
+  "user_role": "admin"
+}
+```
+
+### 二、统一AJAX API
+
+#### 1. 获取角色选择项
 
 **端点**: `GET /api/unified/role-choices/`
 
@@ -252,7 +358,58 @@ GET /api/unified/user-sync-status/?user_id=123
 
 ## 使用示例
 
-### JavaScript调用示例
+### 菜单权限API调用示例
+
+```javascript
+// 获取用户菜单权限
+fetch('/api/permissions/user-menu-permissions/', {
+  headers: {
+    'Authorization': 'Token your-token-here',
+    'Content-Type': 'application/json'
+  }
+})
+.then(response => response.json())
+.then(data => {
+  if (data.success) {
+    console.log('用户菜单:', data.menus);
+    console.log('用户角色:', data.user_role);
+  } else {
+    console.error('获取失败:', data.message);
+  }
+});
+
+// 检查菜单权限
+fetch('/api/permissions/check-menu-permission/', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Token your-token-here',
+    'Content-Type': 'application/json',
+    'X-CSRFToken': getCsrfToken()
+  },
+  body: JSON.stringify({
+    menu_key: 'user_management'
+  })
+})
+.then(response => response.json())
+.then(data => {
+  if (data.success) {
+    console.log('权限检查结果:', data.has_permission);
+  } else {
+    console.error('检查失败:', data.message);
+  }
+});
+
+// 获取菜单层级结构
+fetch('/api/permissions/menu-hierarchy/')
+.then(response => response.json())
+.then(data => {
+  if (data.success) {
+    console.log('菜单层级:', data.menu_hierarchy);
+  }
+});
+```
+
+### 统一AJAX API调用示例
 
 ```javascript
 // 获取角色选择项
@@ -379,14 +536,29 @@ fetch('/api/unified/role-choices/')
 ### 认证和授权
 
 - 所有API都需要用户登录
-- 基于Django的权限系统进行授权检查
-- CSRF保护防止跨站请求伪造
+- 支持Session认证和Token认证两种方式
+- 基于Django的权限系统和新的角色菜单权限系统进行授权检查
+- CSRF保护防止跨站请求伪造（Session认证时需要）
+- Token认证适用于前后端分离场景
+
+### Token认证使用说明
+
+```javascript
+// 在请求头中添加Token
+fetch('/api/permissions/user-menu-permissions/', {
+  headers: {
+    'Authorization': 'Token your-auth-token-here',
+    'Content-Type': 'application/json'
+  }
+})
+```
 
 ### 数据验证
 
 - 服务端对所有输入参数进行验证
 - 防止SQL注入和XSS攻击
 - 敏感数据不在响应中暴露
+- 菜单权限基于角色进行严格控制
 
 ## 迁移指南
 
@@ -407,9 +579,17 @@ fetch('/api/unified/role-choices/')
 
 ## 版本历史
 
+### v1.1 (2025-08-24)
+- 新增菜单权限API模块
+- 实现用户菜单权限获取接口
+- 添加菜单权限检查功能
+- 支持菜单层级结构查询
+- 集成Token认证支持
+- 优化权限控制机制
+
 ### v1.0 (2025-08-24)
 - 初始版本发布
-- 实现6个核心API端点
+- 实现6个核心统一AJAX API端点
 - 提供兼容性接口
 - 完整的错误处理机制
 
@@ -417,4 +597,4 @@ fetch('/api/unified/role-choices/')
 
 **文档维护**: 开发团队  
 **最后更新**: 2025年8月24日  
-**API版本**: v1.0
+**API版本**: v1.1

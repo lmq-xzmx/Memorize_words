@@ -380,17 +380,49 @@ class BatchPermissionSyncManager:
                         task.errors.append(f"处理块失败: {str(e)}")
     
     def _sync_menu_permissions_for_users(self, menu_permissions: Dict, user_ids: List[int], task: BatchSyncTask) -> Tuple[int, int, List[str]]:
-        """为用户同步菜单权限"""
-        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
-        # 暂时跳过菜单权限同步
-        from .models import MenuModuleConfig
+        """为用户同步菜单权限 - 使用 MenuValidity"""
+        from .models import MenuModuleConfig, MenuValidity, RoleManagement
+        from django.contrib.auth import get_user_model
         
-        success_count = len(user_ids)
+        User = get_user_model()
+        success_count = 0
         error_count = 0
         errors = []
         
-        # 暂时返回成功，未来需要实现新的权限同步逻辑
-        logger.info(f"菜单权限同步已跳过，等待新权限系统实现。用户数: {len(user_ids)}")
+        try:
+            with transaction.atomic():
+                for user_id in user_ids:
+                    try:
+                        user = User.objects.get(id=user_id)
+                        if hasattr(user, 'role'):
+                            role_obj = RoleManagement.objects.filter(role_name=user.role).first()
+                            if role_obj:
+                                # 更新用户角色的菜单权限
+                                for menu_key, is_valid in menu_permissions.items():
+                                    menu = MenuModuleConfig.objects.filter(module_name=menu_key).first()
+                                    if menu:
+                                        MenuValidity.objects.update_or_create(
+                                            menu=menu,
+                                            role=role_obj,
+                                            defaults={'is_valid': is_valid}
+                                        )
+                                success_count += 1
+                            else:
+                                errors.append(f"用户 {user_id} 的角色未找到")
+                                error_count += 1
+                        else:
+                            errors.append(f"用户 {user_id} 没有角色信息")
+                            error_count += 1
+                    except User.DoesNotExist:
+                        errors.append(f"用户 {user_id} 不存在")
+                        error_count += 1
+                    except Exception as e:
+                        errors.append(f"用户 {user_id} 权限同步失败: {str(e)}")
+                        error_count += 1
+        except Exception as e:
+            logger.error(f"菜单权限同步失败: {e}")
+            errors.append(f"批量同步失败: {str(e)}")
+            error_count = len(user_ids)
         
         return success_count, error_count, errors
     
@@ -625,8 +657,26 @@ class OptimizedDatabaseOperations:
     
     @staticmethod
     def bulk_update_menu_permissions(role_menu_permissions: List[Dict]):
-        """批量更新菜单权限"""
-        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
-        # 暂时跳过菜单权限更新
-        logger.info(f"菜单权限批量更新已跳过，等待新权限系统实现。权限数: {len(role_menu_permissions)}")
-        pass
+        """批量更新菜单权限 - 使用 MenuValidity"""
+        from ..permissions.models import MenuValidity, RoleManagement, MenuModuleConfig
+        
+        try:
+            with transaction.atomic():
+                for permission_data in role_menu_permissions:
+                    role_name = permission_data.get('role')
+                    menu_key = permission_data.get('menu')
+                    is_valid = permission_data.get('is_valid', True)
+                    
+                    if role_name and menu_key:
+                        role_obj = RoleManagement.objects.filter(role_name=role_name).first()
+                        menu_obj = MenuModuleConfig.objects.filter(module_name=menu_key).first()
+                        
+                        if role_obj and menu_obj:
+                            MenuValidity.objects.update_or_create(
+                                role=role_obj,
+                                menu=menu_obj,
+                                defaults={'is_valid': is_valid}
+                            )
+        except Exception as e:
+             logger.error(f"批量更新菜单权限失败: {e}")
+             raise

@@ -1,6 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
+from .demo_views import (
+    PermissionDemoView, teaching_demo_view, vocabulary_edit_demo_view,
+    report_export_demo_view, check_permission_ajax, permission_test_api
+)
 from .api_views import (
     MenuModuleConfigViewSet, GroupViewSet,
     PermissionViewSet, RoleGroupMappingViewSet, PermissionSyncLogViewSet,
@@ -13,7 +17,8 @@ from .api_views import (
 from .operation_log_views import OperationLogViewSet
 from .api.menu_api import (
     get_user_menu_permissions, check_menu_permission, 
-    get_role_display_name, get_menu_hierarchy
+    get_role_display_name, get_menu_hierarchy,
+    get_user_navigation_menus, get_public_navigation, get_menu_config_json
 )
 
 # API路由配置
@@ -43,6 +48,11 @@ urlpatterns = [
     path('api/check-menu-permission/', check_menu_permission, name='check_menu_permission'),
     path('api/role-display-name/', get_role_display_name, name='role_display_name'),
     path('api/menu-hierarchy/', get_menu_hierarchy, name='menu_hierarchy'),
+    
+    # 导航菜单API（新增）
+    path('api/navigation-menus/', get_user_navigation_menus, name='navigation_menus'),
+    path('api/public-navigation/', get_public_navigation, name='public_navigation'),
+    path('api/menu-config.json', get_menu_config_json, name='menu_config_json'),
     
     # 前后端权限同步API
     path('user-permissions/', get_user_permissions, name='get_user_permissions'),
@@ -100,4 +110,14 @@ urlpatterns = [
     # 批量操作 - 已废弃，请使用 MenuValidity 和 RoleMenuAssignment 替代
     # path('batch/assign-permissions/', views.BatchAssignPermissionsView.as_view(), name='batch_assign_permissions'),
     # path('batch/remove-permissions/', views.BatchRemovePermissionsView.as_view(), name='batch_remove_permissions'),
+    
+    # 权限控制演示页面
+    path('demo/', PermissionDemoView.as_view(), name='permission_demo'),
+    path('demo/teaching/', teaching_demo_view, name='teaching_demo'),
+    path('demo/vocabulary-edit/', vocabulary_edit_demo_view, name='vocabulary_edit_demo'),
+    path('demo/report-export/', report_export_demo_view, name='report_export_demo'),
+    
+    # 演示页面AJAX接口
+    path('demo/ajax/check-permission/', check_permission_ajax, name='demo_check_permission'),
+    path('demo/api/permission-test/', permission_test_api, name='demo_permission_test'),
 ]

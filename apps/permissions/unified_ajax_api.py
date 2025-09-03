@@ -141,15 +141,25 @@ class UnifiedAjaxAPIViewSet(viewsets.ViewSet):
         menu_level = request.GET.get('menu_level')
         
         try:
+            from .models import RoleManagement
+            
             filters = {}
             if role:
-                filters['role'] = role
+                filters['role__role_name'] = role
             if menu_level:
-                filters['menu_module__menu_level'] = menu_level
+                filters['menu__menu_level'] = menu_level
             
-            # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
-            # 暂时返回空列表，避免错误
-            permissions = []
+            # 使用 MenuValidity 替代 RoleMenuPermission
+            permissions = MenuValidity.objects.filter(
+                is_valid=True,
+                **filters
+            ).select_related('menu', 'role').values(
+                'id',
+                'menu__module_name',
+                'menu__url_pattern', 
+                'role__role_name',
+                'is_valid'
+            )
             
             return Response({
                 'success': True,

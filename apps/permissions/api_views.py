@@ -218,7 +218,7 @@ def get_menu_version(request):
 def get_frontend_menus_for_user(request):
     """
     获取当前用户可访问的前台菜单列表
-    基于新的 FrontendMenuConfig 和 FrontendMenuRoleAssignment 模型
+    基于 MenuModuleConfig 和 MenuValidity 模型
     """
     try:
         user = request.user
@@ -232,80 +232,88 @@ def get_frontend_menus_for_user(request):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # 获取该角色已分配且有效的菜单
-        from .models import FrontendMenuRoleAssignment
+        from .models import MenuValidity
         
-        assignments = FrontendMenuRoleAssignment.objects.filter(
+        # 获取用户角色有效的菜单
+        valid_menus = MenuValidity.objects.filter(
             role=user_role,
-            is_active=True,
-            can_view=True
-        ).select_related('menu').order_by('menu__position', 'sort_order_override', 'menu__sort_order')
+            is_valid=True
+        ).select_related('menu_module').order_by('menu_module__sort_order')
         
-        # 按位置分组菜单
-        menus_by_position = {
-            'header': [],
-            'sidebar': [],
-            'footer': [],
-            'floating': []
+        # 按菜单级别分组
+        menus_by_level = {
+            'root': [],
+            'level1': [],
+            'level2': []
         }
         
-        for assignment in assignments:
-            # 检查时间有效性
-            if not assignment.is_valid_now():
-                continue
-                
-            menu = assignment.menu
+        for validity in valid_menus:
+            menu = validity.menu_module
             if not menu.is_active:
                 continue
                 
             menu_data = {
                 'id': menu.id,
                 'key': menu.key,
-                'name': assignment.get_display_name(),
-                'icon': assignment.get_display_icon(),
+                'name': menu.name,
+                'icon': menu.icon,
                 'url': menu.url,
-                'menu_type': menu.menu_type,
-                'position': menu.position,
-                'sort_order': assignment.get_sort_order(),
-                'is_external': menu.is_external,
-                'target': menu.target,
-                'can_access': assignment.can_access,
-                'parent_id': menu.parent.id if menu.parent else None,
-                'description': menu.description
+                'menu_level': menu.menu_level,
+                'sort_order': menu.sort_order,
+                'description': menu.description,
+                'is_active': menu.is_active
             }
             
-            menus_by_position[menu.position].append(menu_data)
+            menus_by_level[menu.menu_level].append(menu_data)
         
         # 构建层级结构
-        def build_menu_tree(menu_list):
+        def build_menu_tree(root_menus, level1_menus, level2_menus):
             """构建菜单树结构"""
-            menu_dict = {menu['id']: menu for menu in menu_list}
-            tree = []
+            # 创建菜单字典便于查找
+            level1_dict = {}
+            level2_dict = {}
             
-            for menu in menu_list:
-                if menu['parent_id'] is None:
-                    # 根菜单
-                    menu['children'] = []
-                    tree.append(menu)
-                else:
-                    # 子菜单
-                    parent = menu_dict.get(menu['parent_id'])
-                    if parent:
-                        if 'children' not in parent:
-                            parent['children'] = []
-                        parent['children'].append(menu)
+            for menu in level1_menus:
+                level1_dict[menu['key']] = menu
+                menu['children'] = []
             
-            return tree
+            for menu in level2_menus:
+                level2_dict[menu['key']] = menu
+                menu['children'] = []
+            
+            # 将level2菜单添加到对应的level1菜单下
+            for menu in level2_menus:
+                # 根据命名约定推断父菜单（如果有的话）
+                # 这里可以根据实际业务逻辑调整
+                pass
+            
+            # 将level1菜单添加到对应的root菜单下
+            for menu in level1_menus:
+                # 根据命名约定推断父菜单（如果有的话）
+                # 这里可以根据实际业务逻辑调整
+                pass
+            
+            # 为root菜单添加children
+            for menu in root_menus:
+                menu['children'] = []
+            
+            return {
+                'root': root_menus,
+                'level1': level1_menus,
+                'level2': level2_menus
+            }
         
-        # 为每个位置构建树结构
-        structured_menus = {}
-        for position, menu_list in menus_by_position.items():
-            structured_menus[position] = build_menu_tree(menu_list)
+        structured_menus = build_menu_tree(
+            menus_by_level['root'],
+            menus_by_level['level1'],
+            menus_by_level['level2']
+        )
         
         return Response({
             'success': True,
             'user_role': user_role,
             'menus': structured_menus,
-            'total_count': sum(len(menus) for menus in menus_by_position.values())
+            'total_count': sum(len(menus) for menus in menus_by_level.values())
         })
         
     except Exception as e:

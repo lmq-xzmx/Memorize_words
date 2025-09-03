@@ -1,0 +1,216 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "navigationStyle": "custom",
+        "backgroundColor": "#f8f9fa",
+        "backgroundTextStyle": "dark",
+        "enablePullDownRefresh": true,
+        "onReachBottomDistance": 50
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom",
+        "backgroundColor": "#ffffff",
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/word/word",
+      "style": {
+        "navigationBarTitleText": "斩词练习",
+        "navigationStyle": "custom",
+        "backgroundColor": "#f8f9fa",
+        "backgroundTextStyle": "dark",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/tools/tools",
+      "style": {
+        "navigationBarTitleText": "学习工具",
+        "navigationStyle": "custom",
+        "backgroundColor": "#f8f9fa",
+        "backgroundTextStyle": "dark",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/fashion/fashion",
+      "style": {
+        "navigationBarTitleText": "时尚内容",
+        "navigationStyle": "custom",
+        "backgroundColor": "#f8f9fa",
+        "backgroundTextStyle": "dark",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人中心",
+        "navigationStyle": "custom",
+        "backgroundColor": "#f8f9fa",
+        "backgroundTextStyle": "dark",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/practice/practice",
+      "style": {
+        "navigationBarTitleText": "学习练习",
+        "navigationStyle": "custom",
+        "backgroundColor": "#f8f9fa",
+        "backgroundTextStyle": "dark"
+      }
+    },
+    {
+      "path": "pages/record/record",
+      "style": {
+        "navigationBarTitleText": "学习记录",
+        "navigationStyle": "custom",
+        "backgroundColor": "#f8f9fa",
+        "backgroundTextStyle": "dark",
+        "enablePullDownRefresh": true
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "英语学习平台",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8",
+    "app-plus": {
+      "background": "#efeff4"
+    }
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#007aff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "position": "bottom",
+    "height": "50px",
+    "fontSize": "12px",
+    "iconWidth": "24px",
+    "spacing": "3px",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
+      },
+      {
+        "pagePath": "pages/word/word",
+        "text": "斩词",
+        "iconPath": "static/tabbar/word.png",
+        "selectedIconPath": "static/tabbar/word-active.png"
+      },
+      {
+        "pagePath": "pages/tools/tools",
+        "text": "工具",
+        "iconPath": "static/tabbar/tools.png",
+        "selectedIconPath": "static/tabbar/tools-active.png"
+      },
+      {
+        "pagePath": "pages/fashion/fashion",
+        "text": "时尚",
+        "iconPath": "static/tabbar/fashion.png",
+        "selectedIconPath": "static/tabbar/fashion-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
+      }
+    ]
+  },
+  "condition": {
+    "current": 0,
+    "list": [
+      {
+        "name": "首页",
+        "path": "pages/index/index",
+        "query": ""
+      },
+      {
+        "name": "登录页",
+        "path": "pages/login/login",
+        "query": ""
+      },
+      {
+        "name": "斩词练习",
+        "path": "pages/word/word",
+        "query": ""
+      },
+      {
+        "name": "学习工具",
+        "path": "pages/tools/tools",
+        "query": ""
+      },
+      {
+        "name": "时尚内容",
+        "path": "pages/fashion/fashion",
+        "query": ""
+      },
+      {
+        "name": "个人中心",
+        "path": "pages/profile/profile",
+        "query": ""
+      },
+      {
+        "name": "学习练习",
+        "path": "pages/practice/practice",
+        "query": "mode=choice"
+      },
+      {
+        "name": "学习记录",
+        "path": "pages/record/record",
+        "query": ""
+      }
+    ]
+  },
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^u-(.*)$": "uview-ui/components/u-$1/u-$1.vue",
+      "^uni-(.*)$": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+    }
+  },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于小程序位置接口的效果展示"
+    },
+    "scope.camera": {
+      "desc": "你的摄像头将用于扫码功能"
+    },
+    "scope.record": {
+      "desc": "你的录音功能将用于语音识别"
+    },
+    "scope.writePhotosAlbum": {
+      "desc": "你的相册权限将用于保存图片"
+    },
+    "scope.userInfo": {
+      "desc": "你的用户信息将用于完善个人资料"
+    }
+  },
+  "requiredBackgroundModes": ["audio", "location"],
+  "navigateToMiniProgramAppIdList": [],
+  "uniStatistics": {
+    "enable": false
+  },
+  "vueVersion": "3",
+  "renderingMode": "seperated",
+  "locale": "zh-Hans",
+  "fallbackLocale": "zh-Hans",
+  "darkmode": false,
+  "themeLocation": "theme.json",
+  "uniIdRouter": {}
+}

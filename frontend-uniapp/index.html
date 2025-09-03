@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="theme-color" content="#2196f3">
+    <title>英语学习平台</title>
+    <meta name="description" content="基于权限控制的英语学习移动应用，支持多角色学习管理">
+    <meta name="keywords" content="英语学习,在线教育,移动学习,权限管理">
+    <link rel="icon" type="image/png" href="/static/logo.png">
+    <link rel="apple-touch-icon" href="/static/logo.png">
+    <style>
+        /* 页面加载动画 */
+        .uni-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .uni-loading-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #2196f3, #21cbf3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        .uni-loading-text {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .uni-loading-spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2196f3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (prefers-color-scheme: dark) {
+            .uni-loading {
+                background: #121212;
+            }
+            .uni-loading-text {
+                color: #ccc;
+            }
+        }
+        
+        /* 移动端适配 */
+        @media screen and (max-width: 768px) {
+            .uni-loading-logo {
+                width: 60px;
+                height: 60px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 页面加载动画 -->
+        <div class="uni-loading" id="loading">
+            <div class="uni-loading-logo">E</div>
+            <div class="uni-loading-text">英语学习平台</div>
+            <div class="uni-loading-spinner"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 隐藏加载动画
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.opacity = '0';
+                    loading.style.transition = 'opacity 0.3s';
+                    setTimeout(function() {
+                        loading.style.display = 'none';
+                    }, 300);
+                }
+            }, 1000);
+        });
+        
+        // 错误处理
+        window.addEventListener('error', function(e) {
+            console.error('页面加载错误:', e.error);
+        });
+        
+        // 移动端适配
+        (function() {
+            const setRem = function() {
+                const width = document.documentElement.clientWidth || document.body.clientWidth;
+                const ratio = width / 375;
+                const size = ratio > 2 ? 2 : ratio < 0.5 ? 0.5 : ratio;
+                document.documentElement.style.fontSize = size * 16 + 'px';
+            };
+            setRem();
+            window.addEventListener('resize', setRem);
+        })();
+    </script>
+</body>
+</html>

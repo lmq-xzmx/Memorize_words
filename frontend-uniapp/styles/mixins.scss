@@ -1,0 +1,1266 @@
+// 导入变量
+@import './variables.scss';
+
+// 清除浮动
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+// 文本省略
+@mixin ellipsis($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+  }
+}
+
+// 居中对齐
+@mixin center($type: 'both') {
+  position: absolute;
+  @if $type == 'both' {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  } @else if $type == 'horizontal' {
+    left: 50%;
+    transform: translateX(-50%);
+  } @else if $type == 'vertical' {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+}
+
+// Flex布局
+@mixin flex($direction: row, $justify: flex-start, $align: stretch, $wrap: nowrap) {
+  display: flex;
+  flex-direction: $direction;
+  justify-content: $justify;
+  align-items: $align;
+  flex-wrap: $wrap;
+}
+
+// 响应式断点
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'xs' {
+    @media screen and (max-width: #{$screen-xs}) {
+      @content;
+    }
+  } @else if $breakpoint == 'sm' {
+    @media screen and (max-width: #{$screen-sm}) {
+      @content;
+    }
+  } @else if $breakpoint == 'md' {
+    @media screen and (max-width: #{$screen-md}) {
+      @content;
+    }
+  } @else if $breakpoint == 'lg' {
+    @media screen and (max-width: #{$screen-lg}) {
+      @content;
+    }
+  } @else if $breakpoint == 'xl' {
+    @media screen and (max-width: #{$screen-xl}) {
+      @content;
+    }
+  }
+}
+
+// 按钮样式
+@mixin button($bg-color: $primary-color, $text-color: $text-color-white, $border-radius: $btn-border-radius) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 $btn-padding-horizontal;
+  height: $btn-height;
+  background-color: $bg-color;
+  color: $text-color;
+  border: none;
+  border-radius: $border-radius;
+  font-size: $btn-font-size;
+  font-weight: $btn-font-weight;
+  text-align: center;
+  cursor: pointer;
+  transition: all $transition-base ease;
+  user-select: none;
+  
+  &:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// 卡片样式
+@mixin card($padding: $card-padding, $border-radius: $card-border-radius, $shadow: $card-shadow) {
+  background-color: $card-bg;
+  border-radius: $border-radius;
+  box-shadow: $shadow;
+  padding: $padding;
+  overflow: hidden;
+}
+
+// 输入框样式
+@mixin input($height: $input-height, $padding: $input-padding, $border-radius: $input-border-radius) {
+  width: 100%;
+  height: $height;
+  padding: 0 $padding;
+  background-color: $input-bg;
+  border: 1rpx solid $input-border-color;
+  border-radius: $border-radius;
+  font-size: $input-font-size;
+  color: $text-color-base;
+  box-sizing: border-box;
+  transition: border-color $transition-base ease;
+  
+  &:focus {
+    border-color: $input-focus-border-color;
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: $text-color-muted;
+  }
+}
+
+// 头像样式
+@mixin avatar($size: $avatar-size-base, $border-radius: $border-radius-circle) {
+  width: $size;
+  height: $size;
+  border-radius: $border-radius;
+  overflow: hidden;
+  background-color: $bg-color-gray;
+  
+  image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+// 徽章样式
+@mixin badge($bg-color: $danger-color, $text-color: $text-color-white) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: $badge-height;
+  height: $badge-height;
+  padding: $badge-padding;
+  background-color: $bg-color;
+  color: $text-color;
+  border-radius: $badge-border-radius;
+  font-size: $badge-font-size;
+  font-weight: $badge-font-weight;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+// 标签样式
+@mixin tag($bg-color: $bg-color-gray, $text-color: $text-color-secondary, $border-color: transparent) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: $tag-height;
+  padding: $tag-padding;
+  background-color: $bg-color;
+  color: $text-color;
+  border: 1rpx solid $border-color;
+  border-radius: $tag-border-radius;
+  font-size: $tag-font-size;
+  font-weight: $tag-font-weight;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+// 分割线样式
+@mixin divider($color: $divider-color, $thickness: $divider-thickness, $margin: $spacing-base) {
+  height: $thickness;
+  background-color: $color;
+  margin: $margin 0;
+  border: none;
+}
+
+// 阴影样式
+@mixin shadow($level: 'base') {
+  @if $level == 'sm' {
+    box-shadow: $box-shadow-sm;
+  } @else if $level == 'base' {
+    box-shadow: $box-shadow-base;
+  } @else if $level == 'lg' {
+    box-shadow: $box-shadow-lg;
+  } @else if $level == 'xl' {
+    box-shadow: $box-shadow-xl;
+  }
+}
+
+// 渐变背景
+@mixin gradient($direction: 'to right', $colors...) {
+  background: linear-gradient(#{$direction}, $colors);
+}
+
+// 动画
+@mixin animation($name, $duration: $transition-base, $timing: ease, $delay: 0s, $iteration: 1, $direction: normal, $fill-mode: both) {
+  animation: $name $duration $timing $delay $iteration $direction $fill-mode;
+}
+
+// 过渡
+@mixin transition($properties: all, $duration: $transition-base, $timing: ease, $delay: 0s) {
+  transition: $properties $duration $timing $delay;
+}
+
+// 变换
+@mixin transform($transforms...) {
+  transform: $transforms;
+}
+
+// 旋转
+@mixin rotate($angle) {
+  transform: rotate($angle);
+}
+
+// 缩放
+@mixin scale($scale) {
+  transform: scale($scale);
+}
+
+// 平移
+@mixin translate($x: 0, $y: 0) {
+  transform: translate($x, $y);
+}
+
+// 透明度
+@mixin opacity($opacity) {
+  opacity: $opacity;
+}
+
+// 滤镜
+@mixin filter($filters...) {
+  filter: $filters;
+}
+
+// 模糊
+@mixin blur($radius) {
+  filter: blur($radius);
+}
+
+// 亮度
+@mixin brightness($value) {
+  filter: brightness($value);
+}
+
+// 对比度
+@mixin contrast($value) {
+  filter: contrast($value);
+}
+
+// 饱和度
+@mixin saturate($value) {
+  filter: saturate($value);
+}
+
+// 色相旋转
+@mixin hue-rotate($angle) {
+  filter: hue-rotate($angle);
+}
+
+// 反色
+@mixin invert($value: 1) {
+  filter: invert($value);
+}
+
+// 灰度
+@mixin grayscale($value: 1) {
+  filter: grayscale($value);
+}
+
+// 棕褐色
+@mixin sepia($value: 1) {
+  filter: sepia($value);
+}
+
+// 阴影滤镜
+@mixin drop-shadow($x: 0, $y: 0, $blur: 0, $color: rgba(0, 0, 0, 0.5)) {
+  filter: drop-shadow($x $y $blur $color);
+}
+
+// 背景图片
+@mixin background-image($url, $size: cover, $position: center, $repeat: no-repeat) {
+  background-image: url($url);
+  background-size: $size;
+  background-position: $position;
+  background-repeat: $repeat;
+}
+
+// 宽高比
+@mixin aspect-ratio($width, $height) {
+  position: relative;
+  
+  &::before {
+    content: '';
+    display: block;
+    padding-top: percentage($height / $width);
+  }
+  
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// 固定宽高比的容器
+@mixin ratio-container($ratio: 1) {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: percentage(1 / $ratio);
+  overflow: hidden;
+  
+  > * {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+// 圆形
+@mixin circle($size) {
+  width: $size;
+  height: $size;
+  border-radius: 50%;
+}
+
+// 正方形
+@mixin square($size) {
+  width: $size;
+  height: $size;
+}
+
+// 三角形
+@mixin triangle($direction: up, $size: 20rpx, $color: $text-color-base) {
+  width: 0;
+  height: 0;
+  
+  @if $direction == up {
+    border-left: $size solid transparent;
+    border-right: $size solid transparent;
+    border-bottom: $size solid $color;
+  } @else if $direction == down {
+    border-left: $size solid transparent;
+    border-right: $size solid transparent;
+    border-top: $size solid $color;
+  } @else if $direction == left {
+    border-top: $size solid transparent;
+    border-bottom: $size solid transparent;
+    border-right: $size solid $color;
+  } @else if $direction == right {
+    border-top: $size solid transparent;
+    border-bottom: $size solid transparent;
+    border-left: $size solid $color;
+  }
+}
+
+// 箭头
+@mixin arrow($direction: right, $size: 12rpx, $color: $text-color-muted, $thickness: 2rpx) {
+  width: $size;
+  height: $size;
+  border: $thickness solid $color;
+  
+  @if $direction == up {
+    border-bottom: none;
+    border-left: none;
+    transform: rotate(-45deg);
+  } @else if $direction == down {
+    border-top: none;
+    border-right: none;
+    transform: rotate(-45deg);
+  } @else if $direction == left {
+    border-top: none;
+    border-right: none;
+    transform: rotate(45deg);
+  } @else if $direction == right {
+    border-bottom: none;
+    border-left: none;
+    transform: rotate(45deg);
+  }
+}
+
+// 加载动画
+@mixin loading-spinner($size: $loading-spinner-size, $color: $loading-spinner-color, $thickness: $loading-spinner-border-width) {
+  width: $size;
+  height: $size;
+  border: $thickness solid rgba($color, 0.3);
+  border-top: $thickness solid $color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+// 脉冲动画
+@mixin pulse($scale: 1.05, $duration: 1s) {
+  animation: pulse $duration ease-in-out infinite alternate;
+  
+  @keyframes pulse {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale($scale);
+    }
+  }
+}
+
+// 弹跳动画
+@mixin bounce($height: 20rpx, $duration: 0.6s) {
+  animation: bounce $duration ease infinite;
+  
+  @keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-$height);
+    }
+    60% {
+      transform: translateY(-$height / 2);
+    }
+  }
+}
+
+// 摇摆动画
+@mixin shake($distance: 10rpx, $duration: 0.5s) {
+  animation: shake $duration ease-in-out;
+  
+  @keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-$distance);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translateX($distance);
+    }
+  }
+}
+
+// 淡入动画
+@mixin fade-in($duration: $transition-base) {
+  animation: fadeIn $duration ease;
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+// 淡出动画
+@mixin fade-out($duration: $transition-base) {
+  animation: fadeOut $duration ease;
+  
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+// 滑入动画
+@mixin slide-in($direction: left, $distance: 100%, $duration: $transition-base) {
+  animation: slideIn#{capitalize($direction)} $duration ease;
+  
+  @if $direction == left {
+    @keyframes slideInLeft {
+      from {
+        transform: translateX(-$distance);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+  } @else if $direction == right {
+    @keyframes slideInRight {
+      from {
+        transform: translateX($distance);
+      }
+      to {
+        transform: translateX(0);
+      }
+    }
+  } @else if $direction == up {
+    @keyframes slideInUp {
+      from {
+        transform: translateY($distance);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+  } @else if $direction == down {
+    @keyframes slideInDown {
+      from {
+        transform: translateY(-$distance);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+// 滑出动画
+@mixin slide-out($direction: left, $distance: 100%, $duration: $transition-base) {
+  animation: slideOut#{capitalize($direction)} $duration ease;
+  
+  @if $direction == left {
+    @keyframes slideOutLeft {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(-$distance);
+      }
+    }
+  } @else if $direction == right {
+    @keyframes slideOutRight {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX($distance);
+      }
+    }
+  } @else if $direction == up {
+    @keyframes slideOutUp {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(-$distance);
+      }
+    }
+  } @else if $direction == down {
+    @keyframes slideOutDown {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY($distance);
+      }
+    }
+  }
+}
+
+// 缩放进入动画
+@mixin zoom-in($scale: 0, $duration: $transition-base) {
+  animation: zoomIn $duration ease;
+  
+  @keyframes zoomIn {
+    from {
+      transform: scale($scale);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+// 缩放退出动画
+@mixin zoom-out($scale: 0, $duration: $transition-base) {
+  animation: zoomOut $duration ease;
+  
+  @keyframes zoomOut {
+    from {
+      transform: scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: scale($scale);
+      opacity: 0;
+    }
+  }
+}
+
+// 旋转进入动画
+@mixin rotate-in($angle: 360deg, $duration: $transition-base) {
+  animation: rotateIn $duration ease;
+  
+  @keyframes rotateIn {
+    from {
+      transform: rotate(-$angle);
+      opacity: 0;
+    }
+    to {
+      transform: rotate(0);
+      opacity: 1;
+    }
+  }
+}
+
+// 旋转退出动画
+@mixin rotate-out($angle: 360deg, $duration: $transition-base) {
+  animation: rotateOut $duration ease;
+  
+  @keyframes rotateOut {
+    from {
+      transform: rotate(0);
+      opacity: 1;
+    }
+    to {
+      transform: rotate($angle);
+      opacity: 0;
+    }
+  }
+}
+
+// 翻转动画
+@mixin flip($axis: x, $duration: $transition-base) {
+  animation: flip#{capitalize($axis)} $duration ease;
+  
+  @if $axis == x {
+    @keyframes flipX {
+      from {
+        transform: perspective(400rpx) rotateX(-90deg);
+        opacity: 0;
+      }
+      40% {
+        transform: perspective(400rpx) rotateX(-10deg);
+      }
+      70% {
+        transform: perspective(400rpx) rotateX(10deg);
+      }
+      to {
+        transform: perspective(400rpx) rotateX(0deg);
+        opacity: 1;
+      }
+    }
+  } @else if $axis == y {
+    @keyframes flipY {
+      from {
+        transform: perspective(400rpx) rotateY(-90deg);
+        opacity: 0;
+      }
+      40% {
+        transform: perspective(400rpx) rotateY(-10deg);
+      }
+      70% {
+        transform: perspective(400rpx) rotateY(10deg);
+      }
+      to {
+        transform: perspective(400rpx) rotateY(0deg);
+        opacity: 1;
+      }
+    }
+  }
+}
+
+// 光晕效果
+@mixin glow($color: $primary-color, $size: 20rpx) {
+  box-shadow: 0 0 $size $color;
+}
+
+// 内阴影
+@mixin inset-shadow($x: 0, $y: 0, $blur: 10rpx, $color: rgba(0, 0, 0, 0.1)) {
+  box-shadow: inset $x $y $blur $color;
+}
+
+// 文字阴影
+@mixin text-shadow($x: 0, $y: 0, $blur: 10rpx, $color: rgba(0, 0, 0, 0.5)) {
+  text-shadow: $x $y $blur $color;
+}
+
+// 文字描边
+@mixin text-stroke($width: 1rpx, $color: $text-color-base) {
+  -webkit-text-stroke: $width $color;
+  text-stroke: $width $color;
+}
+
+// 文字渐变
+@mixin text-gradient($colors...) {
+  background: linear-gradient(to right, $colors);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+// 毛玻璃效果
+@mixin glass($blur: 20rpx, $opacity: 0.8) {
+  backdrop-filter: blur($blur);
+  background-color: rgba(255, 255, 255, $opacity);
+}
+
+// 暗色毛玻璃效果
+@mixin dark-glass($blur: 20rpx, $opacity: 0.8) {
+  backdrop-filter: blur($blur);
+  background-color: rgba(0, 0, 0, $opacity);
+}
+
+// 网格布局
+@mixin grid($columns: 1, $gap: $spacing-base) {
+  display: grid;
+  grid-template-columns: repeat($columns, 1fr);
+  gap: $gap;
+}
+
+// 自适应网格
+@mixin auto-grid($min-width: 200rpx, $gap: $spacing-base) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax($min-width, 1fr));
+  gap: $gap;
+}
+
+// 粘性定位
+@mixin sticky($top: 0) {
+  position: sticky;
+  top: $top;
+  z-index: $z-index-sticky;
+}
+
+// 固定定位
+@mixin fixed($top: auto, $right: auto, $bottom: auto, $left: auto) {
+  position: fixed;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
+  z-index: $z-index-fixed;
+}
+
+// 绝对定位
+@mixin absolute($top: auto, $right: auto, $bottom: auto, $left: auto) {
+  position: absolute;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
+}
+
+// 相对定位
+@mixin relative($top: auto, $right: auto, $bottom: auto, $left: auto) {
+  position: relative;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
+}
+
+// 隐藏元素
+@mixin hide {
+  display: none;
+}
+
+// 显示元素
+@mixin show($display: block) {
+  display: $display;
+}
+
+// 可见性
+@mixin visibility($visible: true) {
+  @if $visible {
+    visibility: visible;
+    opacity: 1;
+  } @else {
+    visibility: hidden;
+    opacity: 0;
+  }
+}
+
+// 禁用选择
+@mixin no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+// 允许选择
+@mixin select {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+// 禁用拖拽
+@mixin no-drag {
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+// 允许拖拽
+@mixin drag {
+  -webkit-user-drag: element;
+  -khtml-user-drag: element;
+  -moz-user-drag: element;
+  -o-user-drag: element;
+  user-drag: element;
+}
+
+// 硬件加速
+@mixin hardware-acceleration {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+// 平滑滚动
+@mixin smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+// 隐藏滚动条
+@mixin hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+// 自定义滚动条
+@mixin custom-scrollbar($width: 12rpx, $track-color: $bg-color-gray, $thumb-color: $border-color-base, $thumb-hover-color: $text-color-muted) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: $track-color;
+    border-radius: $width / 2;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: $thumb-color;
+    border-radius: $width / 2;
+    
+    &:hover {
+      background: $thumb-hover-color;
+    }
+  }
+}
+
+// 占位符样式
+@mixin placeholder($color: $text-color-muted, $font-size: inherit) {
+  &::placeholder {
+    color: $color;
+    font-size: $font-size;
+    opacity: 1;
+  }
+  
+  &::-webkit-input-placeholder {
+    color: $color;
+    font-size: $font-size;
+  }
+  
+  &::-moz-placeholder {
+    color: $color;
+    font-size: $font-size;
+    opacity: 1;
+  }
+  
+  &:-ms-input-placeholder {
+    color: $color;
+    font-size: $font-size;
+  }
+}
+
+// 选中文本样式
+@mixin selection($bg-color: $primary-color, $text-color: $text-color-white) {
+  &::selection {
+    background-color: $bg-color;
+    color: $text-color;
+  }
+  
+  &::-moz-selection {
+    background-color: $bg-color;
+    color: $text-color;
+  }
+}
+
+// 焦点样式
+@mixin focus($color: $primary-color, $width: 2rpx, $style: solid) {
+  &:focus {
+    outline: $width $style $color;
+    outline-offset: 2rpx;
+  }
+}
+
+// 悬停效果
+@mixin hover($property: opacity, $value: 0.8, $duration: $transition-base) {
+  transition: $property $duration ease;
+  
+  &:hover {
+    #{$property}: $value;
+  }
+}
+
+// 激活效果
+@mixin active($scale: 0.95, $duration: $transition-fast) {
+  transition: transform $duration ease;
+  
+  &:active {
+    transform: scale($scale);
+  }
+}
+
+// 禁用状态
+@mixin disabled($opacity: 0.5) {
+  &:disabled,
+  &.disabled {
+    opacity: $opacity;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+}
+
+// 加载状态
+@mixin loading($opacity: 0.6) {
+  &.loading {
+    opacity: $opacity;
+    cursor: wait;
+    pointer-events: none;
+  }
+}
+
+// 错误状态
+@mixin error($border-color: $danger-color, $text-color: $danger-color) {
+  &.error {
+    border-color: $border-color;
+    color: $text-color;
+  }
+}
+
+// 成功状态
+@mixin success($border-color: $success-color, $text-color: $success-color) {
+  &.success {
+    border-color: $border-color;
+    color: $text-color;
+  }
+}
+
+// 警告状态
+@mixin warning($border-color: $warning-color, $text-color: $warning-color) {
+  &.warning {
+    border-color: $border-color;
+    color: $text-color;
+  }
+}
+
+// 信息状态
+@mixin info($border-color: $info-color, $text-color: $info-color) {
+  &.info {
+    border-color: $border-color;
+    color: $text-color;
+  }
+}
+
+// 主题色彩生成器
+@mixin theme-colors {
+  @each $name, $color in $theme-colors {
+    &.#{$name} {
+      background-color: $color;
+      
+      @if $name == 'light' {
+        color: $text-color-base;
+      } @else {
+        color: $text-color-white;
+      }
+    }
+    
+    &.#{$name}-outline {
+      background-color: transparent;
+      border: 1rpx solid $color;
+      color: $color;
+    }
+    
+    &.#{$name}-text {
+      background-color: transparent;
+      color: $color;
+    }
+  }
+}
+
+// 尺寸生成器
+@mixin size-variants($property: font-size, $sizes: (xs: 20rpx, sm: 24rpx, base: 28rpx, lg: 32rpx, xl: 36rpx)) {
+  @each $name, $size in $sizes {
+    &.#{$name} {
+      #{$property}: $size;
+    }
+  }
+}
+
+// 间距生成器
+@mixin spacing-variants($property: margin, $sizes: (0: 0, 1: 10rpx, 2: 20rpx, 3: 30rpx, 4: 40rpx)) {
+  @each $name, $size in $sizes {
+    &.#{$property}-#{$name} {
+      #{$property}: $size;
+    }
+    
+    &.#{$property}t-#{$name} {
+      #{$property}-top: $size;
+    }
+    
+    &.#{$property}r-#{$name} {
+      #{$property}-right: $size;
+    }
+    
+    &.#{$property}b-#{$name} {
+      #{$property}-bottom: $size;
+    }
+    
+    &.#{$property}l-#{$name} {
+      #{$property}-left: $size;
+    }
+    
+    &.#{$property}x-#{$name} {
+      #{$property}-left: $size;
+      #{$property}-right: $size;
+    }
+    
+    &.#{$property}y-#{$name} {
+      #{$property}-top: $size;
+      #{$property}-bottom: $size;
+    }
+  }
+}
+
+// 工具函数
+
+// 字符串首字母大写
+@function capitalize($string) {
+  @return to-upper-case(str-slice($string, 1, 1)) + str-slice($string, 2);
+}
+
+// 计算对比色
+@function contrast-color($color, $light: $text-color-white, $dark: $text-color-base) {
+  @if lightness($color) > 50% {
+    @return $dark;
+  } @else {
+    @return $light;
+  }
+}
+
+// 颜色混合
+@function mix-color($color1, $color2, $weight: 50%) {
+  @return mix($color1, $color2, $weight);
+}
+
+// 颜色变亮
+@function lighten-color($color, $amount: 10%) {
+  @return lighten($color, $amount);
+}
+
+// 颜色变暗
+@function darken-color($color, $amount: 10%) {
+  @return darken($color, $amount);
+}
+
+// 颜色透明度
+@function alpha-color($color, $alpha: 0.5) {
+  @return rgba($color, $alpha);
+}
+
+// 单位转换
+@function px-to-rpx($px) {
+  @return $px * 2rpx;
+}
+
+@function rpx-to-px($rpx) {
+  @return $rpx / 2;
+}
+
+// 计算百分比
+@function percentage($value) {
+  @return $value * 100%;
+}
+
+// 计算em值
+@function em($px, $base: 16px) {
+  @return $px / $base * 1em;
+}
+
+// 计算rem值
+@function rem($px, $base: 16px) {
+  @return $px / $base * 1rem;
+}
+
+// 获取z-index值
+@function z-index($layer) {
+  @if $layer == 'dropdown' {
+    @return $z-index-dropdown;
+  } @else if $layer == 'sticky' {
+    @return $z-index-sticky;
+  } @else if $layer == 'fixed' {
+    @return $z-index-fixed;
+  } @else if $layer == 'modal-backdrop' {
+    @return $z-index-modal-backdrop;
+  } @else if $layer == 'modal' {
+    @return $z-index-modal;
+  } @else if $layer == 'popover' {
+    @return $z-index-popover;
+  } @else if $layer == 'tooltip' {
+    @return $z-index-tooltip;
+  } @else if $layer == 'toast' {
+    @return $z-index-toast;
+  } @else {
+    @return 1;
+  }
+}
+
+// 获取主题色
+@function theme-color($name) {
+  @return map-get($theme-colors, $name);
+}
+
+// 获取断点值
+@function breakpoint($name) {
+  @if $name == 'xs' {
+    @return $screen-xs;
+  } @else if $name == 'sm' {
+    @return $screen-sm;
+  } @else if $name == 'md' {
+    @return $screen-md;
+  } @else if $name == 'lg' {
+    @return $screen-lg;
+  } @else if $name == 'xl' {
+    @return $screen-xl;
+  } @else {
+    @return 0;
+  }
+}
+
+// 获取间距值
+@function spacing($name) {
+  @if $name == 'xs' {
+    @return $spacing-xs;
+  } @else if $name == 'sm' {
+    @return $spacing-sm;
+  } @else if $name == 'base' {
+    @return $spacing-base;
+  } @else if $name == 'lg' {
+    @return $spacing-lg;
+  } @else if $name == 'xl' {
+    @return $spacing-xl;
+  } @else if $name == 'xxl' {
+    @return $spacing-xxl;
+  } @else {
+    @return 0;
+  }
+}
+
+// 获取圆角值
+@function border-radius($name) {
+  @if $name == 'xs' {
+    @return $border-radius-xs;
+  } @else if $name == 'sm' {
+    @return $border-radius-sm;
+  } @else if $name == 'base' {
+    @return $border-radius-base;
+  } @else if $name == 'lg' {
+    @return $border-radius-lg;
+  } @else if $name == 'xl' {
+    @return $border-radius-xl;
+  } @else if $name == 'circle' {
+    @return $border-radius-circle;
+  } @else {
+    @return 0;
+  }
+}
+
+// 获取阴影值
+@function box-shadow($name) {
+  @if $name == 'sm' {
+    @return $box-shadow-sm;
+  } @else if $name == 'base' {
+    @return $box-shadow-base;
+  } @else if $name == 'lg' {
+    @return $box-shadow-lg;
+  } @else if $name == 'xl' {
+    @return $box-shadow-xl;
+  } @else {
+    @return none;
+  }
+}
+
+// 获取字体大小
+@function font-size($name) {
+  @if $name == 'xs' {
+    @return $font-size-xs;
+  } @else if $name == 'sm' {
+    @return $font-size-sm;
+  } @else if $name == 'base' {
+    @return $font-size-base;
+  } @else if $name == 'lg' {
+    @return $font-size-lg;
+  } @else if $name == 'xl' {
+    @return $font-size-xl;
+  } @else if $name == 'xxl' {
+    @return $font-size-xxl;
+  } @else {
+    @return $font-size-base;
+  }
+}
+
+// 获取头像尺寸
+@function avatar-size($name) {
+  @if $name == 'xs' {
+    @return $avatar-size-xs;
+  } @else if $name == 'sm' {
+    @return $avatar-size-sm;
+  } @else if $name == 'base' {
+    @return $avatar-size-base;
+  } @else if $name == 'lg' {
+    @return $avatar-size-lg;
+  } @else if $name == 'xl' {
+    @return $avatar-size-xl;
+  } @else {
+    @return $avatar-size-base;
+  }
+}
+
+// 获取图标尺寸
+@function icon-size($name) {
+  @if $name == 'xs' {
+    @return $icon-size-xs;
+  } @else if $name == 'sm' {
+    @return $icon-size-sm;
+  } @else if $name == 'base' {
+    @return $icon-size-base;
+  } @else if $name == 'lg' {
+    @return $icon-size-lg;
+  } @else if $name == 'xl' {
+    @return $icon-size-xl;
+  } @else {
+    @return $icon-size-base;
+  }
+}

@@ -1,0 +1,667 @@
+/**
+ * 这里是uni-app内置的常用样式变量
+ * 为了方便开发者使用，将一些常用的开发变量进行统一定义
+ * 开发者可以在这里自定义自己的样式变量
+ */
+
+/* 导入移动端适配样式 */
+@import "./styles/mobile.scss";
+
+/* 颜色变量 */
+
+/* 行为相关颜色 */
+$uni-color-primary: #007aff;
+$uni-color-success: #4cd964;
+$uni-color-warning: #f0ad4e;
+$uni-color-error: #dd524d;
+
+/* 文字基本颜色 */
+$uni-text-color: #333; // 基本色
+$uni-text-color-inverse: #fff; // 反色
+$uni-text-color-grey: #999; // 辅助灰色，如加载更多的提示信息
+$uni-text-color-placeholder: #808080;
+$uni-text-color-disable: #c0c0c0;
+
+/* 背景颜色 */
+$uni-bg-color: #ffffff;
+$uni-bg-color-grey: #f8f8f8;
+$uni-bg-color-hover: #f1f1f1; // 点击状态颜色
+$uni-bg-color-mask: rgba(0, 0, 0, 0.4); // 遮罩颜色
+
+/* 边框颜色 */
+$uni-border-color: #c8c7cc;
+
+/* 尺寸变量 */
+
+/* 文字尺寸 */
+$uni-font-size-sm: 24rpx;
+$uni-font-size-base: 28rpx;
+$uni-font-size-lg: 32rpx;
+
+/* 图片尺寸 */
+$uni-img-size-sm: 40rpx;
+$uni-img-size-base: 52rpx;
+$uni-img-size-lg: 80rpx;
+
+/* Border Radius */
+$uni-border-radius-sm: 4rpx;
+$uni-border-radius-base: 6rpx;
+$uni-border-radius-lg: 12rpx;
+$uni-border-radius-circle: 50%;
+
+/* 水平间距 */
+$uni-spacing-row-sm: 10rpx;
+$uni-spacing-row-base: 20rpx;
+$uni-spacing-row-lg: 30rpx;
+
+/* 垂直间距 */
+$uni-spacing-col-sm: 8rpx;
+$uni-spacing-col-base: 16rpx;
+$uni-spacing-col-lg: 24rpx;
+
+/* 透明度 */
+$uni-opacity-disabled: 0.3; // 组件禁用态的透明度
+
+/* 文章场景相关 */
+$uni-color-title: #2c405a; // 文章标题颜色
+$uni-font-size-title: 40rpx;
+$uni-color-subtitle: #555555; // 二级标题颜色
+$uni-font-size-subtitle: 36rpx;
+$uni-color-paragraph: #3f536e; // 文章段落颜色
+$uni-font-size-paragraph: 30rpx;
+
+/* 自定义样式变量 */
+
+/* 主题色彩 */
+$primary-color: #1890ff;
+$secondary-color: #722ed1;
+$success-color: #52c41a;
+$warning-color: #faad14;
+$danger-color: #f5222d;
+$info-color: #13c2c2;
+$light-color: #f0f0f0;
+$dark-color: #262626;
+
+/* 中性色彩 */
+$white: #ffffff;
+$gray-1: #f7f8fa;
+$gray-2: #f2f3f5;
+$gray-3: #e5e6eb;
+$gray-4: #c9cdd4;
+$gray-5: #a9aeb8;
+$gray-6: #86909c;
+$gray-7: #6b7785;
+$gray-8: #4e5969;
+$gray-9: #272e3b;
+$gray-10: #1d2129;
+$black: #000000;
+
+/* 功能色彩 */
+$red-1: #ffece8;
+$red-2: #fdcdc5;
+$red-3: #fbaca3;
+$red-4: #f98981;
+$red-5: #f76560;
+$red-6: #f53f3f;
+$red-7: #cb2634;
+$red-8: #a11729;
+$red-9: #770813;
+$red-10: #4d0408;
+
+$orange-1: #fff7e8;
+$orange-2: #ffe4ba;
+$orange-3: #ffcf8b;
+$orange-4: #ffb65d;
+$orange-5: #ff9a2e;
+$orange-6: #ff7d00;
+$orange-7: #d25f00;
+$orange-8: #a64500;
+$orange-9: #792e00;
+$orange-10: #4d1b00;
+
+$yellow-1: #feffe8;
+$yellow-2: #fffacd;
+$yellow-3: #fff566;
+$yellow-4: #ffec3d;
+$yellow-5: #ffe014;
+$yellow-6: #ffd700;
+$yellow-7: #d4af37;
+$yellow-8: #b8860b;
+$yellow-9: #9a7500;
+$yellow-10: #7c5e00;
+
+$green-1: #e8ffea;
+$green-2: #adf0b6;
+$green-3: #7be188;
+$green-4: #4fd15a;
+$green-5: #23c343;
+$green-6: #00b42a;
+$green-7: #009a29;
+$green-8: #008026;
+$green-9: #006622;
+$green-10: #004d1c;
+
+$blue-1: #e8f7ff;
+$blue-2: #c3e7fe;
+$blue-3: #9fd4fd;
+$blue-4: #7bc0fc;
+$blue-5: #57a9fb;
+$blue-6: #3491fa;
+$blue-7: #2e7cf6;
+$blue-8: #206ccf;
+$blue-9: #125ba8;
+$blue-10: #0e4a81;
+
+$purple-1: #f5e8ff;
+$purple-2: #e8d4fe;
+$purple-3: #d9bbfd;
+$purple-4: #c89ffc;
+$purple-5: #b37feb;
+$purple-6: #9254de;
+$purple-7: #7c3aed;
+$purple-8: #6366f1;
+$purple-9: #4f46e5;
+$purple-10: #3730a3;
+
+/* 文本颜色 */
+$text-color-primary: $gray-10;
+$text-color-regular: $gray-8;
+$text-color-secondary: $gray-6;
+$text-color-placeholder: $gray-5;
+$text-color-disabled: $gray-4;
+$text-color-inverse: $white;
+
+/* 背景色 */
+$bg-color-page: $gray-1;
+$bg-color-container: $white;
+$bg-color-overlay: rgba(0, 0, 0, 0.7);
+$bg-color-mask: rgba(0, 0, 0, 0.5);
+$bg-color-disabled: $gray-2;
+$bg-color-hover: $gray-1;
+$bg-color-pressed: $gray-2;
+
+/* 边框色 */
+$border-color-base: $gray-3;
+$border-color-light: $gray-2;
+$border-color-lighter: $gray-1;
+$border-color-dark: $gray-4;
+$border-color-darker: $gray-5;
+
+/* 字体 */
+$font-family-primary: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+$font-family-code: 'SF Mono', Monaco, Inconsolata, 'Roboto Mono', 'Source Code Pro', Menlo, Consolas, 'Liberation Mono', monospace;
+
+/* 字体大小 */
+$font-size-xs: 20rpx;
+$font-size-sm: 24rpx;
+$font-size-base: 28rpx;
+$font-size-lg: 32rpx;
+$font-size-xl: 36rpx;
+$font-size-xxl: 40rpx;
+$font-size-xxxl: 48rpx;
+
+/* 字体粗细 */
+$font-weight-light: 300;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+/* 行高 */
+$line-height-xs: 1.2;
+$line-height-sm: 1.4;
+$line-height-base: 1.5;
+$line-height-lg: 1.6;
+$line-height-xl: 1.8;
+
+/* 间距 */
+$spacing-xs: 8rpx;
+$spacing-sm: 12rpx;
+$spacing-base: 16rpx;
+$spacing-lg: 24rpx;
+$spacing-xl: 32rpx;
+$spacing-xxl: 48rpx;
+$spacing-xxxl: 64rpx;
+
+/* 圆角 */
+$border-radius-xs: 4rpx;
+$border-radius-sm: 8rpx;
+$border-radius-base: 12rpx;
+$border-radius-lg: 16rpx;
+$border-radius-xl: 24rpx;
+$border-radius-circle: 50%;
+$border-radius-pill: 9999rpx;
+
+/* 阴影 */
+$box-shadow-xs: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+$box-shadow-sm: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+$box-shadow-base: 0 4rpx 16rpx rgba(0, 0, 0, 0.1);
+$box-shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+$box-shadow-xl: 0 12rpx 32rpx rgba(0, 0, 0, 0.15);
+
+/* 过渡动画 */
+$transition-duration-fast: 0.15s;
+$transition-duration-base: 0.3s;
+$transition-duration-slow: 0.5s;
+$transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+
+/* Z-index */
+$z-index-dropdown: 1000;
+$z-index-sticky: 1010;
+$z-index-fixed: 1020;
+$z-index-modal-backdrop: 1030;
+$z-index-modal: 1040;
+$z-index-popover: 1050;
+$z-index-tooltip: 1060;
+$z-index-toast: 1070;
+
+/* 断点 */
+$breakpoint-xs: 480rpx;
+$breakpoint-sm: 768rpx;
+$breakpoint-md: 992rpx;
+$breakpoint-lg: 1200rpx;
+$breakpoint-xl: 1920rpx;
+
+/* 容器 */
+$container-max-width: 1200rpx;
+$container-padding: $spacing-base;
+
+/* 导航栏 */
+$navbar-height: 88rpx;
+$navbar-padding: 0 $spacing-base;
+$navbar-background: $bg-color-container;
+$navbar-border: 1rpx solid $border-color-light;
+$navbar-title-font-size: $font-size-lg;
+$navbar-title-font-weight: $font-weight-medium;
+
+/* 标签栏 */
+$tabbar-height: 100rpx;
+$tabbar-padding: $spacing-xs 0;
+$tabbar-background: $bg-color-container;
+$tabbar-border: 1rpx solid $border-color-light;
+$tabbar-item-font-size: $font-size-xs;
+$tabbar-icon-size: 48rpx;
+
+/* 状态栏 */
+$statusbar-height: var(--status-bar-height);
+
+/* 安全区域 */
+$safe-area-inset-top: constant(safe-area-inset-top);
+$safe-area-inset-right: constant(safe-area-inset-right);
+$safe-area-inset-bottom: constant(safe-area-inset-bottom);
+$safe-area-inset-left: constant(safe-area-inset-left);
+
+/* 按钮 */
+$button-height: 80rpx;
+$button-height-sm: 64rpx;
+$button-height-lg: 96rpx;
+$button-padding: 0 $spacing-lg;
+$button-padding-sm: 0 $spacing-base;
+$button-padding-lg: 0 $spacing-xl;
+$button-font-size: $font-size-base;
+$button-font-size-sm: $font-size-sm;
+$button-font-size-lg: $font-size-lg;
+$button-font-weight: $font-weight-medium;
+$button-border-radius: $border-radius-base;
+$button-border-width: 2rpx;
+
+/* 输入框 */
+$input-height: 80rpx;
+$input-height-sm: 64rpx;
+$input-height-lg: 96rpx;
+$input-padding: 0 $spacing-base;
+$input-padding-sm: 0 $spacing-sm;
+$input-padding-lg: 0 $spacing-lg;
+$input-font-size: $font-size-base;
+$input-font-size-sm: $font-size-sm;
+$input-font-size-lg: $font-size-lg;
+$input-border-radius: $border-radius-base;
+$input-border-width: 2rpx;
+$input-border-color: $border-color-base;
+$input-border-color-focus: $primary-color;
+$input-background: $bg-color-container;
+$input-background-disabled: $bg-color-disabled;
+
+/* 卡片 */
+$card-padding: $spacing-lg;
+$card-padding-sm: $spacing-base;
+$card-padding-lg: $spacing-xl;
+$card-border-radius: $border-radius-lg;
+$card-background: $bg-color-container;
+$card-border: 1rpx solid $border-color-light;
+$card-shadow: $box-shadow-sm;
+
+/* 列表 */
+$list-item-height: 100rpx;
+$list-item-padding: $spacing-base;
+$list-item-border: 1rpx solid $border-color-light;
+$list-item-background: $bg-color-container;
+$list-item-background-hover: $bg-color-hover;
+
+/* 头像 */
+$avatar-size-xs: 48rpx;
+$avatar-size-sm: 64rpx;
+$avatar-size-base: 80rpx;
+$avatar-size-lg: 96rpx;
+$avatar-size-xl: 128rpx;
+$avatar-border-radius: $border-radius-circle;
+
+/* 徽章 */
+$badge-height: 32rpx;
+$badge-padding: 0 12rpx;
+$badge-font-size: $font-size-xs;
+$badge-font-weight: $font-weight-medium;
+$badge-border-radius: $border-radius-pill;
+$badge-background: $danger-color;
+$badge-color: $text-color-inverse;
+
+/* 标签 */
+$tag-height: 48rpx;
+$tag-padding: 0 $spacing-base;
+$tag-font-size: $font-size-sm;
+$tag-font-weight: $font-weight-normal;
+$tag-border-radius: $border-radius-base;
+$tag-background: $bg-color-disabled;
+$tag-color: $text-color-regular;
+$tag-border: 1rpx solid $border-color-base;
+
+/* 分割线 */
+$divider-height: 2rpx;
+$divider-color: $border-color-light;
+$divider-margin: $spacing-base 0;
+
+/* 加载动画 */
+$loading-size: 48rpx;
+$loading-size-sm: 32rpx;
+$loading-size-lg: 64rpx;
+$loading-color: $primary-color;
+$loading-border-width: 4rpx;
+
+/* 图标 */
+$icon-size-xs: 24rpx;
+$icon-size-sm: 32rpx;
+$icon-size-base: 48rpx;
+$icon-size-lg: 64rpx;
+$icon-size-xl: 80rpx;
+
+/* 空状态 */
+$empty-padding: $spacing-xxxl;
+$empty-icon-size: 240rpx;
+$empty-icon-color: $text-color-placeholder;
+$empty-text-color: $text-color-secondary;
+$empty-text-font-size: $font-size-base;
+
+/* 骨架屏 */
+$skeleton-background: $bg-color-disabled;
+$skeleton-animation-duration: 1.5s;
+
+/* 通知栏 */
+$notice-padding: $spacing-base;
+$notice-background: rgba($warning-color, 0.1);
+$notice-border: 1rpx solid rgba($warning-color, 0.3);
+$notice-border-radius: $border-radius-base;
+$notice-font-size: $font-size-sm;
+$notice-icon-size: $icon-size-base;
+$notice-icon-color: $warning-color;
+
+/* 步骤条 */
+$steps-padding: $spacing-base;
+$steps-icon-size: 60rpx;
+$steps-icon-font-size: $font-size-sm;
+$steps-title-font-size: $font-size-sm;
+$steps-line-height: 4rpx;
+$steps-line-color: $border-color-base;
+$steps-active-color: $primary-color;
+$steps-completed-color: $success-color;
+
+/* 进度条 */
+$progress-height: 16rpx;
+$progress-height-sm: 8rpx;
+$progress-height-lg: 24rpx;
+$progress-background: $bg-color-disabled;
+$progress-color: $primary-color;
+$progress-border-radius: $border-radius-lg;
+
+/* 评分 */
+$rate-icon-size: $icon-size-base;
+$rate-icon-color: $border-color-base;
+$rate-icon-color-active: $warning-color;
+$rate-icon-margin: 8rpx;
+
+/* 开关 */
+$switch-width: 100rpx;
+$switch-height: 60rpx;
+$switch-border-radius: 30rpx;
+$switch-background: $border-color-base;
+$switch-background-active: $primary-color;
+$switch-handle-size: 52rpx;
+$switch-handle-margin: 4rpx;
+$switch-handle-background: $bg-color-container;
+$switch-handle-shadow: $box-shadow-sm;
+
+/* 滑块 */
+$slider-height: 8rpx;
+$slider-background: $bg-color-disabled;
+$slider-color: $primary-color;
+$slider-border-radius: 4rpx;
+$slider-handle-size: 32rpx;
+$slider-handle-background: $bg-color-container;
+$slider-handle-border: 2rpx solid $primary-color;
+$slider-handle-shadow: $box-shadow-sm;
+
+/* 时间轴 */
+$timeline-padding: $spacing-base 0;
+$timeline-item-padding-left: 60rpx;
+$timeline-item-padding-bottom: $spacing-lg;
+$timeline-dot-size: 16rpx;
+$timeline-dot-color: $primary-color;
+$timeline-line-width: 2rpx;
+$timeline-line-color: $border-color-base;
+$timeline-time-font-size: $font-size-xs;
+$timeline-time-color: $text-color-placeholder;
+$timeline-title-font-size: $font-size-base;
+$timeline-title-color: $text-color-primary;
+$timeline-desc-font-size: $font-size-sm;
+$timeline-desc-color: $text-color-secondary;
+
+/* 折叠面板 */
+$collapse-border: 1rpx solid $border-color-light;
+$collapse-border-radius: $border-radius-base;
+$collapse-header-padding: $spacing-base;
+$collapse-header-background: $bg-color-disabled;
+$collapse-content-padding: $spacing-base;
+$collapse-content-background: $bg-color-container;
+$collapse-title-font-size: $font-size-base;
+$collapse-title-color: $text-color-primary;
+$collapse-arrow-size: 12rpx;
+
+/* 抽屉 */
+$drawer-background: $bg-color-container;
+$drawer-mask-background: rgba(0, 0, 0, 0.5);
+$drawer-width: 600rpx;
+$drawer-height: 600rpx;
+
+/* 模态框 */
+$modal-background: $bg-color-container;
+$modal-mask-background: rgba(0, 0, 0, 0.5);
+$modal-width: 600rpx;
+$modal-max-width: 90%;
+$modal-border-radius: $border-radius-lg;
+$modal-header-padding: $spacing-lg $spacing-base;
+$modal-header-border: 1rpx solid $border-color-light;
+$modal-body-padding: $spacing-lg $spacing-base;
+$modal-footer-padding: $spacing-base;
+$modal-footer-border: 1rpx solid $border-color-light;
+$modal-title-font-size: $font-size-lg;
+$modal-title-font-weight: $font-weight-medium;
+$modal-title-color: $text-color-primary;
+$modal-close-size: $icon-size-base;
+$modal-close-color: $text-color-placeholder;
+
+/* 气泡提示 */
+$popover-background: $bg-color-container;
+$popover-border: 1rpx solid $border-color-light;
+$popover-border-radius: $border-radius-base;
+$popover-shadow: $box-shadow-lg;
+$popover-padding: $spacing-base;
+$popover-font-size: $font-size-sm;
+$popover-color: $text-color-primary;
+$popover-arrow-size: 12rpx;
+$popover-offset: 16rpx;
+
+/* 工具提示 */
+$tooltip-background: rgba(0, 0, 0, 0.8);
+$tooltip-color: $text-color-inverse;
+$tooltip-font-size: $font-size-xs;
+$tooltip-border-radius: $border-radius-sm;
+$tooltip-padding: 12rpx 16rpx;
+$tooltip-arrow-size: 8rpx;
+$tooltip-offset: 12rpx;
+
+/* 消息提示 */
+$toast-background: rgba(0, 0, 0, 0.8);
+$toast-color: $text-color-inverse;
+$toast-font-size: $font-size-sm;
+$toast-border-radius: $border-radius-base;
+$toast-padding: $spacing-base $spacing-lg;
+$toast-max-width: 80%;
+
+/* 加载更多 */
+$load-more-padding: $spacing-lg;
+$load-more-color: $text-color-placeholder;
+$load-more-font-size: $font-size-sm;
+$load-more-loading-size: 32rpx;
+$load-more-loading-margin: 0 $spacing-xs 0 0;
+
+/* 下拉刷新 */
+$pull-refresh-padding: $spacing-lg;
+$pull-refresh-color: $text-color-placeholder;
+$pull-refresh-font-size: $font-size-sm;
+$pull-refresh-loading-size: 32rpx;
+$pull-refresh-loading-margin: 0 0 $spacing-xs 0;
+$pull-refresh-arrow-size: 12rpx;
+$pull-refresh-arrow-margin: 0 0 $spacing-xs 0;
+
+/* 搜索框 */
+$search-padding: $spacing-base;
+$search-background: $bg-color-container;
+$search-input-background: $bg-color-disabled;
+$search-input-border-radius: $border-radius-lg;
+$search-button-margin: 0 0 0 $spacing-base;
+$search-button-padding: 0 $spacing-lg;
+
+/* 网格 */
+$grid-item-padding: $spacing-base;
+$grid-icon-size: $icon-size-lg;
+$grid-icon-color: $primary-color;
+$grid-icon-margin: 0 0 $spacing-xs 0;
+$grid-text-font-size: $font-size-sm;
+$grid-text-color: $text-color-primary;
+
+/* 浮动按钮 */
+$fab-size: 120rpx;
+$fab-background: $primary-color;
+$fab-color: $text-color-inverse;
+$fab-font-size: $icon-size-lg;
+$fab-shadow: $box-shadow-lg;
+$fab-bottom: 40rpx;
+$fab-right: 40rpx;
+
+/* 粘性头部 */
+$sticky-header-background: $bg-color-container;
+$sticky-header-border: 1rpx solid $border-color-light;
+
+/* 毛玻璃卡片 */
+$glass-card-background: rgba(255, 255, 255, 0.8);
+$glass-card-border: 1rpx solid rgba(255, 255, 255, 0.2);
+$glass-card-backdrop-filter: blur(20rpx);
+
+/* 加载遮罩 */
+$loading-overlay-background: rgba(255, 255, 255, 0.8);
+$loading-overlay-spinner-size: 80rpx;
+$loading-overlay-spinner-margin: 0 0 $spacing-base 0;
+$loading-overlay-text-font-size: $font-size-sm;
+$loading-overlay-text-color: $text-color-secondary;
+
+/* 虚拟列表 */
+$virtual-list-item-padding: $spacing-base;
+$virtual-list-item-border: 1rpx solid $border-color-light;
+
+/* 瀑布流 */
+$waterfall-column-margin: 0 $spacing-xs;
+$waterfall-item-margin: 0 0 $spacing-base 0;
+$waterfall-item-background: $bg-color-container;
+$waterfall-item-border-radius: $border-radius-base;
+$waterfall-item-shadow: $box-shadow-sm;
+
+/* 自定义属性（CSS变量）支持 */
+:root {
+  --primary-color: #{$primary-color};
+  --secondary-color: #{$secondary-color};
+  --success-color: #{$success-color};
+  --warning-color: #{$warning-color};
+  --danger-color: #{$danger-color};
+  --info-color: #{$info-color};
+  --light-color: #{$light-color};
+  --dark-color: #{$dark-color};
+  
+  --text-color-primary: #{$text-color-primary};
+  --text-color-regular: #{$text-color-regular};
+  --text-color-secondary: #{$text-color-secondary};
+  --text-color-placeholder: #{$text-color-placeholder};
+  --text-color-disabled: #{$text-color-disabled};
+  --text-color-inverse: #{$text-color-inverse};
+  
+  --bg-color-page: #{$bg-color-page};
+  --bg-color-container: #{$bg-color-container};
+  --bg-color-overlay: #{$bg-color-overlay};
+  --bg-color-mask: #{$bg-color-mask};
+  --bg-color-disabled: #{$bg-color-disabled};
+  --bg-color-hover: #{$bg-color-hover};
+  --bg-color-pressed: #{$bg-color-pressed};
+  
+  --border-color-base: #{$border-color-base};
+  --border-color-light: #{$border-color-light};
+  --border-color-lighter: #{$border-color-lighter};
+  --border-color-dark: #{$border-color-dark};
+  --border-color-darker: #{$border-color-darker};
+  
+  --font-size-xs: #{$font-size-xs};
+  --font-size-sm: #{$font-size-sm};
+  --font-size-base: #{$font-size-base};
+  --font-size-lg: #{$font-size-lg};
+  --font-size-xl: #{$font-size-xl};
+  --font-size-xxl: #{$font-size-xxl};
+  
+  --spacing-xs: #{$spacing-xs};
+  --spacing-sm: #{$spacing-sm};
+  --spacing-base: #{$spacing-base};
+  --spacing-lg: #{$spacing-lg};
+  --spacing-xl: #{$spacing-xl};
+  --spacing-xxl: #{$spacing-xxl};
+  
+  --border-radius-xs: #{$border-radius-xs};
+  --border-radius-sm: #{$border-radius-sm};
+  --border-radius-base: #{$border-radius-base};
+  --border-radius-lg: #{$border-radius-lg};
+  --border-radius-xl: #{$border-radius-xl};
+  
+  --box-shadow-xs: #{$box-shadow-xs};
+  --box-shadow-sm: #{$box-shadow-sm};
+  --box-shadow-base: #{$box-shadow-base};
+  --box-shadow-lg: #{$box-shadow-lg};
+  --box-shadow-xl: #{$box-shadow-xl};
+  
+  --transition-duration-fast: #{$transition-duration-fast};
+  --transition-duration-base: #{$transition-duration-base};
+  --transition-duration-slow: #{$transition-duration-slow};
+  
+  --z-index-dropdown: #{$z-index-dropdown};
+  --z-index-sticky: #{$z-index-sticky};
+  --z-index-fixed: #{$z-index-fixed};
+  --z-index-modal-backdrop: #{$z-index-modal-backdrop};
+  --z-index-modal: #{$z-index-modal};
+  --z-index-popover: #{$z-index-popover};
+  --z-index-tooltip: #{$z-index-tooltip};
+  --z-index-toast: #{$z-index-toast};
+}

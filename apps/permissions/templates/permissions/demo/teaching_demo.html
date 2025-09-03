@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% load permission_tags %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.demo-page {
+    padding: 20px;
+}
+
+.permission-info {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.feature-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    background-color: #f8f9fa;
+}
+
+.action-buttons {
+    margin-top: 15px;
+}
+
+.action-buttons .btn {
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="demo-page">
+    <h1>{{ page_title }}</h1>
+    
+    <div class="permission-info">
+        <h5><i class="fas fa-shield-alt"></i> 权限要求</h5>
+        <p>{{ required_permission }}</p>
+        <p><strong>恭喜！</strong> 您拥有访问此页面的权限。</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="feature-card">
+                <h4><i class="fas fa-book-open"></i> 课程管理</h4>
+                <p>管理教学课程，包括创建、编辑和删除课程内容。</p>
+                <div class="action-buttons">
+                    {% permission_required 'teaching_center' 'create' %}
+                    <button class="btn btn-primary" onclick="simulateAction('创建课程')">
+                        <i class="fas fa-plus"></i> 创建课程
+                    </button>
+                    {% endpermission_required %}
+                    
+                    {% permission_required 'teaching_center' 'edit' %}
+                    <button class="btn btn-success" onclick="simulateAction('编辑课程')">
+                        <i class="fas fa-edit"></i> 编辑课程
+                    </button>
+                    {% endpermission_required %}
+                    
+                    {% permission_required 'teaching_center' 'delete' %}
+                    <button class="btn btn-danger" onclick="simulateAction('删除课程')">
+                        <i class="fas fa-trash"></i> 删除课程
+                    </button>
+                    {% endpermission_required %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="feature-card">
+                <h4><i class="fas fa-users"></i> 学生管理</h4>
+                <p>管理学生信息，查看学习进度和成绩统计。</p>
+                <div class="action-buttons">
+                    {% permission_required 'teaching_center' 'view' %}
+                    <button class="btn btn-info" onclick="simulateAction('查看学生列表')">
+                        <i class="fas fa-list"></i> 学生列表
+                    </button>
+                    {% endpermission_required %}
+                    
+                    {% permission_required 'teaching_center' 'export' %}
+                    <button class="btn btn-warning" onclick="simulateAction('导出学生数据')">
+                        <i class="fas fa-download"></i> 导出数据
+                    </button>
+                    {% endpermission_required %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="feature-card">
+                <h4><i class="fas fa-chart-line"></i> 教学统计</h4>
+                <p>查看教学效果统计和分析报告。</p>
+                
+                {% if user|has_menu_permission:'teaching_center' %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> 您有权限查看教学统计数据
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 您没有权限查看教学统计数据
+                </div>
+                {% endif %}
+                
+                <div class="action-buttons">
+                    {% permission_required 'teaching_center' 'view' %}
+                    <button class="btn btn-primary" onclick="simulateAction('查看统计报告')">
+                        <i class="fas fa-chart-bar"></i> 统计报告
+                    </button>
+                    {% endpermission_required %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{% url 'permissions:permission_demo' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回演示首页
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function simulateAction(actionName) {
+    // 模拟操作执行
+    const timestamp = new Date().toLocaleTimeString();
+    alert(`[${timestamp}] 执行操作: ${actionName}\n\n这是一个演示操作，实际系统中会执行相应的业务逻辑。`);
+    
+    // 记录到控制台
+    console.log(`教学中心操作: ${actionName} - ${timestamp}`);
+}
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('教学中心演示页面已加载');
+    
+    // 如果有权限检查器，初始化权限检查
+    if (window.FrontendPermissionChecker) {
+        const permissionChecker = new FrontendPermissionChecker();
+        permissionChecker.initializePermissionChecks();
+    }
+});
+</script>
+{% endblock %}

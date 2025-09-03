@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load permission_tags %}
+
+{% block title %}权限控制演示{% endblock %}
+
+{% block extra_css %}
+<style>
+.permission-demo {
+    padding: 20px;
+}
+
+.demo-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.demo-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+
+.permission-item {
+    margin: 10px 0;
+    padding: 10px;
+    border-left: 4px solid #007bff;
+    background-color: white;
+}
+
+.permission-granted {
+    border-left-color: #28a745;
+    background-color: #d4edda;
+}
+
+.permission-denied {
+    border-left-color: #dc3545;
+    background-color: #f8d7da;
+}
+
+.btn-demo {
+    margin: 5px;
+}
+
+.menu-list {
+    list-style: none;
+    padding: 0;
+}
+
+.menu-list li {
+    padding: 8px;
+    margin: 5px 0;
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.ajax-result {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="permission-demo">
+    <h1>权限控制演示页面</h1>
+    <p class="lead">此页面演示了基于角色的权限控制系统功能</p>
+
+    <!-- 用户信息展示 -->
+    <div class="demo-section">
+        <h3>当前用户信息</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>用户名:</strong> {{ user.username }}</p>
+                <p><strong>是否超级用户:</strong> {% if user.is_superuser %}是{% else %}否{% endif %}</p>
+                <p><strong>是否员工:</strong> {% if user.is_staff %}是{% else %}否{% endif %}</p>
+                {% if user.role %}
+                <p><strong>用户角色:</strong> {{ user.role.name }} ({{ user.role.level }})</p>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <p><strong>用户组:</strong></p>
+                <ul>
+                    {% for group in user.groups.all %}
+                    <li>{{ group.name }}</li>
+                    {% empty %}
+                    <li>无用户组</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 菜单权限检查 -->
+    <div class="demo-section">
+        <h3>菜单权限检查</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <h5>可访问的菜单:</h5>
+                {% user_menu_list as user_menus %}
+                <!-- 调试信息 -->
+                <div class="alert alert-info">
+                    <strong>调试信息：</strong><br>
+                    用户: {{ request.user.username }} (ID: {{ request.user.id }})<br>
+                    是否认证: {{ request.user.is_authenticated }}<br>
+                    菜单数量: {{ user_menus|length }}<br>
+                    菜单类型: {{ user_menus|default:"None" }}
+                </div>
+                <ul class="menu-list">
+                    {% for menu in user_menus %}
+                    <li>
+                        <i class="{{ menu.icon }}"></i>
+                        {{ menu.name }} ({{ menu.key }})
+                    </li>
+                    {% empty %}
+                    <li>无可访问菜单</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h5>权限检查示例:</h5>
+                {% for perm in demo_permissions %}
+                <div class="permission-item {% if user|has_menu_permission:perm.menu_key %}permission-granted{% else %}permission-denied{% endif %}">
+                    <strong>{{ perm.description }}</strong><br>
+                    <small>菜单: {{ perm.menu_key }}, 操作: {{ perm.action }}</small>
+                    <span class="float-right">
+                        {% if user|has_menu_permission:perm.menu_key %}
+                        <span class="badge badge-success">有权限</span>
+                        {% else %}
+                        <span class="badge badge-danger">无权限</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能按钮演示 -->
+    <div class="demo-section">
+        <h3>功能按钮权限控制</h3>
+        <p>以下按钮根据用户权限动态显示:</p>
+        
+        {% permission_required 'teaching_center' 'view' %}
+        <a href="{% url 'permissions:teaching_demo' %}" class="btn btn-primary btn-demo">
+            <i class="fas fa-chalkboard-teacher"></i> 教学中心
+        </a>
+        {% endpermission_required %}
+        
+        {% permission_required 'vocabulary_management' 'edit' %}
+        <a href="{% url 'permissions:vocabulary_edit_demo' %}" class="btn btn-success btn-demo">
+            <i class="fas fa-edit"></i> 词汇编辑
+        </a>
+        {% endpermission_required %}
+        
+        {% permission_required 'report_center' 'export' %}
+        <a href="{% url 'permissions:report_export_demo' %}" class="btn btn-warning btn-demo">
+            <i class="fas fa-download"></i> 报告导出
+        </a>
+        {% endpermission_required %}
+        
+        <button class="btn btn-info btn-demo" onclick="testPermissionAPI()">
+            <i class="fas fa-test-tube"></i> 测试权限API
+        </button>
+    </div>
+
+    <!-- AJAX权限检查演示 -->
+    <div class="demo-section">
+        <h3>AJAX权限检查</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <form id="permission-check-form">
+                    <div class="form-group">
+                        <label for="menu_key">菜单标识:</label>
+                        <select class="form-control" id="menu_key" name="menu_key">
+                            <option value="teaching_center">教学中心</option>
+                            <option value="vocabulary_management">词汇管理</option>
+                            <option value="report_center">报告中心</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="action">操作类型:</label>
+                        <select class="form-control" id="action" name="action">
+                            <option value="view">查看</option>
+                            <option value="create">创建</option>
+                            <option value="edit">编辑</option>
+                            <option value="delete">删除</option>
+                            <option value="export">导出</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="checkPermissionAjax()">
+                        检查权限
+                    </button>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div id="ajax-result" class="ajax-result" style="display: none;">
+                    <h6>检查结果:</h6>
+                    <div id="result-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 权限调试信息 -->
+    {% if user.is_superuser %}
+    <div class="demo-section">
+        <h3>权限调试信息 (仅超级用户可见)</h3>
+        {% permission_debug user %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function checkPermissionAjax() {
+    const menuKey = document.getElementById('menu_key').value;
+    const action = document.getElementById('action').value;
+    
+    fetch('{% url "permissions:demo_check_permission" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            menu_key: menuKey,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultDiv = document.getElementById('ajax-result');
+        const contentDiv = document.getElementById('result-content');
+        
+        if (data.success) {
+            const hasPermission = data.has_permission;
+            contentDiv.innerHTML = `
+                <p><strong>菜单:</strong> ${data.menu_key}</p>
+                <p><strong>操作:</strong> ${data.action}</p>
+                <p><strong>权限状态:</strong> 
+                    <span class="badge ${hasPermission ? 'badge-success' : 'badge-danger'}">
+                        ${hasPermission ? '有权限' : '无权限'}
+                    </span>
+                </p>
+            `;
+        } else {
+            contentDiv.innerHTML = `<p class="text-danger">错误: ${data.error}</p>`;
+        }
+        
+        resultDiv.style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const resultDiv = document.getElementById('ajax-result');
+        const contentDiv = document.getElementById('result-content');
+        contentDiv.innerHTML = `<p class="text-danger">请求失败: ${error.message}</p>`;
+        resultDiv.style.display = 'block';
+    });
+}
+
+function testPermissionAPI() {
+    fetch('{% url "permissions:demo_permission_test" %}')
+    .then(response => response.json())
+    .then(data => {
+        console.log('权限API测试结果:', data);
+        alert('权限API测试完成，请查看控制台输出');
+    })
+    .catch(error => {
+        console.error('API测试失败:', error);
+        alert('API测试失败: ' + error.message);
+    });
+}
+
+// 初始化权限检查器
+if (window.FrontendPermissionChecker) {
+    const permissionChecker = new FrontendPermissionChecker();
+    permissionChecker.initializePermissionChecks();
+}
+</script>
+{% endblock %}

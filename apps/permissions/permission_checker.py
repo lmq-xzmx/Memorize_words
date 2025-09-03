@@ -218,18 +218,17 @@ class PermissionChecker:
         获取用户可访问的菜单列表
         
         Returns:
-            list: 可访问的菜单列表
+            list: 可访问的菜单对象列表
         """
         if not self.user or not self.user.is_authenticated:
             return []
         
         # 获取模型类
         MenuModuleConfig = get_menu_module_model()
-        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
         
         # 超级管理员可以访问所有菜单
         if getattr(self.user, 'is_superuser', False):
-            return list(MenuModuleConfig.objects.filter(is_active=True).values_list('key', flat=True))
+            return list(MenuModuleConfig.objects.filter(is_active=True).order_by('sort_order'))
         
         # 检查缓存
         cache_key = f'{self._cache_prefix}_accessible_menus'
@@ -240,9 +239,13 @@ class PermissionChecker:
         accessible_menus = []
         
         if self.user_role:
-            # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
-            # 暂时返回所有活跃菜单
-            accessible_menus = list(MenuModuleConfig.objects.filter(is_active=True).values_list('key', flat=True))
+            # 获取所有活跃菜单
+            all_menus = MenuModuleConfig.objects.filter(is_active=True).order_by('sort_order')
+            
+            # 根据用户角色过滤菜单
+            for menu in all_menus:
+                if self.can_access_menu(menu.key):
+                    accessible_menus.append(menu)
         
         # 缓存结果（10分钟）
         cache.set(cache_key, accessible_menus, 600)

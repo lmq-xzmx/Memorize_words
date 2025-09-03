@@ -1,0 +1,24 @@
+{
+  "light": {
+    "navBarBackgroundColor": "#ffffff",
+    "navBarTitleTextStyle": "black",
+    "navBarTextStyle": "black",
+    "backgroundColor": "#f8f8f8",
+    "backgroundTextStyle": "dark",
+    "backgroundColorTop": "#ffffff",
+    "backgroundColorBottom": "#ffffff",
+    "enablePullDownRefresh": true,
+    "onReachBottomDistance": 50
+  },
+  "dark": {
+    "navBarBackgroundColor": "#1f1f1f",
+    "navBarTitleTextStyle": "white",
+    "navBarTextStyle": "white",
+    "backgroundColor": "#121212",
+    "backgroundTextStyle": "light",
+    "backgroundColorTop": "#1f1f1f",
+    "backgroundColorBottom": "#1f1f1f",
+    "enablePullDownRefresh": true,
+    "onReachBottomDistance": 50
+  }
+}

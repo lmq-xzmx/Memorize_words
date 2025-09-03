@@ -362,9 +362,18 @@ def get_permission_stats(request):
         # 统计各角色用户数量
         role_stats = User.objects.values('role').annotate(count=Count('id'))
         
-        # TODO: 使用 MenuValidity 和 RoleMenuAssignment 替代 RoleMenuPermission
-        # 暂时返回空的权限配置统计
+        # 使用 MenuValidity 和 RoleMenuAssignment 统计权限配置
+        from apps.permissions.models import MenuValidity, RoleManagement
+        
         permission_stats = []
+        roles = RoleManagement.objects.all()
+        for role in roles:
+            menu_count = MenuValidity.objects.filter(role=role, is_valid=True).count()
+            permission_stats.append({
+                'role_name': role.role_name,
+                'display_name': role.display_name,
+                'menu_permissions': menu_count
+            })
         
         return JsonResponse({
             'success': True,
