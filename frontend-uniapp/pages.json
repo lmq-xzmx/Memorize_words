@@ -1,14 +1,13 @@
 {
   "pages": [
     {
-      "path": "pages/index/index",
+      "path": "pages/word/word",
       "style": {
-        "navigationBarTitleText": "首页",
+        "navigationBarTitleText": "斩词练习",
         "navigationStyle": "custom",
         "backgroundColor": "#f8f9fa",
         "backgroundTextStyle": "dark",
-        "enablePullDownRefresh": true,
-        "onReachBottomDistance": 50
+        "enablePullDownRefresh": true
       }
     },
     {
@@ -18,16 +17,6 @@
         "navigationStyle": "custom",
         "backgroundColor": "#ffffff",
         "backgroundTextStyle": "dark"
-      }
-    },
-    {
-      "path": "pages/word/word",
-      "style": {
-        "navigationBarTitleText": "斩词练习",
-        "navigationStyle": "custom",
-        "backgroundColor": "#f8f9fa",
-        "backgroundTextStyle": "dark",
-        "enablePullDownRefresh": true
       }
     },
     {
@@ -101,12 +90,6 @@
     "spacing": "3px",
     "list": [
       {
-        "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home-active.png"
-      },
-      {
         "pagePath": "pages/word/word",
         "text": "斩词",
         "iconPath": "static/tabbar/word.png",
@@ -136,18 +119,13 @@
     "current": 0,
     "list": [
       {
-        "name": "首页",
-        "path": "pages/index/index",
+        "name": "斩词练习",
+        "path": "pages/word/word",
         "query": ""
       },
       {
         "name": "登录页",
         "path": "pages/login/login",
-        "query": ""
-      },
-      {
-        "name": "斩词练习",
-        "path": "pages/word/word",
         "query": ""
       },
       {

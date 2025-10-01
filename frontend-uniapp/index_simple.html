@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语学习平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: #667eea;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 4rem 0;
+            color: white;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 1rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .admin-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-top: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-section h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .admin-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .admin-link {
+            display: block;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            text-align: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .admin-link:hover {
+            background: #e9ecef;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">英语学习平台</div>
+            <nav class="nav-links">
+                <a href="http://localhost:8000/accounts/login/">登录</a>
+                <a href="http://localhost:8000/accounts/register/">注册</a>
+                <a href="http://localhost:8000/admin/">管理后台</a>
+            </nav>
+        </div>
+    </header>
+    
+    <div class="container">
+        <section class="hero">
+            <h1>欢迎来到英语学习平台</h1>
+            <p>智能化英语学习，让学习更高效、更有趣</p>
+            <a href="http://localhost:8000/accounts/login/" class="cta-button">开始学习</a>
+        </section>
+        
+        <section class="features">
+            <div class="feature-card" onclick="navigateTo('/apps/words/')">
+                <h3>📚 词汇管理</h3>
+                <p>智能词汇学习系统，个性化词汇推荐，帮助您快速扩展词汇量</p>
+            </div>
+            
+            <div class="feature-card" onclick="navigateTo('/apps/teaching/')">
+                <h3>🎓 教学模块</h3>
+                <p>专业的教学内容管理，支持多种教学方式和学习路径</p>
+            </div>
+            
+            <div class="feature-card" onclick="navigateTo('/apps/analytics/')">
+                <h3>📊 学习分析</h3>
+                <p>详细的学习数据分析，帮助您了解学习进度和效果</p>
+            </div>
+            
+            <div class="feature-card" onclick="navigateTo('/gamification/')">
+                <h3>🎮 游戏化学习</h3>
+                <p>通过游戏化元素让学习更有趣，提高学习动力和参与度</p>
+            </div>
+            
+            <div class="feature-card" onclick="navigateTo('/personalization/')">
+                <h3>⚙️ 个性化设置</h3>
+                <p>根据您的学习习惯和偏好，定制专属的学习体验</p>
+            </div>
+            
+            <div class="feature-card" onclick="navigateTo('/apps/permissions/')">
+                <h3>🔐 权限管理</h3>
+                <p>完善的权限控制系统，确保平台安全和用户数据保护</p>
+            </div>
+        </section>
+        
+        <section class="admin-section">
+            <h2>系统管理</h2>
+            <p>管理员和教师可以通过以下链接访问相应的管理功能：</p>
+            <div class="admin-links">
+                <a href="http://localhost:8000/admin/" class="admin-link">Django管理后台</a>
+                <a href="http://localhost:8000/accounts/" class="admin-link">用户管理</a>
+                <a href="http://localhost:8000/apps/words/" class="admin-link">词汇管理</a>
+                <a href="http://localhost:8000/apps/teaching/" class="admin-link">教学管理</a>
+                <a href="http://localhost:8000/apps/analytics/" class="admin-link">数据分析</a>
+                <a href="http://localhost:8000/apps/permissions/" class="admin-link">权限管理</a>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        function navigateTo(path) {
+            // 尝试访问Django后端的对应路径
+            window.open('http://localhost:8000' + path, '_blank');
+        }
+        
+        // 检查后端服务状态
+        function checkBackendStatus() {
+            fetch('http://localhost:8000/')
+                .then(response => {
+                    if (response.ok) {
+                        console.log('后端服务正常运行');
+                    } else {
+                        console.warn('后端服务可能存在问题');
+                    }
+                })
+                .catch(error => {
+                    console.error('无法连接到后端服务:', error);
+                    // 显示提示信息
+                    const banner = document.createElement('div');
+                    banner.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        background: #f44336;
+                        color: white;
+                        padding: 10px;
+                        text-align: center;
+                        z-index: 1000;
+                    `;
+                    banner.textContent = '无法连接到后端服务，请确保Django服务器正在运行';
+                    document.body.insertBefore(banner, document.body.firstChild);
+                });
+        }
+        
+        // 页面加载时检查后端状态
+        window.addEventListener('load', checkBackendStatus);
+    </script>
+</body>
+</html>

@@ -105,7 +105,7 @@
       "weui": true
     },
     "optimization": {
-      "subPackages": true
+      "subPackages": false
     },
     "cloudfunctionRoot": "cloudfunctions/",
     "plugins": {},
